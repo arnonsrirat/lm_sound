@@ -1,37 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 คู่มือการใช้งาน Git สำหรับทีม (Team Workflow Guide)
 
-## Getting Started
+คู่มือฉบับนี้อธิบายขั้นตอนการเขียนโค้ดร่วมกัน เพื่อป้องกันปัญหา "โค้ดทับกัน" หรือ "เว็บพัง" โดยเราจะใช้ระบบแยก Branch และดึงโค้ดมารวมกันที่จุดศูนย์กลาง
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 📌 โครงสร้างกิ่ง (Branch Structure)
+โปรเจกต์ของเราจะแบ่งพื้นที่การทำงานออกเป็น 3 กิ่งหลัก ได้แก่:
+1. **`main`** : กิ่งศูนย์กลางสำหรับเอาขึ้นเว็บจริง (Production) **ห้ามเขียนโค้ดหรือ Push ตรงลงกิ่งนี้เด็ดขาด!**
+2. **`anon`** : กิ่งพื้นที่ทำงานส่วนตัวของหัวหน้าทีม (Lead)
+3. **`Ninja`** : กิ่งพื้นที่ทำงานส่วนตัวของสมาชิกทีม (Member)
+
+> **💡 กฎเหล็กประจำทีม:**
+> ทุกคนจะต้องเขียนโค้ดใน **"กิ่งของตัวเอง"** เท่านั้น และก่อนจะเริ่มเขียนโค้ดใหม่ทุกครั้ง ต้องดึงโค้ดล่าสุดจาก `main` เข้ามารวมในกิ่งตัวเองเสมอ เพื่อป้องกันโค้ดเก่าไปชนกับโค้ดใหม่
+
+---
+
+## 🛠️ ขั้นตอนที่ 1: การทำงานประจำวัน (ดึง -> เขียน -> ส่ง)
+*ขั้นตอนนี้ "ทุกคน" ต้องทำเหมือนกันทุกครั้งที่เปิดคอมพิวเตอร์มาทำงาน*
+
+```
+# 1. ย้ายไปที่กิ่งของตัวเอง (เปลี่ยนคำว่า <branch-name> เป็น anon หรือ Ninja)
+git checkout <branch-name>
+
+# 2. ดึงโค้ดอัปเดตล่าสุดจากกิ่ง main มารวมในเครื่องตัวเอง (สำคัญมาก! ป้องกันโค้ดชนกัน)
+git pull origin main
+
+# 3. เริ่มทำงาน พิมพ์โค้ด แก้ไขไฟล์ต่างๆ ตามปกติ...
+
+# 4. เมื่อทำงานเสร็จ ให้บันทึกไฟล์ทั้งหมด
+git add .
+
+# 5. เขียนอธิบายว่ารอบนี้ทำอะไรไปบ้าง (สั้นๆ ให้เข้าใจง่าย)
+git commit -m "feat: อธิบายงานที่ทำ เช่น เพิ่มระบบล็อกอิน"
+
+# 6. ส่งโค้ดทั้งหมดขึ้นไปเก็บไว้บน GitHub ในกิ่งของตัวเอง
+git push origin <branch-name>
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+👑 ขั้นตอนที่ 2: การรวมงานทุกคนเพื่ออัปเดตเว็บ (ทำโดยหัวหน้าทีม - Anon)
+เมื่อทุกคนส่งงานขึ้น GitHub ในกิ่งของตัวเองเรียบร้อยแล้ว หัวหน้าทีมจะมีหน้าที่รวบรวมโค้ดทั้งหมดเข้ากิ่ง main ตามลำดับนี้:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+Bash
+# 1. ย้ายตัวเองไปที่กิ่ง main ก่อน
+git checkout main
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 2. ดึงอัปเดต main เผื่อมีอะไรเปลี่ยนแปลง
+git pull origin main
 
-## Learn More
+# 3. โหลดข้อมูลกิ่งของ Ninja ลงมาเตรียมไว้
+git fetch origin Ninja
 
-To learn more about Next.js, take a look at the following resources:
+# 4. นำโค้ดของ Ninja มารวมเข้ากับ main
+git merge origin/Ninja
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 5. นำโค้ดของตัวเอง (anon) มารวมเข้ากับ main ด้วย
+git merge anon
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 6. ส่งโค้ดที่รวมเสร็จสมบูรณ์แล้ว กลับขึ้นไปบน GitHub (พร้อมใช้งานจริง)
+git push origin main
 
-## Deploy on Vercel
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+🔄 ขั้นตอนที่ 3: การอัปเดตเครื่องตัวเองเมื่อ main เปลี่ยนไป
+หลังจากหัวหน้าทีมทำ "ขั้นตอนที่ 2" เสร็จแล้ว โค้ดตรงกลาง (main) จะเป็นเวอร์ชันใหม่ล่าสุด "ทุกคนในทีม" ต้องรีบดึงโค้ดนั้นกลับมาที่เครื่องตัวเองทันที เพื่อเตรียมทำงานชิ้นต่อไป
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# lm_sound" 
+```
+Bash
+# 1. เช็กให้แน่ใจว่าอยู่กิ่งตัวเอง (anon หรือ Ninja)
+git checkout <branch-name>
+
+# 2. ดึงโค้ดที่หัวหน้าเพิ่งอัปเดตบน main ลงมารวมกับงานเรา
+git pull origin main
+
+# 3. อัปเดตกิ่งของตัวเองบน GitHub ให้เป็นเวอร์ชันใหม่ล่าสุดด้วย
+git push origin <branch-name>
