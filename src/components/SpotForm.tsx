@@ -88,20 +88,20 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
       <div className="mb-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-emerald-400 transition"
+          className="inline-flex items-center gap-2 text-xs font-medium text-indigo-400 hover:text-cyan-300 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>กลับสู่หน้าแรก</span>
         </Link>
       </div>
 
-      <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 bg-slate-900/80 shadow-2xl">
+      <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-purple-500/20 bg-[#0d1226]/80 shadow-2xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-emerald-400" />
-            {isEdit ? "แก้ไขจุดอ่านหนังสือ" : "เพิ่มจุดอ่านหนังสือใหม่"}
+            <Sparkles className="w-5 h-5 text-pink-400" />
+            <span className="twilight-text">{isEdit ? "แก้ไขจุดอ่านหนังสือ" : "เพิ่มจุดอ่านหนังสือใหม่"}</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-indigo-300/60 mt-1">
             แบ่งปันมุมลับในมหาวิทยาลัย พร้อมเสียงบรรยากาศจริงให้เพื่อนๆ ได้ฟัง
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
               ชื่อจุดอ่านหนังสือ *
             </label>
             <input
@@ -124,7 +124,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="เช่น หอสมุดกลาง ชั้น 4 มุม Silent Study"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
               required
             />
             {errors.title && <p className="text-rose-400 text-xs mt-1">{errors.title[0]}</p>}
@@ -132,17 +132,17 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
 
           {/* Location */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
               พิกัด / สถานที่ตั้ง *
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
+              <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-indigo-400/60" />
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="เช่น อาคารเรียนรวม 3 ชั้น 5 หรือ โต๊ะใต้ต้นจามจุรี"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
                 required
               />
             </div>
@@ -151,7 +151,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
 
           {/* Noise Level */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
               ระดับเสียงบรรยากาศ *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -163,19 +163,19 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
                     key={lvl}
                     type="button"
                     onClick={() => setFormData({ ...formData, noiseLevel: lvl })}
-                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
+                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
                       isSelected
-                        ? "bg-emerald-500/10 border-emerald-500/60 ring-2 ring-emerald-500/20"
-                        : "bg-slate-950/60 border-slate-800 hover:border-slate-700"
+                        ? "bg-purple-600/15 border-purple-500/80 ring-2 ring-purple-500/30 shadow-md shadow-purple-900/20"
+                        : "bg-[#080b14]/60 border-indigo-900/40 hover:border-indigo-700"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xs font-bold ${isSelected ? "text-emerald-400" : "text-slate-200"}`}>
+                      <span className={`text-xs font-bold ${isSelected ? "text-pink-300" : "text-slate-200"}`}>
                         {config.label}
                       </span>
-                      <Volume2 className={`w-3.5 h-3.5 ${isSelected ? "text-emerald-400" : "text-slate-500"}`} />
+                      <Volume2 className={`w-3.5 h-3.5 ${isSelected ? "text-cyan-400" : "text-indigo-400/60"}`} />
                     </div>
-                    <span className="text-[10px] text-slate-400">{config.desc}</span>
+                    <span className="text-[10px] text-indigo-300/60">{config.desc}</span>
                   </button>
                 );
               })}
@@ -185,30 +185,37 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
           {/* Image URL & Preset Selection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
                 URL รูปภาพสถานที่ *
               </label>
-              <span className="text-[11px] text-slate-500">เลือกภาพตัวอย่างได้</span>
+              <span className="text-[11px] text-indigo-400/60">เลือกภาพตัวอย่างได้</span>
             </div>
             <div className="relative">
-              <ImageIcon className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
+              <ImageIcon className="absolute left-3.5 top-3 w-4 h-4 text-indigo-400/60" />
               <input
                 type="text"
                 value={formData.imageUrl}
                 onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                 placeholder="https://..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
                 required
               />
             </div>
             {/* Presets */}
             <div className="flex flex-wrap gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, imageUrl: "/logo.png" })}
+                className="text-[10px] px-2.5 py-1 rounded-lg bg-purple-900/30 hover:bg-purple-800/40 text-pink-300 border border-purple-500/40 transition cursor-pointer"
+              >
+                ✨ อาร์ตเวิร์ก LhobMoom Sound
+              </button>
               {PRESET_IMAGES.map((preset) => (
                 <button
                   key={preset.url}
                   type="button"
                   onClick={() => setFormData({ ...formData, imageUrl: preset.url })}
-                  className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                  className="text-[10px] px-2.5 py-1 rounded-lg bg-[#0e1326] hover:bg-[#161d3b] text-indigo-200/80 border border-indigo-900/50 transition cursor-pointer"
                 >
                   {preset.label}
                 </button>
@@ -220,19 +227,19 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
           {/* Audio URL & Preset Selection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
                 URL ไฟล์เสียงบรรยากาศ (.mp3, .ogg) *
               </label>
-              <span className="text-[11px] text-slate-500">เลือกเสียงตัวอย่างได้</span>
+              <span className="text-[11px] text-indigo-400/60">เลือกเสียงตัวอย่างได้</span>
             </div>
             <div className="relative">
-              <Music className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
+              <Music className="absolute left-3.5 top-3 w-4 h-4 text-indigo-400/60" />
               <input
                 type="text"
                 value={formData.audioUrl}
                 onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
                 placeholder="https://..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
                 required
               />
             </div>
@@ -243,7 +250,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
                   key={preset.url}
                   type="button"
                   onClick={() => setFormData({ ...formData, audioUrl: preset.url })}
-                  className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                  className="text-[10px] px-2.5 py-1 rounded-lg bg-[#0e1326] hover:bg-[#161d3b] text-indigo-200/80 border border-indigo-900/50 transition cursor-pointer"
                 >
                   {preset.label}
                 </button>
@@ -254,7 +261,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
               รายละเอียดและคำแนะนำเพิ่มเติม *
             </label>
             <textarea
@@ -262,7 +269,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="แนะนำเรื่องความสว่าง, ปลั๊กไฟ, แอร์, ช่วงเวลาที่คนน้อย, หรือจุดที่เดินเข้าไปหายาก..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
               required
             />
             {errors.description && <p className="text-rose-400 text-xs mt-1">{errors.description[0]}</p>}
@@ -272,14 +279,14 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
           <div className="pt-4 flex items-center justify-end gap-3">
             <Link
               href="/"
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition"
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-indigo-300 hover:text-slate-200 transition"
             >
               ยกเลิก
             </Link>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-50 transition shadow-lg shadow-emerald-500/20"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white twilight-gradient-btn disabled:opacity-50 transition shadow-lg shadow-purple-900/40 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isSubmitting ? "กำลังบันทึก..." : isEdit ? "อัปเดตจุดอ่านหนังสือ" : "เผยแพร่จุดอ่านหนังสือ"}</span>
