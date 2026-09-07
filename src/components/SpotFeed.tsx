@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import SpotCard from "./SpotCard";
-import { Volume2, Sparkles, Filter, AlertCircle, PlusCircle } from "lucide-react";
+import { Volume2, Sparkles, Filter, AlertCircle, PlusCircle, Search } from "lucide-react";
 import Link from "next/link";
 
 interface SpotFeedProps {
@@ -25,10 +26,20 @@ interface SpotFeedProps {
 }
 
 export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const currentNoise = searchParams.get("noiseLevel") || "all";
-  const currentSearch = searchParams.get("search") || "";
+  const initialNoise = searchParams.get("noiseLevel") || "all";
+  const initialSearch = searchParams.get("search") || "";
+
+  // Instant Client-side State
+  const [activeNoise, setActiveNoise] = useState<string>(initialNoise);
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
+
+  useEffect(() => {
+    const noise = searchParams.get("noiseLevel") || "all";
+    const search = searchParams.get("search") || "";
+    setActiveNoise(noise);
+    setSearchQuery(search);
+  }, [searchParams]);
 
   const filterOptions = [
     { key: "all", label: "ทั้งหมด" },
@@ -38,30 +49,59 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
   ];
 
   const handleFilterClick = (key: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    setActiveNoise(key);
+    const url = new URL(window.location.href);
     if (key === "all") {
-      params.delete("noiseLevel");
+      url.searchParams.delete("noiseLevel");
     } else {
-      params.set("noiseLevel", key);
+      url.searchParams.set("noiseLevel", key);
     }
-    router.push(`/?${params.toString()}#feed`);
+    window.history.replaceState(null, "", url.toString());
   };
 
+  // Instant 0ms In-Memory Filtering
+  const filteredSpots = useMemo(() => {
+    return spots.filter((spot) => {
+      const matchNoise = activeNoise === "all" || spot.noiseLevel === activeNoise;
+      const q = searchQuery.trim().toLowerCase();
+      const matchSearch =
+        !q ||
+        spot.title.toLowerCase().includes(q) ||
+        spot.description.toLowerCase().includes(q) ||
+        spot.location.toLowerCase().includes(q);
+      return matchNoise && matchSearch;
+    });
+  }, [spots, activeNoise, searchQuery]);
+
   return (
-    <section id="feed" className="space-y-6">
+    <section id="feed" className="space-y-6 scroll-mt-20">
       {/* Feed Controls Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-100 flex items-center gap-2">
             <span>จุดอ่านหนังสือยอดนิยม</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-emerald-400 font-normal border border-slate-700">
-              {spots.length} จุด
+              {filteredSpots.length} จุด
             </span>
           </h2>
-          {currentSearch && (
-            <p className="text-xs text-slate-400 mt-1">
-              ผลการค้นหาสำหรับ: &ldquo;<span className="text-emerald-400 font-semibold">{currentSearch}</span>&rdquo;
-            </p>
+          {searchQuery && (
+            <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+              <span>
+                ผลการค้นหาสำหรับ: &ldquo;<span className="text-emerald-400 font-semibold">{searchQuery}</span>&rdquo;
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete("search");
+                  window.history.replaceState(null, "", url.toString());
+                }}
+                className="text-[11px] text-slate-500 hover:text-slate-300 underline"
+              >
+                ล้างคำค้นหา
+              </button>
+            </div>
           )}
         </div>
 
@@ -69,15 +109,15 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <Filter className="w-3.5 h-3.5 text-slate-400 mr-1 shrink-0" />
           {filterOptions.map((opt) => {
-            const active = currentNoise === opt.key;
+            const active = activeNoise === opt.key;
             return (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => handleFilterClick(opt.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
                   active
-                    ? "bg-emerald-500 text-slate-950 font-semibold shadow-sm"
+                    ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20 scale-105"
                     : "bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800"
                 }`}
               >
@@ -89,9 +129,9 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
       </div>
 
       {/* Grid of Spots */}
-      {spots.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {spots.map((spot) => (
+      {filteredSpots.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
+          {filteredSpots.map((spot) => (
             <SpotCard key={spot.id} spot={spot} currentUserId={currentUserId} />
           ))}
         </div>
