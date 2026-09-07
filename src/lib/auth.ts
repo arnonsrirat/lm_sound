@@ -1,84 +1,123 @@
+import bcrypt from "bcryptjs";
+import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { userService, UserRecord } from "./user-service";
 
-export class ForbiddenError extends Error {
-  statusCode: number;
+export const SESSION_COOKIE_NAME = "lm_sound_session";
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "lm-sound-ambient-secure-jwt-secret-key-2026"
+);
 
-  constructor(message: string = "Forbidden: คุณไม่มีสิทธิ์ในการดำเนินการนี้ (403)") {
-    super(message);
-    this.name = "ForbiddenError";
-    this.statusCode = 403;
-  }
-}
-
-export class UnauthorizedError extends Error {
-  statusCode: number;
-
-  constructor(message: string = "Unauthorized: กรุณาเข้าสู่ระบบก่อนดำเนินการ (401)") {
-    super(message);
-    this.name = "UnauthorizedError";
-    this.statusCode = 401;
-  }
-}
-
-export interface SessionUser {
+export interface SessionPayload {
   userId: string;
   email: string;
   username: string;
+  name?: string | null;
 }
 
-/**
- * ดึงข้อมูล Session จาก Cookie
- * รองรับทั้ง session cookie จากระบบ Auth ของ Ninja (เช่น `session_token` หรือ `session_user`)
- */
-export async function getSession(): Promise<SessionUser | null> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session_user")?.value || cookieStore.get("session")?.value;
+// 1. Password Hashing
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
 
-  if (!sessionCookie) {
+export async function comparePassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+// 2. JWT Session Management
+export async function createSessionToken(
+  payload: SessionPayload
+): Promise<string> {
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d") // 7 days session
+    .sign(JWT_SECRET);
+}
+
+export async function verifySessionToken(
+  token: string
+): Promise<SessionPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      username: payload.username as string,
+      name: (payload.name as string) || null,
+    };
+  } catch {
     return null;
   }
-
-  try {
-    // รองรับ JSON session cookie
-    const parsed = JSON.parse(sessionCookie);
-    if (parsed && (parsed.userId || parsed.id)) {
-      return {
-        userId: parsed.userId || parsed.id,
-        email: parsed.email || "",
-        username: parsed.username || "",
-      };
-    }
-  } catch {
-    // หากเป็น token ธรรมดา หรือ userId ตรงๆ
-    return {
-      userId: sessionCookie,
-      email: "",
-      username: "",
-    };
-  }
-
-  return null;
 }
 
-/**
- * ตรวจสอบว่าผู้ใช้ล็อกอินอยู่หรือไม่ ถ้าไม่จะโยน UnauthorizedError (401)
- */
-export async function requireAuth(): Promise<SessionUser> {
+// 3. Cookie Management
+export async function setSessionCookie(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+  });
+}
+
+export async function clearSessionCookie() {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}
+
+export class UnauthorizedError extends Error {
+  constructor(message = "กรุณาเข้าสู่ระบบก่อนทำรายการ (401 Unauthorized)") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
+export class ForbiddenError extends Error {
+  constructor(message = "คุณไม่มีสิทธิ์ดำเนินการนี้ (403 Forbidden)") {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
+export async function getSession(): Promise<SessionPayload | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return null;
+
+  return verifySessionToken(token);
+}
+
+export async function requireAuth(): Promise<SessionPayload> {
   const session = await getSession();
-  if (!session || !session.userId) {
+  if (!session) {
     throw new UnauthorizedError();
   }
   return session;
 }
 
-/**
- * Authorization Guard:
- * ดักจับสิทธิ์ให้แก้ไขหรือลบได้เฉพาะ session.userId === spot.authorId เท่านั้น
- * หากไม่ใช่จะโยน ForbiddenError (403) ทันที
- */
-export function assertSpotOwnership(authorId: string, currentUserId: string): void {
-  if (authorId !== currentUserId) {
-    throw new ForbiddenError("403 Forbidden: คุณไม่มีสิทธิ์แก้ไขหรือลบจุดอ่านหนังสือนี้ เนื่องจากไม่ใช่เจ้าของโพสต์");
+export function assertSpotOwnership(spotAuthorId: string, currentUserId: string): void {
+  if (spotAuthorId !== currentUserId) {
+    throw new ForbiddenError("คุณไม่มีสิทธิ์แก้ไขหรือลบจุดอ่านหนังสือนี้ (403 Forbidden)");
   }
 }
+
+export async function getCurrentUser(): Promise<UserRecord | null> {
+  const session = await getSession();
+  if (!session) return null;
+
+  return userService.findById(session.userId);
+}
+

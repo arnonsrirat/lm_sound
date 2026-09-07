@@ -1,0 +1,357 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { registerSchema } from "@/lib/validation";
+import {
+  Volume2,
+  Lock,
+  User,
+  Mail,
+  Smile,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
+
+export default function RegisterPage() {
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    name: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+    if (serverError) setServerError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setServerError(null);
+    setSuccessMessage(null);
+
+    // Validate with Zod
+    const result = registerSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setServerError(data.error || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
+        setLoading(false);
+        return;
+      }
+
+      setSuccessMessage("สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบ...");
+      setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 1200);
+    } catch {
+      setServerError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-zinc-950 text-zinc-100 overflow-hidden px-4 py-12">
+      {/* Dynamic Ambient Background with Glowing Orbs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[550px] h-[550px] rounded-full bg-teal-500/15 blur-[140px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/20 blur-[130px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-purple-900/10 blur-[160px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+      </div>
+
+      {/* Main Glassmorphic Form Card */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="backdrop-blur-2xl bg-zinc-900/70 border border-white/10 rounded-3xl p-8 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+          {/* Logo & Header */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <Link
+              href="/"
+              className="group flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-400 to-indigo-500 p-0.5 shadow-lg shadow-teal-500/25 mb-4 hover:scale-105 transition-transform duration-300"
+            >
+              <div className="w-full h-full bg-zinc-950 rounded-[14px] flex items-center justify-center">
+                <Volume2 className="w-7 h-7 text-teal-400 group-hover:rotate-6 transition-transform" />
+              </div>
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              สร้างบัญชีใหม่
+            </h1>
+            <p className="text-sm text-zinc-400 mt-1.5">
+              เข้าร่วมเป็นส่วนหนึ่งของคอมมูนิตี้เสียงผ่อนคลาย LM Sound
+            </p>
+          </div>
+
+          {/* Feedback Alerts */}
+          {serverError && (
+            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <span>{serverError}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm animate-in fade-in">
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            {/* Username Field */}
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-xs font-medium text-zinc-300 mb-1"
+              >
+                ชื่อผู้ใช้ (Username)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="เช่น sound_ninja"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                    errors.username
+                      ? "border-red-500/60 focus:ring-red-500/30"
+                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                  }`}
+                />
+              </div>
+              {errors.username && (
+                <p className="text-xs text-red-400 mt-1">{errors.username}</p>
+              )}
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-xs font-medium text-zinc-300 mb-1"
+              >
+                อีเมล (Email)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                    errors.email
+                      ? "border-red-500/60 focus:ring-red-500/30"
+                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                  }`}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-xs text-red-400 mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Name Field (Optional) */}
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-xs font-medium text-zinc-300 mb-1"
+              >
+                ชื่อที่ต้องการให้แสดง (ไม่บังคับ)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                  <Smile className="w-4 h-4" />
+                </div>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="ชื่อ หรือ นามแฝง"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950/60 border border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-xs font-medium text-zinc-300 mb-1"
+              >
+                รหัสผ่าน
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="อย่างน้อย 6 ตัวอักษร"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                    errors.password
+                      ? "border-red-500/60 focus:ring-red-500/30"
+                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-xs text-red-400 mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-xs font-medium text-zinc-300 mb-1"
+              >
+                ยืนยันรหัสผ่าน
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="กรอกรหัสผ่านอีกครั้ง"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                    errors.confirmPassword
+                      ? "border-red-500/60 focus:ring-red-500/30"
+                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-xs text-red-400 mt-1">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-600 text-white font-medium text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>กำลังสร้างบัญชี...</span>
+                </>
+              ) : (
+                <>
+                  <span>สมัครสมาชิก</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Login Link */}
+          <div className="mt-6 text-center text-xs text-zinc-400">
+            มีบัญชีสมาชิกอยู่แล้ว?{" "}
+            <Link
+              href="/login"
+              className="text-teal-400 font-semibold hover:text-teal-300 transition-colors"
+            >
+              เข้าสู่ระบบที่นี่
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
