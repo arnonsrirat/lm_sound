@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { spotSchema, type SpotInput } from "@/lib/validations/spot";
 import { requireAuth, assertSpotOwnership, ForbiddenError, UnauthorizedError } from "@/lib/auth";
+import { filterFallbackSpots, FALLBACK_SPOTS } from "@/lib/fallbackSpots";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -79,7 +80,7 @@ export async function createSpotAction(formData: FormData | SpotInput): Promise<
 
 /**
  * 2. Read Spots (Feed)
- * ดึงรายการจุดอ่านหนังสือทั้งหมด พร้อมรองรับ Search และ Filter ระดับเสียง
+ * ดึงรายการจุดอ่านหนังสือทั้งหมด พร้อม Fast Timeout Guard และ Fallback อัตโนมัติ
  */
 export async function getSpots(options?: {
   search?: string;
@@ -87,9 +88,15 @@ export async function getSpots(options?: {
   take?: number;
   skip?: number;
 }) {
-  try {
-    const { search, noiseLevel, take = 50, skip = 0 } = options || {};
+  const { search, noiseLevel, take = 50, skip = 0 } = options || {};
 
+  // ตรวจสอบว่า DATABASE_URL เป็น placeholder หรือไม่ หากใช่ ให้คืนค่า Fallback ทันทีใน 0ms
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (!dbUrl || dbUrl.includes("ep-sample") || dbUrl.includes("dummy")) {
+    return filterFallbackSpots(search, noiseLevel);
+  }
+
+  try {
     const whereClause: Record<string, unknown> = {};
 
     if (search && search.trim() !== "") {
@@ -104,7 +111,8 @@ export async function getSpots(options?: {
       whereClause.noiseLevel = noiseLevel;
     }
 
-    const spots = await prisma.spot.findMany({
+    // Fast Timeout Guard: ป้องกันไม่ให้ Prisma ค้างรอ Network Timeout นานเกิน 1.2 วินาที
+    const queryPromise = prisma.spot.findMany({
       where: whereClause,
       include: {
         author: {
@@ -121,20 +129,38 @@ export async function getSpots(options?: {
       skip,
     });
 
-    return spots;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("DB_TIMEOUT")), 1200)
+    );
+
+    const spots = await Promise.race([queryPromise, timeoutPromise]);
+
+    if (spots && spots.length > 0) {
+      return spots;
+    }
+
+    // หากฐานข้อมูลว่างเปล่า คืนค่า Fallback Spots
+    return filterFallbackSpots(search, noiseLevel);
   } catch (error) {
-    console.error("getSpots Error:", error);
-    return [];
+    // คืนค่า Fallback Spots ทันทีเมื่อเกิด Error หรือ Timeout
+    return filterFallbackSpots(search, noiseLevel);
   }
 }
 
 /**
  * 3. Read Spot by ID
- * ดึงข้อมูลจุดอ่านหนังสือเฉพาะจุด
+ * ดึงข้อมูลจุดอ่านหนังสือเฉพาะจุด พร้อม Fast Timeout & Fallback Guard
  */
 export async function getSpotById(id: string) {
+  const fallback = FALLBACK_SPOTS.find((s) => s.id === id);
+
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (!dbUrl || dbUrl.includes("ep-sample") || dbUrl.includes("dummy")) {
+    return fallback || null;
+  }
+
   try {
-    const spot = await prisma.spot.findUnique({
+    const queryPromise = prisma.spot.findUnique({
       where: { id },
       include: {
         author: {
@@ -145,10 +171,15 @@ export async function getSpotById(id: string) {
         },
       },
     });
-    return spot;
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("DB_TIMEOUT")), 1200)
+    );
+
+    const spot = await Promise.race([queryPromise, timeoutPromise]);
+    return spot || fallback || null;
   } catch (error) {
-    console.error("getSpotById Error:", error);
-    return null;
+    return fallback || null;
   }
 }
 

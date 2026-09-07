@@ -15,7 +15,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800/80 bg-slate-950/90 backdrop-blur-xl px-4 py-2">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-indigo-950/70 bg-[#080b14]/90 backdrop-blur-xl px-4 py-2">
       <nav className="flex items-center justify-around">
         {items.map((item) => {
           const Icon = item.icon;
@@ -28,10 +28,10 @@ export default function BottomNav() {
                 href={item.href}
                 className="flex flex-col items-center -mt-5 group"
               >
-                <div className="w-12 h-12 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-105 transition">
+                <div className="w-12 h-12 rounded-full twilight-gradient-btn text-white flex items-center justify-center shadow-lg shadow-purple-900/40 group-hover:scale-105 transition border border-purple-400/30">
                   <Icon className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] mt-1 font-semibold text-emerald-400">
+                <span className="text-[10px] mt-1 font-semibold text-pink-300">
                   {item.label}
                 </span>
               </Link>
@@ -43,7 +43,7 @@ export default function BottomNav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center py-1 px-3 transition ${
-                isActive ? "text-emerald-400 font-medium" : "text-slate-400 hover:text-slate-200"
+                isActive ? "text-cyan-300 font-medium" : "text-indigo-300/60 hover:text-slate-200"
               }`}
             >
               <Icon className="w-5 h-5" />

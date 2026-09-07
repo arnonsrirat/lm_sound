@@ -7,17 +7,17 @@ export const noiseLevelLabels: Record<NoiseLevel, { label: string; desc: string;
   quiet: {
     label: "เงียบสงบ",
     desc: "เหมาะสำหรับอ่านหนังสือที่ต้องใช้สมาธิสูง",
-    badgeColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
   },
   moderate: {
     label: "ปานกลาง",
     desc: "มีเสียงแอร์หรือเสียงกระซิบเบาๆ",
-    badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    badgeColor: "bg-purple-500/15 text-purple-300 border-purple-500/30",
   },
   lively: {
     label: "คึกคัก / คาเฟ่",
     desc: "มีเสียงคนคุยกันหรือเสียงแก้วกาแฟ",
-    badgeColor: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    badgeColor: "bg-pink-500/15 text-pink-300 border-pink-500/30",
   },
 };
 

@@ -79,16 +79,16 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
   };
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden flex flex-col group relative border border-slate-800/80 bg-slate-900/60 shadow-xl">
+    <div className="glass-card rounded-2xl overflow-hidden flex flex-col group relative border border-indigo-900/40 bg-[#0d1226]/70 shadow-xl">
       {/* Top Image & Floating Badges */}
-      <div className="relative h-48 w-full overflow-hidden bg-slate-800">
+      <div className="relative h-48 w-full overflow-hidden bg-[#0a0e1c]">
         <img
           src={spot.imageUrl}
           alt={spot.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#080b14] via-[#080b14]/30 to-transparent" />
 
         {/* Noise Level Badge */}
         <div className="absolute top-3 left-3">
@@ -100,15 +100,15 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
           </span>
         </div>
 
-        {/* Audio Preview Play Button */}
+        {/* Audio Preview Play Button in Twilight Style */}
         <button
           onClick={togglePlay}
           type="button"
           aria-label={isPlaying ? "หยุดฟังเสียงบรรยากาศ" : "ฟังเสียงบรรยากาศ"}
-          className={`absolute bottom-3 right-3 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 ${
+          className={`absolute bottom-3 right-3 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 cursor-pointer ${
             isPlaying
-              ? "bg-emerald-500 text-white shadow-emerald-500/40 animate-pulse"
-              : "bg-slate-900/80 text-emerald-400 hover:bg-emerald-500 hover:text-white backdrop-blur-md border border-emerald-500/30"
+              ? "bg-gradient-to-tr from-pink-500 to-purple-600 text-white shadow-purple-500/50 animate-pulse ring-2 ring-pink-400/50"
+              : "bg-[#0b0f20]/90 text-cyan-300 hover:text-white hover:bg-gradient-to-tr hover:from-cyan-500 hover:to-purple-600 backdrop-blur-md border border-purple-500/30"
           }`}
         >
           {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 ml-0.5 fill-current" />}
@@ -116,11 +116,11 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
 
         {/* Playing indicator bars */}
         {isPlaying && (
-          <div className="absolute bottom-3 left-3 flex items-end gap-1 h-5 px-2 py-1 rounded bg-slate-950/70 backdrop-blur-md">
-            <span className="w-1 bg-emerald-400 animate-bounce h-2" style={{ animationDelay: "0ms" }} />
-            <span className="w-1 bg-emerald-400 animate-bounce h-4" style={{ animationDelay: "150ms" }} />
-            <span className="w-1 bg-emerald-400 animate-bounce h-3" style={{ animationDelay: "300ms" }} />
-            <span className="text-[10px] text-emerald-400 font-medium ml-1">กำลังเล่นเสียง</span>
+          <div className="absolute bottom-3 left-3 flex items-end gap-1 h-5 px-2.5 py-1 rounded-full bg-[#080b14]/85 backdrop-blur-md border border-purple-500/30">
+            <span className="w-1 bg-gradient-to-t from-cyan-400 to-purple-400 animate-bounce h-2" style={{ animationDelay: "0ms" }} />
+            <span className="w-1 bg-gradient-to-t from-cyan-400 to-pink-400 animate-bounce h-4" style={{ animationDelay: "150ms" }} />
+            <span className="w-1 bg-gradient-to-t from-purple-400 to-pink-400 animate-bounce h-3" style={{ animationDelay: "300ms" }} />
+            <span className="text-[10px] text-pink-300 font-medium ml-1">กำลังเล่น</span>
           </div>
         )}
       </div>
@@ -128,26 +128,26 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
       {/* Card Content */}
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-indigo-300/70 mb-2">
+            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span className="truncate">{spot.location}</span>
           </div>
 
           <Link href={`/spots/${spot.id}`}>
-            <h3 className="font-semibold text-lg text-slate-100 group-hover:text-emerald-400 transition-colors line-clamp-1">
+            <h3 className="font-semibold text-lg text-slate-100 group-hover:text-purple-300 transition-colors line-clamp-1">
               {spot.title}
             </h3>
           </Link>
 
-          <p className="text-slate-400 text-sm mt-2 line-clamp-2 leading-relaxed">
+          <p className="text-indigo-200/60 text-sm mt-2 line-clamp-2 leading-relaxed">
             {spot.description}
           </p>
         </div>
 
         {/* Footer info & Actions */}
-        <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+        <div className="pt-4 mt-4 border-t border-indigo-950/80 flex items-center justify-between text-xs text-indigo-300/70">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 border border-slate-700">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 flex items-center justify-center text-cyan-300 border border-purple-500/30">
               <User className="w-3 h-3" />
             </div>
             <span className="truncate max-w-[120px]">
@@ -161,7 +161,7 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
               <>
                 <Link
                   href={`/spots/${spot.id}/edit`}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition"
+                  className="p-1.5 rounded-lg hover:bg-purple-500/10 text-indigo-400 hover:text-cyan-300 transition"
                   title="แก้ไขจุดอ่านหนังสือ"
                 >
                   <Edit3 className="w-4 h-4" />
@@ -169,7 +169,7 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition"
+                  className="p-1.5 rounded-lg hover:bg-rose-500/10 text-indigo-400 hover:text-rose-400 transition cursor-pointer"
                   title="ลบจุดอ่านหนังสือ"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -179,9 +179,9 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
 
             <Link
               href={`/spots/${spot.id}`}
-              className="text-emerald-400 hover:underline font-medium ml-1 inline-flex items-center gap-1"
+              className="text-cyan-400 hover:text-purple-300 font-medium ml-1 inline-flex items-center gap-1 transition"
             >
-              ดูรายละเอียด &rarr;
+              ดูข้อมูล &rarr;
             </Link>
           </div>
         </div>
