@@ -18,20 +18,27 @@ export interface MixerChannel {
   enabled: boolean;
 }
 
-export interface PresetTrack {
+export interface AudioTrack {
   id: string;
   title: string;
   subtitle: string;
   category: string;
-  channelVolumes: Record<string, number>;
+  imageUrl?: string;
+  audioUrl?: string;
+  location?: string;
+  channelVolumes?: Record<string, number>;
 }
 
-export const PRESET_TRACKS: PresetTrack[] = [
+export type PresetTrack = AudioTrack;
+
+export const PRESET_TRACKS: AudioTrack[] = [
   {
     id: "midnight-rain",
     title: "Midnight Rain & Thunder",
     subtitle: "ฝนตกยามค่ำคืนและเสียงสายลม",
     category: "Rain & Storm",
+    imageUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/rain_heavy.ogg",
     channelVolumes: { rain: 0.8, whitenoise: 0.2, ambient: 0.4, waves: 0.1 },
   },
   {
@@ -39,6 +46,8 @@ export const PRESET_TRACKS: PresetTrack[] = [
     title: "Deep Focus Workspace",
     subtitle: "คลื่นเสียงเสริมสมาธิและการอ่านหนังสือ",
     category: "Focus & Flow",
+    imageUrl: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=800&q=80",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/office_room.ogg",
     channelVolumes: { rain: 0.2, whitenoise: 0.7, ambient: 0.5, waves: 0.0 },
   },
   {
@@ -46,6 +55,8 @@ export const PRESET_TRACKS: PresetTrack[] = [
     title: "Ocean Shore Breeze",
     subtitle: "เกลียวคลื่นซัดหาดทรายและสายลมชายฝั่ง",
     category: "Nature & Chill",
+    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    audioUrl: "https://actions.google.com/sounds/v1/water/ocean_waves.ogg",
     channelVolumes: { rain: 0.1, whitenoise: 0.15, ambient: 0.5, waves: 0.85 },
   },
   {
@@ -53,6 +64,8 @@ export const PRESET_TRACKS: PresetTrack[] = [
     title: "Zen Temple Ambience",
     subtitle: "บรรยากาศสงบนิ่งเพื่อการผ่อนคลายจิตใจ",
     category: "Meditation & Sleep",
+    imageUrl: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=80",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/forest_wind.ogg",
     channelVolumes: { rain: 0.35, whitenoise: 0.2, ambient: 0.8, waves: 0.2 },
   },
 ];
@@ -60,20 +73,23 @@ export const PRESET_TRACKS: PresetTrack[] = [
 interface AudioContextType {
   isPlaying: boolean;
   masterVolume: number;
-  activeTrack: PresetTrack;
-  tracks: PresetTrack[];
+  activeTrack: AudioTrack;
+  tracks: AudioTrack[];
   mixerChannels: MixerChannel[];
   isMixerOpen: boolean;
+  isNowPlayingOpen: boolean;
   togglePlay: () => void;
   play: () => void;
   pause: () => void;
   setMasterVolume: (vol: number) => void;
   selectTrack: (trackId: string) => void;
+  playSpot: (track: AudioTrack) => void;
   nextTrack: () => void;
   prevTrack: () => void;
   setChannelVolume: (channelId: string, volume: number) => void;
   toggleChannel: (channelId: string) => void;
   setIsMixerOpen: (open: boolean) => void;
+  setIsNowPlayingOpen: (open: boolean) => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -81,8 +97,11 @@ const AudioContext = createContext<AudioContextType | null>(null);
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [masterVolume, setMasterVolumeState] = useState(0.75);
-  const [activeTrack, setActiveTrack] = useState<PresetTrack>(PRESET_TRACKS[0]);
+  const [activeTrack, setActiveTrack] = useState<AudioTrack>(PRESET_TRACKS[0]);
   const [isMixerOpen, setIsMixerOpen] = useState(false);
+  const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(true);
+
+  const htmlAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [mixerChannels, setMixerChannels] = useState<MixerChannel[]>([
     {
@@ -335,6 +354,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const setMasterVolume = (vol: number) => {
     const clamped = Math.max(0, Math.min(1, vol));
     setMasterVolumeState(clamped);
+    if (htmlAudioRef.current) {
+      htmlAudioRef.current.volume = clamped;
+    }
     if (masterGainRef.current && audioCtxRef.current) {
       masterGainRef.current.gain.setTargetAtTime(
         clamped,
@@ -348,10 +370,24 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const play = () => {
     getOrCreateAudioContext();
     setIsPlaying(true);
+    if (activeTrack.audioUrl) {
+      if (!htmlAudioRef.current) {
+        htmlAudioRef.current = new Audio(activeTrack.audioUrl);
+        htmlAudioRef.current.loop = true;
+      } else if (htmlAudioRef.current.src !== activeTrack.audioUrl) {
+        htmlAudioRef.current.src = activeTrack.audioUrl;
+        htmlAudioRef.current.loop = true;
+      }
+      htmlAudioRef.current.volume = masterVolume;
+      htmlAudioRef.current.play().catch(() => {});
+    }
   };
 
   // Pause audio
   const pause = () => {
+    if (htmlAudioRef.current) {
+      htmlAudioRef.current.pause();
+    }
     const ctx = audioCtxRef.current;
     if (ctx) {
       // Fade out channel volumes smoothly
@@ -378,21 +414,54 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (!found) return;
 
     setActiveTrack(found);
+    setIsNowPlayingOpen(true);
 
     // Apply track's preset channel volumes
-    setMixerChannels((prev) =>
-      prev.map((ch) => ({
-        ...ch,
-        volume:
-          found.channelVolumes[ch.id] !== undefined
-            ? found.channelVolumes[ch.id]
-            : ch.volume,
-        enabled: true,
-      }))
-    );
+    if (found.channelVolumes) {
+      setMixerChannels((prev) =>
+        prev.map((ch) => ({
+          ...ch,
+          volume:
+            found.channelVolumes?.[ch.id] !== undefined
+              ? found.channelVolumes[ch.id]
+              : ch.volume,
+          enabled: true,
+        }))
+      );
+    }
 
-    if (!isPlaying) {
-      play();
+    getOrCreateAudioContext();
+    setIsPlaying(true);
+    if (found.audioUrl) {
+      if (!htmlAudioRef.current) {
+        htmlAudioRef.current = new Audio(found.audioUrl);
+        htmlAudioRef.current.loop = true;
+      } else {
+        htmlAudioRef.current.src = found.audioUrl;
+        htmlAudioRef.current.loop = true;
+      }
+      htmlAudioRef.current.volume = masterVolume;
+      htmlAudioRef.current.play().catch(() => {});
+    }
+  };
+
+  // Play any spot directly from Feed or Banner
+  const playSpot = (track: AudioTrack) => {
+    setActiveTrack(track);
+    setIsNowPlayingOpen(true);
+    getOrCreateAudioContext();
+    setIsPlaying(true);
+
+    if (track.audioUrl) {
+      if (!htmlAudioRef.current) {
+        htmlAudioRef.current = new Audio(track.audioUrl);
+        htmlAudioRef.current.loop = true;
+      } else {
+        htmlAudioRef.current.src = track.audioUrl;
+        htmlAudioRef.current.loop = true;
+      }
+      htmlAudioRef.current.volume = masterVolume;
+      htmlAudioRef.current.play().catch(() => {});
     }
   };
 
@@ -435,16 +504,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         tracks: PRESET_TRACKS,
         mixerChannels,
         isMixerOpen,
+        isNowPlayingOpen,
         togglePlay,
         play,
         pause,
         setMasterVolume,
         selectTrack,
+        playSpot,
         nextTrack,
         prevTrack,
         setChannelVolume,
         toggleChannel,
         setIsMixerOpen,
+        setIsNowPlayingOpen,
       }}
     >
       {children}

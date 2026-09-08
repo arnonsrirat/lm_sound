@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Moon, Sun, User as UserIcon, PlusCircle, Sparkles } from "lucide-react";
+import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut } from "lucide-react";
 
 export default function Header({
   currentUser,
@@ -15,6 +14,19 @@ export default function Header({
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("lmsound-theme");
+    if (savedTheme === "light") {
+      setIsDark(false);
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    } else {
+      setIsDark(true);
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    }
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,85 +40,117 @@ export default function Header({
   };
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("lmsound-theme", "dark");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("lmsound-theme", "light");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-indigo-950/70 bg-[#080b14]/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b border-purple-500/20 bg-[var(--header-bg)] backdrop-blur-xl shadow-lg transition-colors">
       <div className="flex h-16 items-center justify-between px-4 md:px-8 max-w-7xl mx-auto gap-4">
-        {/* Left: Brand Logo with official artwork */}
+        {/* Left: Brand Logo as in wireframe */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-purple-900/30 group-hover:scale-105 transition border border-purple-500/30">
+          <div className="relative w-10 h-10 rounded-2xl overflow-hidden shadow-lg shadow-purple-600/30 group-hover:scale-105 transition border border-purple-400/40 p-0.5 bg-gradient-to-tr from-purple-600 to-fuchsia-500">
             <img
               src="/logo.png"
               alt="LhobMoom Sound Logo"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover rounded-[14px]"
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-lg tracking-tight twilight-text group-hover:opacity-90 transition">
-              LhobMoom <span className="text-pink-400">Sound</span>
+            <span className="font-extrabold text-lg tracking-tight purple-gradient-text group-hover:opacity-90 transition">
+              LM Sound
             </span>
-            <span className="text-[10px] text-indigo-300/70 uppercase tracking-widest hidden sm:block">
+            <span className="text-[10px] text-purple-300/80 uppercase tracking-widest hidden sm:block font-medium">
               Spatial & Ambient Soundscape
             </span>
           </div>
         </Link>
 
-        {/* Center: Search Bar (Desktop & Mobile) */}
+        {/* Center: Search Bar ("ค้นหา" as in wireframe) */}
         <form
           onSubmit={handleSearchSubmit}
           className="flex-1 max-w-md mx-2 relative"
         >
           <div className="relative flex items-center">
-            <Search className="absolute left-3.5 w-4 h-4 text-indigo-400/60 pointer-events-none" />
+            <Search className="absolute left-3.5 w-4 h-4 text-purple-400 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ค้นหาจุดอ่านหนังสือ, ตึก, โซนเงียบ..."
-              className="w-full pl-10 pr-4 py-2 bg-[#0e1326]/90 border border-indigo-900/40 rounded-full text-sm text-slate-200 placeholder-indigo-300/40 focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition"
+              placeholder="ค้นหาเสียงบรรยากาศ, จุดอ่านหนังสือ, โซนเงียบ..."
+              className="w-full pl-10 pr-4 py-2 bg-purple-950/25 border border-purple-500/25 rounded-full text-sm text-foreground placeholder:text-purple-300/50 focus:outline-none focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/20 transition shadow-inner"
             />
           </div>
         </form>
 
-        {/* Right: Actions */}
+        {/* Right: Theme Toggle ("เปลี่ยนแนว สว่าง กับ ดาร์ก") & Login */}
         <div className="flex items-center gap-2 md:gap-3 shrink-0">
           {/* Add Spot Button */}
           <Link
             href="/spots/new"
-            className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/25 transition shadow-sm"
+            className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold purple-pill hover:bg-purple-600/20 transition shadow-sm"
           >
-            <PlusCircle className="w-4 h-4 text-cyan-400" />
+            <PlusCircle className="w-3.5 h-3.5 text-purple-400" />
             <span>เพิ่มจุดใหม่</span>
           </Link>
 
-          {/* Theme Toggle */}
+          {/* Theme Toggle ("เปลี่ยนแนว สว่าง กับ ดาร์ก" as annotated in wireframe) */}
           <button
             onClick={toggleTheme}
             type="button"
-            aria-label="เปลี่ยนธีม"
-            className="p-2 rounded-full bg-[#0e1326] border border-indigo-900/50 text-indigo-300 hover:text-cyan-300 hover:border-indigo-700 transition"
+            aria-label="เปลี่ยนแนว สว่าง กับ ดาร์ก"
+            title={isDark ? "เปลี่ยนเป็นโหมดสว่าง" : "เปลี่ยนเป็นโหมดดาร์ก"}
+            className="p-2 rounded-full bg-purple-950/30 border border-purple-500/30 text-purple-300 hover:text-white hover:border-purple-400 hover:bg-purple-600/20 transition shadow-sm cursor-pointer"
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? (
+              <Sun className="w-4 h-4 text-amber-300 hover:rotate-45 transition-transform" />
+            ) : (
+              <Moon className="w-4 h-4 text-purple-700 hover:-rotate-12 transition-transform" />
+            )}
           </button>
 
-          {/* User / Login */}
+          {/* User / Login as annotated in wireframe */}
           {currentUser ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0e1326] border border-indigo-900/50 text-xs text-slate-300">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-500 to-purple-600 text-white flex items-center justify-center font-bold text-[11px]">
-                {currentUser.username[0]?.toUpperCase() || "U"}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 text-white flex items-center justify-center font-bold text-[10px]">
+                  {currentUser.username[0]?.toUpperCase() || "U"}
+                </div>
+                <span className="font-medium hidden sm:inline">{currentUser.username}</span>
               </div>
-              <span className="font-medium hidden sm:inline">{currentUser.username}</span>
+              <button
+                onClick={handleLogout}
+                className="p-1.5 rounded-full text-purple-400 hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
+                title="ออกจากระบบ"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           ) : (
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white twilight-gradient-btn transition shadow-md shadow-purple-900/30"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold purple-gradient-btn transition"
             >
               <UserIcon className="w-3.5 h-3.5" />
-              <span>เข้าสู่ระบบ</span>
+              <span>Login</span>
             </Link>
           )}
         </div>

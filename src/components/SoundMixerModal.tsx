@@ -31,20 +31,20 @@ export default function SoundMixerModal() {
   const getChannelIcon = (id: string) => {
     switch (id) {
       case "rain":
-        return <CloudRain className="w-5 h-5 text-teal-400" />;
+        return <CloudRain className="w-5 h-5 text-purple-400" />;
       case "whitenoise":
-        return <Radio className="w-5 h-5 text-indigo-400" />;
+        return <Radio className="w-5 h-5 text-fuchsia-400" />;
       case "ambient":
-        return <Wind className="w-5 h-5 text-emerald-400" />;
+        return <Wind className="w-5 h-5 text-pink-400" />;
       case "waves":
         return <Waves className="w-5 h-5 text-cyan-400" />;
       default:
-        return <Sliders className="w-5 h-5 text-teal-400" />;
+        return <Sliders className="w-5 h-5 text-purple-400" />;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
       {/* Click outside to close */}
       <div
         className="fixed inset-0"
@@ -52,17 +52,17 @@ export default function SoundMixerModal() {
       />
 
       {/* Modal Container */}
-      <div className="relative z-10 w-full max-w-lg bg-zinc-900 border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-lg glass-panel border border-purple-500/30 rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-5 border-b border-white/10">
+        <div className="flex items-center justify-between pb-5 border-b border-purple-500/20">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+            <div className="p-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Sound Mixer</h2>
-              <p className="text-xs text-zinc-400">
-                ผสมผสานเสียงบรรยากาศตามใจคุณ
+              <h2 className="text-lg font-bold purple-gradient-text">Sound Mixer</h2>
+              <p className="text-xs text-purple-300/70">
+                ผสมผสานเสียงบรรยากาศตามใจคุณ (Real-time Web Audio)
               </p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function SoundMixerModal() {
 
         {/* Channels List */}
         <div className="space-y-4">
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+          <div className="text-xs font-bold text-purple-300 uppercase tracking-wider">
             ปรับระดับเสียงแยกแต่ละประเภท
           </div>
 
@@ -116,34 +116,34 @@ export default function SoundMixerModal() {
                 key={channel.id}
                 className={`p-3.5 rounded-2xl border transition-all ${
                   channel.enabled
-                    ? "bg-zinc-950/50 border-white/10"
-                    : "bg-zinc-950/20 border-white/5 opacity-50"
+                    ? "bg-purple-950/40 border-purple-500/25"
+                    : "bg-purple-950/10 border-purple-500/10 opacity-50"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2.5">
                     {getChannelIcon(channel.id)}
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm font-semibold text-white">
                       {channel.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-zinc-400 w-9 text-right">
+                    <span className="text-xs font-mono text-purple-300/80 w-9 text-right">
                       {channel.enabled ? `${Math.round(channel.volume * 100)}%` : "Off"}
                     </span>
                     <button
                       onClick={() => toggleChannel(channel.id)}
-                      className={`p-1.5 rounded-lg border transition-colors ${
+                      className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                         channel.enabled
-                          ? "text-teal-400 hover:bg-teal-500/10 border-teal-500/20"
-                          : "text-zinc-500 hover:bg-white/5 border-white/5"
+                          ? "text-purple-400 hover:bg-purple-500/20 border-purple-500/30"
+                          : "text-purple-400/40 hover:bg-white/5 border-purple-500/10"
                       }`}
                       title={channel.enabled ? "ปิดเสียงนี้" : "เปิดเสียงนี้"}
                     >
                       {isMuted ? (
-                        <VolumeX className="w-4 h-4" />
+                        <VolumeX className="w-4 h-4 text-red-400" />
                       ) : (
-                        <Volume2 className="w-4 h-4" />
+                        <Volume2 className="w-4 h-4 text-purple-400" />
                       )}
                     </button>
                   </div>
@@ -163,7 +163,7 @@ export default function SoundMixerModal() {
                       toggleChannel(channel.id);
                     }
                   }}
-                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-teal-400 hover:accent-teal-300"
+                  className="w-full h-1.5 bg-purple-950/80 rounded-lg appearance-none cursor-pointer accent-purple-400 hover:accent-purple-300"
                 />
               </div>
             );
@@ -173,7 +173,7 @@ export default function SoundMixerModal() {
         {/* Footer Close Button */}
         <button
           onClick={() => setIsMixerOpen(false)}
-          className="w-full mt-6 py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-colors"
+          className="w-full mt-6 py-2.5 px-4 rounded-xl purple-gradient-btn text-white text-xs font-bold transition cursor-pointer"
         >
           เสร็จสิ้น
         </button>

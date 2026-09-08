@@ -74,59 +74,81 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
   }, [spots, activeNoise, searchQuery]);
 
   return (
-    <section id="feed" className="space-y-6 scroll-mt-20">
-      {/* Feed Controls Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-indigo-950/70">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <span>จุดอ่านหนังสือยอดนิยม</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#10152c] text-cyan-300 font-normal border border-purple-500/30">
-              {filteredSpots.length} จุด
-            </span>
-          </h2>
-          {searchQuery && (
-            <div className="flex items-center gap-2 text-xs text-indigo-300/70 mt-1">
-              <span>
-                ผลการค้นหาสำหรับ: &ldquo;<span className="text-pink-400 font-semibold">{searchQuery}</span>&rdquo;
+    <section id="popular" className="space-y-6 scroll-mt-20">
+      {/* Feed Controls Header matching wireframe: 'เสียงยอดนิยม' and 'ดูทั้งหมด' */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-purple-500/20">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-fuchsia-400">
+            <Filter className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl md:text-2xl font-extrabold text-foreground flex items-center gap-2">
+                <span>เสียงยอดนิยม</span>
+              </h2>
+              <span className="text-xs px-2.5 py-0.5 rounded-full purple-pill font-medium">
+                {filteredSpots.length} รายการ
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  const url = new URL(window.location.href);
-                  url.searchParams.delete("search");
-                  window.history.replaceState(null, "", url.toString());
-                }}
-                className="text-[11px] text-indigo-400 hover:text-cyan-300 underline cursor-pointer"
-              >
-                ล้างคำค้นหา
-              </button>
             </div>
-          )}
+            <p className="text-xs text-purple-300/70 mt-0.5">
+              รวมเสียงบรรยากาศและมุมอ่านหนังสือยอดฮิตที่มีผู้ฟังมากที่สุด
+            </p>
+          </div>
         </div>
 
-        {/* Filter Chips with Twilight Gradient */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          <Filter className="w-3.5 h-3.5 text-indigo-400/60 mr-1 shrink-0" />
-          {filterOptions.map((opt) => {
-            const active = activeNoise === opt.key;
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => handleFilterClick(opt.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                  active
-                    ? "twilight-gradient-btn text-white font-bold shadow-md shadow-purple-900/40 scale-105"
-                    : "bg-[#0d1226] text-indigo-300/70 hover:text-slate-200 hover:bg-[#131936] border border-indigo-900/50"
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        {/* Right side of header: 'ดูทั้งหมด' & Filter chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            {filterOptions.map((opt) => {
+              const active = activeNoise === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => handleFilterClick(opt.key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
+                    active
+                      ? "purple-gradient-btn font-bold shadow-md shadow-purple-900/40 scale-105"
+                      : "bg-purple-950/25 text-purple-300 hover:text-white hover:bg-purple-600/20 border border-purple-500/20"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 'ดูทั้งหมด' link as annotated in wireframe */}
+          <button
+            type="button"
+            onClick={() => handleFilterClick("all")}
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold purple-pill hover:bg-purple-600/25 transition cursor-pointer flex items-center gap-1"
+          >
+            <span>ดูทั้งหมด</span>
+          </button>
         </div>
       </div>
+
+      {searchQuery && (
+        <div className="flex items-center gap-2 text-xs text-purple-300/80 -mt-2">
+          <span>
+            ผลการค้นหาสำหรับ: &ldquo;<span className="text-fuchsia-300 font-semibold">{searchQuery}</span>&rdquo;
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              const url = new URL(window.location.href);
+              url.searchParams.delete("search");
+              window.history.replaceState(null, "", url.toString());
+            }}
+            className="text-[11px] text-purple-400 hover:text-cyan-300 underline cursor-pointer"
+          >
+            ล้างคำค้นหา
+          </button>
+        </div>
+      )}
 
       {/* Grid of Spots */}
       {filteredSpots.length > 0 ? (
