@@ -204,8 +204,8 @@ export async function updateSpotAction(
       return { success: false, error: "ไม่พบจุดอ่านหนังสือนี้ในระบบ (404)", statusCode: 404 };
     }
 
-    // Authorization Guard: สิทธิ์เฉพาะเจ้าของโพสต์เท่านั้น (403)
-    assertSpotOwnership(existingSpot.authorId, session.userId);
+    // Authorization Guard: สิทธิ์เฉพาะเจ้าของโพสต์ (แอดมินผ่านได้ทุกจุด)
+    assertSpotOwnership(existingSpot.authorId, session.userId, session.role === "ADMIN");
 
     let rawData: Record<string, unknown>;
     if (formData instanceof FormData) {
@@ -278,8 +278,8 @@ export async function deleteSpotAction(spotId: string): Promise<ActionResult> {
       return { success: false, error: "ไม่พบจุดอ่านหนังสือนี้ในระบบ (404)", statusCode: 404 };
     }
 
-    // Authorization Guard: 403 Forbidden
-    assertSpotOwnership(existingSpot.authorId, session.userId);
+    // Authorization Guard: 403 Forbidden (แอดมินผ่านได้ทุกจุด)
+    assertSpotOwnership(existingSpot.authorId, session.userId, session.role === "ADMIN");
 
     await prisma.spot.delete({
       where: { id: spotId },

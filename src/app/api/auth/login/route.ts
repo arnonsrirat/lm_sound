@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       email: user.email,
       username: user.username,
       name: user.name,
+      role: user.role,
     });
 
     await setSessionCookie(token);

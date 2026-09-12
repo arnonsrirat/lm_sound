@@ -5,6 +5,7 @@ export interface UserRecord {
   passwordHash: string;
   name: string | null;
   avatar: string | null;
+  role: "USER" | "ADMIN";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,6 +13,7 @@ export interface UserRecord {
 // In-memory development store to ensure auth works seamlessly even before Postgres connection is active
 const devUsersStore = new Map<string, UserRecord>();
 
+// Pre-seed a demo test user for development convenience
 // Pre-seed a demo test user for development convenience
 devUsersStore.set("demo@lmsound.com", {
   id: "user_demo_123",
@@ -21,6 +23,20 @@ devUsersStore.set("demo@lmsound.com", {
   passwordHash: "$2a$10$f6f4B9/42oRkHQ9KvZ4u/eE7Z2r8pQk2LqK7KkQc0nN9uQpZ4d3eq",
   name: "LM Sound Explorer",
   avatar: null,
+  role: "USER",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
+
+// Pre-seed admin สำหรับทดสอบระบบหลังบ้าน (password: admin1234)
+devUsersStore.set("admin@lmsound.com", {
+  id: "user_admin_001",
+  email: "admin@lmsound.com",
+  username: "admin",
+  passwordHash: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+  name: "LM Sound Admin",
+  avatar: null,
+  role: "ADMIN",
   createdAt: new Date(),
   updatedAt: new Date(),
 });
@@ -60,6 +76,7 @@ export const userService = {
             passwordHash: user.password,
             name: user.username,
             avatar: null,
+            role: user.role === "ADMIN" ? "ADMIN" : "USER",
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           };
@@ -96,6 +113,7 @@ export const userService = {
             passwordHash: user.password,
             name: user.username,
             avatar: null,
+            role: user.role === "ADMIN" ? "ADMIN" : "USER",
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           };
@@ -136,6 +154,7 @@ export const userService = {
           passwordHash: user.password,
           name: data.name || user.username,
           avatar: null,
+          role: user.role === "ADMIN" ? "ADMIN" : "USER",
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         };
@@ -151,6 +170,7 @@ export const userService = {
       passwordHash: data.passwordHash,
       name: data.name || null,
       avatar: null,
+      role: "USER",
       createdAt: new Date(),
       updatedAt: new Date(),
     };

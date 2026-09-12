@@ -5,11 +5,25 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut } from "lucide-react";
 
+export interface HeaderSettings {
+  logoLight: string;
+  logoDark: string;
+  siteName: string;
+  siteTagline: string;
+  role?: "USER" | "ADMIN";
+}
+
 export default function Header({
   currentUser,
+  settings,
 }: {
   currentUser?: { userId: string; username: string } | null;
+  settings?: HeaderSettings;
 }) {
+  const logoLight = settings?.logoLight || "/logo.png";
+  const logoDark = settings?.logoDark || "/logo.png";
+  const siteName = settings?.siteName || "LM Sound";
+  const siteTagline = settings?.siteTagline || "Spatial & Ambient Soundscape";
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
@@ -27,6 +41,17 @@ export default function Header({
       document.documentElement.classList.remove("light");
     }
   }, []);
+
+  // สลับโลโก้ตามธีมสว่าง/มืด (แอดมินตั้งค่าแยกได้)
+  useEffect(() => {
+    document.querySelectorAll<HTMLImageElement>(".logo-theme-img").forEach((img) => {
+      const light = img.dataset.logoLight;
+      const dark = img.dataset.logoDark;
+      if (light && dark) {
+        img.src = isDark ? dark : light;
+      }
+    });
+  }, [isDark, logoLight, logoDark]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,18 +93,21 @@ export default function Header({
         {/* Left: Brand Logo as in wireframe */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
           <div className="relative w-10 h-10 rounded-2xl overflow-hidden shadow-lg shadow-purple-600/30 group-hover:scale-105 transition border border-purple-400/40 p-0.5 bg-gradient-to-tr from-purple-600 to-fuchsia-500">
+            {/* โลโก้แยกตามธีมสว่าง/มืด (แอดมินตั้งได้) */}
             <img
               src="/logo.png"
-              alt="LhobMoom Sound Logo"
-              className="w-full h-full object-cover rounded-[14px]"
+              alt={`${siteName} Logo`}
+              data-logo-light={logoLight}
+              data-logo-dark={logoDark}
+              className="w-full h-full object-cover rounded-[14px] logo-theme-img"
             />
           </div>
           <div className="flex flex-col">
             <span className="font-extrabold text-lg tracking-tight purple-gradient-text group-hover:opacity-90 transition">
-              LM Sound
+              {siteName}
             </span>
             <span className="text-[10px] text-purple-300/80 uppercase tracking-widest hidden sm:block font-medium">
-              Spatial & Ambient Soundscape
+              {siteTagline}
             </span>
           </div>
         </Link>

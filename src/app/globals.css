@@ -1,31 +1,101 @@
 @import "tailwindcss";
 
+/* ============================================
+   โทนหลัก: ธีมมืด = ม่วงดำ (default)
+   ============================================ */
 :root {
-  --background: #090514;
-  --foreground: #f3f0fc;
-  --card-bg: rgba(22, 14, 46, 0.72);
-  --card-border: rgba(168, 85, 247, 0.22);
-  --accent-purple: #9333ea;
+  --background: #0a0612;
+  --foreground: #f3ecff;
+  --card-bg: rgba(26, 16, 51, 0.72);
+  --card-border: rgba(196, 181, 253, 0.18);
+  --accent-purple: #a78bfa;
   --accent-violet: #8b5cf6;
-  --accent-fuchsia: #d946ef;
-  --accent-cyan: #38bdf8;
-  --sidebar-bg: rgba(14, 9, 30, 0.82);
-  --header-bg: rgba(9, 5, 20, 0.85);
-  --muted-text: rgba(216, 180, 254, 0.65);
+  --accent-fuchsia: #e879f9;
+  --accent-cyan: #67e8f9;
+  --sidebar-bg: rgba(13, 8, 26, 0.85);
+  --header-bg: rgba(10, 6, 18, 0.85);
+  --muted-text: rgba(216, 200, 255, 0.6);
 }
 
+/* ============================================
+   ธีมสว่าง: พาสเทล ม่วง-ขาว ผ่อนคลาย
+   ============================================ */
 html.light {
-  --background: #faf7ff;
-  --foreground: #1c1033;
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --card-border: rgba(168, 85, 247, 0.22);
-  --accent-purple: #7e22ce;
-  --accent-violet: #7c3aed;
-  --accent-fuchsia: #c026d3;
-  --accent-cyan: #0284c7;
-  --sidebar-bg: rgba(245, 240, 255, 0.88);
+  --background: #fbf9ff;
+  --foreground: #2e1a4e;
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --card-border: rgba(196, 181, 253, 0.4);
+  --accent-purple: #8b5cf6;
+  --accent-violet: #a78bfa;
+  --accent-fuchsia: #e879f9;
+  --accent-cyan: #38bdf8;
+  --sidebar-bg: rgba(248, 245, 255, 0.9);
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --muted-text: rgba(124, 94, 180, 0.75);
+}
+
+/* ============================================
+   ธีมเทศกาล (แอดมินสลับได้จากหน้า /admin)
+   ============================================ */
+
+/* สงกรานต์ — ฟ้าพาสเทลสดชื่น */
+html.festival-songkran {
+  --background: #f2fbff;
+  --foreground: #123a52;
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --card-border: rgba(125, 211, 252, 0.45);
+  --accent-purple: #7dd3fc;
+  --accent-violet: #38bdf8;
+  --accent-fuchsia: #a5b4fc;
+  --accent-cyan: #22d3ee;
+  --sidebar-bg: rgba(240, 250, 255, 0.92);
   --header-bg: rgba(255, 255, 255, 0.9);
-  --muted-text: rgba(107, 70, 153, 0.8);
+  --muted-text: rgba(42, 100, 140, 0.8);
+}
+
+/* ลอยกระทง — ม่วงน้ำเงินพาสเทล */
+html.festival-loykratong {
+  --background: #f4f3ff;
+  --foreground: #2b2467;
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --card-border: rgba(165, 180, 252, 0.45);
+  --accent-purple: #818cf8;
+  --accent-violet: #6366f1;
+  --accent-fuchsia: #c084fc;
+  --accent-cyan: #67e8f9;
+  --sidebar-bg: rgba(245, 244, 255, 0.92);
+  --header-bg: rgba(252, 251, 255, 0.9);
+  --muted-text: rgba(90, 80, 170, 0.8);
+}
+
+/* ปีใหม่ — ทอง-ม่วง */
+html.festival-newyear {
+  --background: #14101f;
+  --foreground: #ffeec9;
+  --card-bg: rgba(38, 28, 62, 0.8);
+  --card-border: rgba(250, 204, 21, 0.3);
+  --accent-purple: #c4b5fd;
+  --accent-violet: #a78bfa;
+  --accent-fuchsia: #fbbf24;
+  --accent-cyan: #fcd34d;
+  --sidebar-bg: rgba(18, 13, 30, 0.88);
+  --header-bg: rgba(14, 10, 24, 0.88);
+  --muted-text: rgba(253, 230, 180, 0.7);
+}
+
+/* คริสต์มาส — แดง-ม่วง */
+html.festival-christmas {
+  --background: #140d1c;
+  --foreground: #ffe9f0;
+  --card-bg: rgba(45, 20, 40, 0.8);
+  --card-border: rgba(248, 113, 113, 0.3);
+  --accent-purple: #d8b4fe;
+  --accent-violet: #a78bfa;
+  --accent-fuchsia: #fb7185;
+  --accent-cyan: #f9a8d4;
+  --sidebar-bg: rgba(20, 12, 26, 0.88);
+  --header-bg: rgba(16, 10, 22, 0.88);
+  --muted-text: rgba(255, 210, 220, 0.65);
 }
 
 @theme inline {
@@ -40,27 +110,36 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
-  background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(147, 51, 234, 0.18), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(192, 38, 211, 0.12), transparent),
-    radial-gradient(ellipse 50% 30% at 10% 45%, rgba(56, 189, 248, 0.08), transparent);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(167, 139, 250, 0.16), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(232, 121, 249, 0.1), transparent),
+    radial-gradient(ellipse 50% 30% at 10% 45%, rgba(103, 232, 249, 0.06), transparent);
   background-attachment: fixed;
 }
 
+/* พื้นหลังพาสเทลอ่อนฟุ้งๆ ของธีมสว่าง */
 html.light body {
-  background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(168, 85, 247, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(232, 121, 249, 0.1), transparent),
-    radial-gradient(ellipse 50% 30% at 10% 45%, rgba(56, 189, 248, 0.08), transparent);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(196, 181, 253, 0.25), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(240, 171, 252, 0.18), transparent),
+    radial-gradient(ellipse 50% 30% at 10% 45%, rgba(147, 197, 253, 0.12), transparent);
 }
 
-/* Glassmorphism & Purple Theme Cards */
+html.festival-newyear body,
+html.festival-christmas body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(250, 204, 21, 0.1), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(244, 114, 182, 0.08), transparent),
+    radial-gradient(ellipse 50% 30% at 10% 45%, rgba(167, 139, 250, 0.08), transparent);
+}
+
+/* Glassmorphism & Pastel Purple Cards */
 .glass-panel {
   background: var(--card-bg);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--card-border);
-  box-shadow: 0 10px 35px -5px rgba(112, 26, 117, 0.15), 0 0 20px 0 rgba(147, 51, 234, 0.08);
+  box-shadow: 0 10px 35px -5px rgba(139, 92, 246, 0.12), 0 0 20px 0 rgba(167, 139, 250, 0.07);
 }
 
 .glass-card {
@@ -73,48 +152,62 @@ html.light body {
 
 .glass-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(168, 85, 247, 0.55);
-  box-shadow: 0 16px 36px -8px rgba(147, 51, 234, 0.28), 0 0 25px -4px rgba(217, 70, 239, 0.2);
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow: 0 16px 36px -8px rgba(167, 139, 250, 0.25), 0 0 25px -4px rgba(232, 121, 249, 0.18);
 }
 
-/* Purple Gradient Text */
+/* ข้อความไล่เฉดพาสเทลม่วง */
 .purple-gradient-text {
-  background: linear-gradient(135deg, #c084fc 0%, #a855f7 45%, #ec4899 100%);
+  background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 45%, #f0abfc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-html.light .purple-gradient-text {
-  background: linear-gradient(135deg, #6b21a8 0%, #7c3aed 50%, #db2777 100%);
+html.light .purple-gradient-text,
+html.festival-songkran .purple-gradient-text,
+html.festival-loykratong .purple-gradient-text {
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #c026d3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Purple Gradient Button */
+html.festival-newyear .purple-gradient-text {
+  background: linear-gradient(135deg, #fde68a 0%, #fbbf24 50%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html.festival-christmas .purple-gradient-text {
+  background: linear-gradient(135deg, #fda4af 0%, #fb7185 50%, #d8b4fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ปุ่มไล่เฉดม่วงพาสเทล */
 .purple-gradient-btn {
-  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #d8b4fe 100%);
   color: #ffffff;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 18px rgba(147, 51, 234, 0.35);
+  box-shadow: 0 4px 18px rgba(167, 139, 250, 0.35);
 }
 
 .purple-gradient-btn:hover {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%);
-  box-shadow: 0 6px 26px rgba(168, 85, 247, 0.55);
+  background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 50%, #f0abfc 100%);
+  box-shadow: 0 6px 26px rgba(196, 181, 253, 0.5);
   transform: translateY(-1px);
 }
 
-/* Purple Glow Pill */
+/* Pill พื้นม่วงพาสเทล */
 .purple-pill {
-  background: rgba(147, 51, 234, 0.14);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  color: #d8b4fe;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  color: #d8c8ff;
 }
 
 html.light .purple-pill {
-  background: rgba(147, 51, 234, 0.1);
-  border: 1px solid rgba(147, 51, 234, 0.25);
-  color: #6b21a8;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #6d28d9;
 }
 
 /* Equalizer Bars Animation */
@@ -130,33 +223,33 @@ html.light .purple-pill {
 
 /* Pulse Glow Ring */
 @keyframes purplePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(167, 139, 250, 0); }
 }
 
 .pulse-purple {
   animation: purplePulse 2s infinite;
 }
 
-/* Custom Purple Scrollbar */
+/* Custom Pastel Purple Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(14, 9, 30, 0.5);
+  background: rgba(20, 12, 38, 0.5);
 }
 
 html.light ::-webkit-scrollbar-track {
-  background: rgba(243, 232, 255, 0.5);
+  background: rgba(243, 238, 255, 0.6);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.35);
+  background: rgba(167, 139, 250, 0.35);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(192, 38, 211, 0.65);
+  background: rgba(196, 181, 253, 0.6);
 }

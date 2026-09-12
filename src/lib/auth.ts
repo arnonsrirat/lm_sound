@@ -13,6 +13,7 @@ export interface SessionPayload {
   email: string;
   username: string;
   name?: string | null;
+  role?: "USER" | "ADMIN";
 }
 
 // 1. Password Hashing
@@ -49,6 +50,7 @@ export async function verifySessionToken(
       email: payload.email as string,
       username: payload.username as string,
       name: (payload.name as string) || null,
+      role: payload.role === "ADMIN" ? "ADMIN" : "USER",
     };
   } catch {
     return null;
@@ -108,7 +110,32 @@ export async function requireAuth(): Promise<SessionPayload> {
   return session;
 }
 
-export function assertSpotOwnership(spotAuthorId: string, currentUserId: string): void {
+/**
+ * Guard สิทธิ์แอดมิน — โยน ForbiddenError หากผู้ใช้ไม่ใช่ ADMIN
+ */
+export async function requireAdmin(): Promise<SessionPayload> {
+  const session = await requireAuth();
+  if (session.role !== "ADMIN") {
+    throw new ForbiddenError("เฉพาะผู้ดูแลระบบ (ADMIN) เท่านั้นที่ทำรายการนี้ได้");
+  }
+  return session;
+}
+
+/**
+ * เช็กว่า session ปัจจุบันเป็นแอดมินหรือไม่ (ไม่โยน error)
+ */
+export async function isAdmin(): Promise<boolean> {
+  const session = await getSession();
+  return session?.role === "ADMIN";
+}
+
+export function assertSpotOwnership(
+  spotAuthorId: string,
+  currentUserId: string,
+  isAdminUser = false
+): void {
+  // แอดมินสามารถจัดการสถานที่ทุกจุดได้
+  if (isAdminUser) return;
   if (spotAuthorId !== currentUserId) {
     throw new ForbiddenError("คุณไม่มีสิทธิ์แก้ไขหรือลบจุดอ่านหนังสือนี้ (403 Forbidden)");
   }

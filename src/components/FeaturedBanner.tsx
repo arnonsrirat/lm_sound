@@ -18,6 +18,12 @@ interface RecommendedSpot {
 interface FeaturedBannerProps {
   spots?: RecommendedSpot[];
   spot?: RecommendedSpot | null;
+  bannerSettings?: {
+    bannerLight: string;
+    bannerDark: string;
+    bannerTitle: string;
+    bannerSubtitle: string;
+  };
 }
 
 const DEFAULT_RECOMMENDED: RecommendedSpot[] = [
@@ -59,9 +65,19 @@ const DEFAULT_RECOMMENDED: RecommendedSpot[] = [
   },
 ];
 
-export default function FeaturedBanner({ spots, spot }: FeaturedBannerProps) {
+export default function FeaturedBanner({ spots, spot, bannerSettings }: FeaturedBannerProps) {
   const { isPlaying, activeTrack, playSpot, togglePlay } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDark, setIsDark] = useState(true);
+
+  // ติดตามธีมสว่าง/มืด เพื่อสลับภาพแบนเนอร์ที่แอดมินตั้งไว้แยกกัน
+  useEffect(() => {
+    const updateTheme = () => setIsDark(!document.documentElement.classList.contains("light"));
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Combine provided spots or fallback
   const items: RecommendedSpot[] =
@@ -111,11 +127,15 @@ export default function FeaturedBanner({ spots, spot }: FeaturedBannerProps) {
     <section id="recommended" className="relative mb-8 group scroll-mt-20">
       {/* Outer Glow container */}
       <div className="relative rounded-3xl overflow-hidden border border-purple-500/35 bg-[#0f071d] shadow-2xl backdrop-blur-xl">
-        {/* Background Image / Ambient Artwork */}
+        {/* Background Image / Ambient Artwork (แบนเนอร์แยกตามธีมสว่าง/มืด — แอดมินตั้งได้) */}
         <div className="absolute inset-0">
           <img
             key={currentItem.id}
-            src={currentItem.imageUrl || "/logo.png"}
+            src={
+              isDark
+                ? bannerSettings?.bannerDark || currentItem.imageUrl || "/logo.png"
+                : bannerSettings?.bannerLight || currentItem.imageUrl || "/logo.png"
+            }
             alt={currentItem.title}
             className="w-full h-full object-cover object-center opacity-30 group-hover:scale-105 transition-transform duration-1000 ease-out"
           />
@@ -142,10 +162,10 @@ export default function FeaturedBanner({ spots, spot }: FeaturedBannerProps) {
         {/* Banner Content */}
         <div className="relative z-10 p-6 md:p-8 lg:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="max-w-xl space-y-3">
-            {/* Tag Badge */}
+            {/* Tag Badge (ข้อความหัวแบนเนอร์ — แอดมินแก้ได้) */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold purple-pill backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-              <span>เสียงแนะนำ (Recommended Soundscape)</span>
+              <span>{bannerSettings?.bannerTitle || "เสียงแนะนำ (Recommended Soundscape)"}</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-snug">
@@ -165,7 +185,7 @@ export default function FeaturedBanner({ spots, spot }: FeaturedBannerProps) {
             </div>
 
             <p className="text-purple-200/70 text-xs sm:text-sm line-clamp-2 leading-relaxed pt-1">
-              {currentItem.description}
+              {bannerSettings?.bannerSubtitle || currentItem.description}
             </p>
           </div>
 

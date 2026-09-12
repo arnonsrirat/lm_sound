@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, Sparkles, Flame, PlusCircle, Volume2, Music2, Sliders } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
 
-export default function Sidebar() {
+export default function Sidebar({ logoDark }: { logoDark?: string }) {
   const pathname = usePathname();
   const { setIsMixerOpen, setIsNowPlayingOpen, isPlaying } = useAudio();
 
@@ -107,7 +107,7 @@ export default function Sidebar() {
         <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-gradient-to-b from-purple-950/40 to-[#0d071a] text-xs shadow-lg mt-4">
           <div className="h-20 w-full relative overflow-hidden">
             <img
-              src="/logo.png"
+              src={logoDark || "/logo.png"}
               alt="LM Sound Logo"
               className="w-full h-full object-cover"
             />

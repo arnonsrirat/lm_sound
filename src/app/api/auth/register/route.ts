@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       email: newUser.email,
       username: newUser.username,
       name: newUser.name,
+      role: "USER",
     });
 
     await setSessionCookie(token);

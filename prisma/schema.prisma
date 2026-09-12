@@ -16,9 +16,18 @@ model User {
   email     String   @unique
   username  String   @unique
   password  String
+  role      String   @default("USER") // "USER" | "ADMIN"
   spots     Spot[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// การตั้งค่าเว็บไซต์ที่แอดมินปรับแต่งได้ โดยไม่ต้องแก้โค้ด
+model SiteSetting {
+  id                   String   @id @default(cuid())
+  key                  String   @unique
+  value                String
+  updatedAt            DateTime @updatedAt
 }
 
 model Spot {

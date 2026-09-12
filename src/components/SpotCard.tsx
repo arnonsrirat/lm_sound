@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Play, Pause, MapPin, Volume2, Trash2, Edit3, User } from "lucide-react";
+import { Play, Pause, MapPin, Trash2, Edit3, User } from "lucide-react";
 import { noiseLevelLabels, type NoiseLevel } from "@/lib/validations/spot";
 import { deleteSpotAction } from "@/actions/spot";
 import { useAudio } from "@/context/AudioContext";
+import NoiseGauge from "@/components/NoiseGauge";
 
 export interface SpotCardProps {
   spot: {
@@ -83,13 +84,12 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/30 to-transparent" />
 
-        {/* Noise Level Badge */}
+        {/* Noise Level Gauge (เกจแสดงระดับเสียงแทนข้อความล้วน) */}
         <div className="absolute top-3 left-3">
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-md ${noiseConfig.badgeColor}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-md ${noiseConfig.badgeColor}`}
           >
-            <Volume2 className="w-3.5 h-3.5 text-purple-400" />
-            {noiseConfig.label}
+            <NoiseGauge noiseLevel={spot.noiseLevel} />
           </span>
         </div>
 
