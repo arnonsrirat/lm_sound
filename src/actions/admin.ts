@@ -240,3 +240,26 @@ export async function setUserRoleAction(
     return { success: false, error: "เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์ผู้ใช้", statusCode: 500 };
   }
 }
+
+/**
+ * แอดมินดึงรายการผู้ใช้งานทั้งหมดในระบบ
+ */
+export async function getAdminUsersAction(): Promise<
+  ActionResult<Array<{ id: string; email: string; username: string; role: "USER" | "ADMIN"; createdAt: string | Date }>>
+> {
+  try {
+    await requireAdmin();
+    const { userService } = await import("@/lib/user-service");
+    const users = await userService.listUsers();
+    return { success: true, data: users, statusCode: 200 };
+  } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return { success: false, error: err.message, statusCode: 403 };
+    }
+    if (err instanceof UnauthorizedError) {
+      return { success: false, error: err.message, statusCode: 401 };
+    }
+    console.error("Get Admin Users Error:", err);
+    return { success: false, error: "เกิดข้อผิดพลาดในการโหลดรายการผู้ใช้", statusCode: 500 };
+  }
+}

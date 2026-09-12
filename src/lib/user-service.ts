@@ -178,4 +178,46 @@ export const userService = {
     devUsersStore.set(newUser.email, newUser);
     return newUser;
   },
+
+  async listUsers(): Promise<Omit<UserRecord, "passwordHash">[]> {
+    const prisma = await getPrismaClient();
+    if (prisma) {
+      try {
+        const users = await prisma.user.findMany({
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+        return users.map((u) => ({
+          id: u.id,
+          email: u.email,
+          username: u.username,
+          name: u.username,
+          avatar: null,
+          role: u.role === "ADMIN" ? "ADMIN" : "USER",
+          createdAt: u.createdAt,
+          updatedAt: u.updatedAt,
+        }));
+      } catch {
+        // Fallback to dev store
+      }
+    }
+
+    return Array.from(devUsersStore.values()).map((u) => ({
+      id: u.id,
+      email: u.email,
+      username: u.username,
+      name: u.name,
+      avatar: u.avatar,
+      role: u.role,
+      createdAt: u.createdAt,
+      updatedAt: u.updatedAt,
+    }));
+  },
 };

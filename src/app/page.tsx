@@ -46,7 +46,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <div className="flex-1 flex max-w-[1680px] w-full mx-auto relative">
         {/* Left Sidebar ("nav bar ไว้ใส่หน้าต่างๆ" as drawn in wireframe) */}
-        <Sidebar logoDark={settings.logoDark} />
+        <Sidebar logoDark={settings.logoDark} role={session?.role} />
 
         {/* Center Main Area + Right Sidebar ("เวลา sound เล่น") */}
         <div className="flex-1 md:pl-60 lg:pl-64 flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 pb-28 md:pb-16 min-w-0">

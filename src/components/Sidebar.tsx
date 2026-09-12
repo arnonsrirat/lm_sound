@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, Flame, PlusCircle, Volume2, Music2, Sliders } from "lucide-react";
+import { Home, Sparkles, Flame, PlusCircle, Volume2, Music2, Sliders, ShieldCheck } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
 
-export default function Sidebar({ logoDark }: { logoDark?: string }) {
+export default function Sidebar({ logoDark, role }: { logoDark?: string; role?: "USER" | "ADMIN" }) {
   const pathname = usePathname();
   const { setIsMixerOpen, setIsNowPlayingOpen, isPlaying } = useAudio();
 
@@ -14,6 +14,7 @@ export default function Sidebar({ logoDark }: { logoDark?: string }) {
     { label: "เสียงแนะนำ", href: "/#recommended", icon: Sparkles },
     { label: "เสียงยอดนิยม", href: "/#popular", icon: Flame },
     { label: "เพิ่มจุดใหม่", href: "/spots/new", icon: PlusCircle },
+    ...(role === "ADMIN" ? [{ label: "จัดการระบบ (Admin)", href: "/admin", icon: ShieldCheck }] : []),
   ];
 
   const noiseFilters = [

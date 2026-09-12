@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut } from "lucide-react";
+import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut, ShieldCheck } from "lucide-react";
 
 export interface HeaderSettings {
   logoLight: string;
@@ -158,11 +158,26 @@ export default function Header({
           {/* User / Login as annotated in wireframe */}
           {currentUser ? (
             <div className="flex items-center gap-2">
+              {settings?.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-500/20 via-purple-600/30 to-fuchsia-600/20 text-amber-300 border border-amber-500/40 hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/10 transition shadow-sm"
+                  title="เข้าสู่แผงควบคุมแอดมิน"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">หลังบ้าน (Admin)</span>
+                </Link>
+              )}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200">
                 <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 text-white flex items-center justify-center font-bold text-[10px]">
                   {currentUser.username[0]?.toUpperCase() || "U"}
                 </div>
                 <span className="font-medium hidden sm:inline">{currentUser.username}</span>
+                {settings?.role === "ADMIN" && (
+                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                    Admin
+                  </span>
+                )}
               </div>
               <button
                 onClick={handleLogout}
