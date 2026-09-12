@@ -13,5 +13,7 @@ services:
       - DIRECT_URL=${DIRECT_URL}
       - SESSION_SECRET=${SESSION_SECRET}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    volumes:
+      - ./public/uploads:/app/public/uploads
     env_file:
       - .env

@@ -18,7 +18,12 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("API Upload Error:", err);
     return NextResponse.json(
-      { success: false, error: "เกิดข้อผิดพลาดในการรับไฟล์อัปโหลด" },
+      {
+        success: false,
+        error: `เกิดข้อผิดพลาดในการรับไฟล์อัปโหลด: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      },
       { status: 500 }
     );
   }
