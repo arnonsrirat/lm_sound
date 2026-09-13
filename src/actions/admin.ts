@@ -7,6 +7,7 @@ import { requireAdmin, assertSpotOwnership, ForbiddenError, UnauthorizedError } 
 import { updateSiteSettings, type SiteSettings, type FestivalTheme } from "@/lib/site-settings";
 import { spotSchema, type SpotInput } from "@/lib/validations/spot";
 import type { ActionResult } from "@/actions/spot";
+import { FALLBACK_SPOTS } from "@/lib/fallbackSpots";
 
 const settingsSchema = z.object({
   logoLight: z.string().min(1, "กรุณาระบุโลโก้ธีมสว่าง"),
@@ -132,6 +133,13 @@ export async function adminUpdateSpotAction(
 
     const existing = await prisma.spot.findUnique({ where: { id: spotId }, select: { id: true } });
     if (!existing) {
+      const fallbackIndex = FALLBACK_SPOTS.findIndex((spot) => spot.id === spotId);
+      if (fallbackIndex >= 0) {
+        FALLBACK_SPOTS.splice(fallbackIndex, 1);
+        revalidatePath("/");
+        revalidatePath("/admin");
+        return { success: true, statusCode: 200 };
+      }
       return { success: false, error: "ไม่พบสถานที่นี้ในระบบ (404)", statusCode: 404 };
     }
 
