@@ -82,7 +82,7 @@ export default function LoginPage() {
 
       setSuccessMessage("เข้าสู่ระบบสำเร็จ! กำลังนำท่านเข้าสู่ระบบ...");
       setTimeout(() => {
-        router.push("/");
+        router.push(data.user?.role === "ADMIN" ? "/admin" : "/");
         router.refresh();
       }, 1000);
     } catch {

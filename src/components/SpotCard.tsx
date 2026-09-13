@@ -85,7 +85,7 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/30 to-transparent" />
 
         {/* Noise Level Gauge (เกจแสดงระดับเสียงแทนข้อความล้วน) */}
-        <div className="absolute top-3 left-3">
+        <div className="hidden">
           <span
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-md ${noiseConfig.badgeColor}`}
           >
@@ -125,6 +125,7 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
       {/* Card Content */}
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
+          <div className="mb-3"><NoiseGauge noiseLevel={spot.noiseLevel} /></div>
           <div className="flex items-center gap-1.5 text-xs text-purple-300/80 mb-2">
             <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0" />
             <span className="truncate">{spot.location}</span>

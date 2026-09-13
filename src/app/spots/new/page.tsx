@@ -3,9 +3,11 @@ import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import SpotForm from "@/components/SpotForm";
 import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function NewSpotPage() {
   const session = await getSession();
+  if (!session) redirect("/login?next=/spots/new");
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">

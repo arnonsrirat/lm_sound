@@ -38,6 +38,7 @@ import {
 import NoiseGauge from "@/components/NoiseGauge";
 import AdminSidebar, { type AdminTab } from "@/components/admin/AdminSidebar";
 import MediaFolderPicker from "@/components/admin/MediaFolderPicker";
+import CampusMap from "@/components/CampusMap";
 import type { MediaFolder } from "@/actions/media";
 
 interface AdminDashboardProps {
@@ -48,14 +49,16 @@ interface AdminDashboardProps {
     username: string;
     role?: string;
   } | null;
+  initialTab?: AdminTab;
 }
 
 export default function AdminDashboard({
   initialSettings,
   initialSpots,
   currentUser,
+  initialTab = "spots",
 }: AdminDashboardProps) {
-  const [tab, setTab] = useState<AdminTab>("spots");
+  const [tab, setTab] = useState<AdminTab>(initialTab);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>(initialSettings);
   const [spots, setSpots] = useState<SpotItem[]>(initialSpots);
@@ -172,9 +175,7 @@ export default function AdminDashboard({
           <div className="flex items-center gap-3">
             <a
               href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-purple-200 bg-purple-900/30 hover:bg-purple-600/25 border border-purple-500/20 transition"
+              className="hidden"
             >
               <span>ชมหน้าเว็บ</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -199,7 +200,10 @@ export default function AdminDashboard({
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        <main
+          className="flex-1 p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl w-full mx-auto"
+          style={{ paddingBottom: "8rem", scrollPaddingBottom: "8rem" }}
+        >
           {tab === "spots" && (
             <SpotsTab spots={spots} setSpots={setSpots} notify={notify} />
           )}
@@ -322,7 +326,7 @@ function LogosBannersTab({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div className="glass-panel rounded-3xl p-5 md:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-purple-500/15">
           <div>
@@ -569,9 +573,12 @@ function AdminSpotForm({
   );
   const [imageUrl, setImageUrl] = useState(spot?.imageUrl || "");
   const [audioUrl, setAudioUrl] = useState(spot?.audioUrl || "");
+  const [latitude, setLatitude] = useState(spot?.latitude ?? 7.80822);
+  const [longitude, setLongitude] = useState(spot?.longitude ?? 99.93869);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState<"image" | "audio" | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -583,6 +590,8 @@ function AdminSpotForm({
         noiseLevel,
         imageUrl,
         audioUrl,
+        latitude,
+        longitude,
       };
 
       if (isEdit && spot) {
@@ -655,15 +664,24 @@ function AdminSpotForm({
                 <option value="moderate">Moderate (ปานกลาง)</option>
                 <option value="lively">Lively (คึกคัก)</option>
               </select>
+              <button type="button" disabled={!audioUrl || isAnalyzing} onClick={async () => { setIsAnalyzing(true); try { const audio = new Audio(audioUrl); const ctx = new AudioContext(); const response = await fetch(audioUrl); const buffer = await ctx.decodeAudioData(await response.arrayBuffer()); const data = buffer.getChannelData(0); let sum = 0; for (let i = 0; i < data.length; i += Math.max(1, Math.floor(data.length / 50000))) sum += data[i] * data[i]; const rms = Math.sqrt(sum / Math.ceil(data.length / Math.max(1, Math.floor(data.length / 50000)))); setNoiseLevel(rms < 0.08 ? "quiet" : rms < 0.2 ? "moderate" : "lively"); void audio; await ctx.close(); } catch { notify(false, "วิเคราะห์เสียงไม่สำเร็จ"); } finally { setIsAnalyzing(false); } }} className="mt-2 text-[11px] text-cyan-300 underline cursor-pointer disabled:opacity-50">{isAnalyzing ? "กำลังวิเคราะห์…" : "วิเคราะห์เสียงรบกวนอัตโนมัติ"}</button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-purple-300/80">พิกัดบนแผนที่มหาวิทยาลัย</label>
+              <span className="text-[10px] text-cyan-300">{latitude.toFixed(5)}, {longitude.toFixed(5)}</span>
+            </div>
+            <CampusMap spots={[]} selected={{ latitude, longitude }} interactive onPick={(lat, lng) => { setLatitude(lat); setLongitude(lng); }} />
           </div>
 
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-purple-300/80">URL รูปภาพ</label>
+              <label className="text-xs font-semibold text-purple-300/80">รูปภาพจากคลัง</label>
               <button
                 type="button"
-                onClick={() => setPickerOpen(true)}
+                onClick={() => setPickerOpen("image")}
                 className="text-[11px] text-fuchsia-300 hover:text-white flex items-center gap-1 cursor-pointer"
               >
                 <FolderOpen className="w-3.5 h-3.5" />
@@ -673,20 +691,26 @@ function AdminSpotForm({
             <input
               required
               value={imageUrl}
+              readOnly
+              disabled
+              onClick={() => setPickerOpen("image")}
               onChange={(e) => setImageUrl(e.target.value)}
               className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
-              placeholder="https://... หรือ /uploads/..."
+              placeholder="เลือกภาพจากคลังภาพ"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-purple-300/80">URL เสียงบรรยากาศ (MP3/OGG)</label>
+            <div className="flex items-center justify-between"><label className="text-xs font-semibold text-purple-300/80">เสียงบรรยากาศจากคลัง</label><button type="button" onClick={() => setPickerOpen("audio")} className="text-[11px] text-fuchsia-300 cursor-pointer">เลือกจากคลังเสียง</button></div>
             <input
               required
               value={audioUrl}
+              readOnly
+              disabled
+              onClick={() => setPickerOpen("audio")}
               onChange={(e) => setAudioUrl(e.target.value)}
               className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
-              placeholder="https://actions.google.com/sounds/v1/..."
+              placeholder="เลือกเสียงจากคลังเสียง"
             />
           </div>
 
@@ -714,13 +738,14 @@ function AdminSpotForm({
         <MediaFolderPicker
           isModal
           targetTitle="เลือกรูปภาพสำหรับสถานที่"
-          defaultFolder="general"
-          selectedUrl={imageUrl}
+          defaultFolder={pickerOpen === "audio" ? "audio" : "general"}
+          allowedFolder={pickerOpen === "audio" ? "audio" : "general"}
+          selectedUrl={pickerOpen === "audio" ? audioUrl : imageUrl}
           onSelect={(url) => {
-            setImageUrl(url);
-            setPickerOpen(false);
+            if (pickerOpen === "audio") setAudioUrl(url); else setImageUrl(url);
+            setPickerOpen(null);
           }}
-          onClose={() => setPickerOpen(false)}
+          onClose={() => setPickerOpen(null)}
         />
       )}
     </div>
@@ -741,6 +766,29 @@ function ThemesTab({
   onSave: () => void;
   isPending: boolean;
 }) {
+  const [mode, setMode] = useState<"light" | "dark">("dark");
+  const [lightPalette, setLightPalette] = useState({ primary: "#7c3aed", accent: "#0284c7", surface: "#ffffff", background: "#f1f5f9", text: "#111827" });
+  const [darkPalette, setDarkPalette] = useState({ primary: "#a855f7", accent: "#22d3ee", surface: "#160b2b", background: "#080510", text: "#f5f3ff" });
+  const palette = mode === "light" ? lightPalette : darkPalette;
+  const [presetName, setPresetName] = useState("");
+  const [presets, setPresets] = useState<Array<{ name: string; palette: typeof palette }>>([]);
+  useEffect(() => { try { const saved = localStorage.getItem("lmsound-theme-presets"); if (saved) setPresets(JSON.parse(saved)); } catch { /* ignore malformed local presets */ } }, []);
+  const applyPalette = (next: typeof palette) => {
+    if (mode === "light") setLightPalette(next); else setDarkPalette(next);
+    const root = document.documentElement;
+    root.style.setProperty("--theme-primary", next.primary); root.style.setProperty("--theme-accent", next.accent); root.style.setProperty("--theme-surface", next.surface); root.style.setProperty("--theme-background", next.background); root.style.setProperty("--theme-foreground", next.text);
+  };
+  const calculateTheme = () => { const opposite = mode === "light" ? { primary: palette.primary, accent: palette.accent, surface: "#160b2b", background: "#080510", text: "#f5f3ff" } : { primary: palette.primary, accent: palette.accent, surface: "#ffffff", background: "#f1f5f9", text: "#111827" }; if (mode === "light") setDarkPalette(opposite); else setLightPalette(opposite); };
+  const savePreset = () => { if (!presetName.trim()) return; const next = [...presets.filter((item) => item.name !== presetName.trim()), { name: presetName.trim(), palette }]; setPresets(next); localStorage.setItem("lmsound-theme-presets", JSON.stringify(next)); setPresetName(""); };
+  if (true) return (
+    <div className="glass-panel rounded-3xl p-5 md:p-6 space-y-5">
+      <div className="flex gap-2"><button type="button" onClick={() => setMode("light")} className={`px-4 py-2 rounded-xl text-xs cursor-pointer ${mode === "light" ? "purple-gradient-btn" : "bg-purple-950/40"}`}>ธีมสว่าง (Light)</button><button type="button" onClick={() => setMode("dark")} className={`px-4 py-2 rounded-xl text-xs cursor-pointer ${mode === "dark" ? "purple-gradient-btn" : "bg-purple-950/40"}`}>ธีมมืด (Dark)</button></div>
+      <div><h2 className="font-bold text-lg text-purple-100 flex items-center gap-2"><Palette className="w-5 h-5 text-fuchsia-400" />ปรับแต่งธีมทุกส่วน</h2><p className="text-xs text-purple-300/60 mt-1">กำหนดสีหลัก พื้นหลัง พื้นผิว ตัวอักษร และสีเสริมของเว็บไซต์</p></div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">{Object.entries({ primary: "สีหลัก", accent: "สีเน้น", surface: "พื้นผิวการ์ด", background: "พื้นหลัง", text: "ตัวอักษร" }).map(([key, label]) => <label key={key} className="text-xs text-purple-200"><span className="block mb-1">{label}</span><input type="color" value={palette[key as keyof typeof palette]} onChange={(event) => applyPalette({ ...palette, [key]: event.target.value })} className="h-11 w-full rounded-xl bg-transparent cursor-pointer" /></label>)}</div>
+      <div className="flex flex-wrap gap-2"><button type="button" onClick={calculateTheme} className="px-4 py-2 rounded-xl purple-gradient-btn text-xs font-semibold cursor-pointer">คำนวณชุดสี Light / Dark</button><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="ชื่อ preset" className="rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 text-xs" /><button type="button" onClick={savePreset} className="px-4 py-2 rounded-xl border border-purple-500/30 text-xs cursor-pointer">บันทึก Preset</button><button type="button" onClick={onSave} disabled={isPending} className="px-4 py-2 rounded-xl purple-gradient-btn text-xs font-semibold cursor-pointer">บันทึกการตั้งค่า</button></div>
+      {presets.length > 0 && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{presets.map((preset) => <button key={preset.name} type="button" onClick={() => applyPalette(preset.palette)} className="flex items-center gap-3 rounded-xl border border-purple-500/25 p-3 text-left cursor-pointer"><span className="flex gap-1">{Object.values(preset.palette).map((color) => <i key={color} className="h-5 w-5 rounded-full border border-white/20" style={{ backgroundColor: color }} />)}</span><span className="text-xs text-purple-100">{preset.name}</span></button>)}</div>}
+    </div>
+  );
   return (
     <div className="glass-panel rounded-3xl p-5 md:p-6 space-y-5">
       <div>
@@ -905,7 +953,17 @@ function UsersTab({
   };
 
   useEffect(() => {
-    fetchUsers();
+    let cancelled = false;
+    const loadUsers = async () => {
+      const res = await getAdminUsersAction();
+      if (cancelled) return;
+      if (res.success && res.data) setUsers(res.data);
+      setIsLoading(false);
+    };
+    void loadUsers();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleToggleRole = (userId: string, currentRole: "USER" | "ADMIN") => {

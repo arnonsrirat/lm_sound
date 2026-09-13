@@ -6,6 +6,8 @@ export interface SpotItem {
   noiseLevel: string;
   imageUrl: string;
   audioUrl: string;
+  latitude?: number | null;
+  longitude?: number | null;
   authorId: string;
   author?: {
     id: string;

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Upload,
   Folder,
   FolderOpen,
+  Music,
   Image as ImageIcon,
   Trash2,
   Check,
@@ -14,8 +15,9 @@ import {
   X,
   FileImage,
   Sparkles,
+  MoreVertical,
 } from "lucide-react";
-import type { MediaItem, MediaFolder } from "@/actions/media";
+import { moveMediaAction, type MediaItem, type MediaFolder } from "@/actions/media";
 
 interface MediaFolderPickerProps {
   onSelect?: (url: string) => void;
@@ -23,6 +25,8 @@ interface MediaFolderPickerProps {
   defaultFolder?: MediaFolder;
   isModal?: boolean;
   onClose?: () => void;
+  canManage?: boolean;
+  allowedFolder?: MediaFolder;
   targetTitle?: string; // e.g. "เลือกภาพสำหรับ โลโก้ (ธีมมืด)"
 }
 
@@ -30,6 +34,7 @@ const FOLDERS: { id: MediaFolder; label: string; desc: string }[] = [
   { id: "logos", label: "โฟลเดอร์โลโก้ (Logos)", desc: "รูปโลโก้สำหรับธีมสว่างและมืด" },
   { id: "banners", label: "โฟลเดอร์แบนเนอร์ (Banners)", desc: "ภาพหัวเว็บ / Banner แนะนำ" },
   { id: "general", label: "คลังภาพทั่วไป (General)", desc: "รูปสปอตและสื่อประกอบอื่นๆ" },
+  { id: "audio", label: "คลังเสียงบรรยากาศ (Audio)", desc: "ไฟล์เสียง MP3, WAV, OGG และ M4A" },
 ];
 
 export default function MediaFolderPicker({
@@ -39,6 +44,8 @@ export default function MediaFolderPicker({
   isModal = false,
   onClose,
   targetTitle,
+  canManage = true,
+  allowedFolder,
 }: MediaFolderPickerProps) {
   const [currentFolder, setCurrentFolder] = useState<MediaFolder>(defaultFolder);
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -47,6 +54,8 @@ export default function MediaFolderPicker({
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [moveFor, setMoveFor] = useState<MediaItem | null>(null);
+  const [draggedItem, setDraggedItem] = useState<MediaItem | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +69,7 @@ export default function MediaFolderPicker({
     }
   };
 
-  const loadFiles = async (folderToLoad = currentFolder) => {
+  const loadFiles = useCallback(async (folderToLoad: MediaFolder = currentFolder) => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/admin/media?folder=${folderToLoad}`);
@@ -75,11 +84,12 @@ export default function MediaFolderPicker({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentFolder]);
 
   useEffect(() => {
-    loadFiles(currentFolder);
-  }, [currentFolder]);
+    const timer = window.setTimeout(() => void loadFiles(currentFolder), 0);
+    return () => window.clearTimeout(timer);
+  }, [currentFolder, loadFiles]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,6 +153,15 @@ export default function MediaFolderPicker({
     notify("คัดลอก URL แล้ว");
   };
 
+  const handleMove = async (target: MediaFolder) => {
+    if (!moveFor) return;
+    const result = await moveMediaAction(moveFor.url, target);
+    if (!result.success || !result.data) { notify(result.error || "ย้ายไฟล์ไม่สำเร็จ", true); return; }
+    setItems((prev) => prev.filter((item) => item.url !== moveFor.url));
+    setMoveFor(null);
+    notify("ย้ายไฟล์เรียบร้อยแล้ว");
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -165,14 +184,14 @@ export default function MediaFolderPicker({
 
         {/* Upload Button */}
         <div className="flex items-center gap-2">
-          <input
+          {canManage && <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
-            accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+            accept={currentFolder === "audio" ? "audio/mpeg,audio/wav,audio/ogg,audio/mp4" : "image/png,image/jpeg,image/webp,image/svg+xml,image/gif"}
             className="hidden"
-          />
-          <button
+          />}
+          {canManage && <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
@@ -184,7 +203,7 @@ export default function MediaFolderPicker({
               <Upload className="w-4 h-4" />
             )}
             อัปโหลดเข้า {currentFolder.toUpperCase()}
-          </button>
+          </button>}
 
           <button
             type="button"
@@ -214,13 +233,15 @@ export default function MediaFolderPicker({
 
       {/* Folder Selection Pills */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {FOLDERS.map((folder) => {
+        {(allowedFolder ? FOLDERS.filter((folder) => folder.id === allowedFolder) : FOLDERS).map((folder) => {
           const isActive = currentFolder === folder.id;
           return (
             <button
               key={folder.id}
               type="button"
               onClick={() => setCurrentFolder(folder.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => { event.preventDefault(); if (draggedItem) { setMoveFor(draggedItem); setCurrentFolder(folder.id); } }}
               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
                 isActive
                   ? "bg-purple-600/20 border-purple-400/60 shadow-md shadow-purple-950/40"
@@ -283,6 +304,9 @@ export default function MediaFolderPicker({
               return (
                 <div
                   key={item.url}
+                  draggable={canManage}
+                  onDragStart={() => setDraggedItem(item)}
+                  onDragEnd={() => setDraggedItem(null)}
                   className={`group relative rounded-2xl border transition-all overflow-hidden flex flex-col bg-purple-950/40 ${
                     isSelected
                       ? "border-emerald-400 ring-2 ring-emerald-400/30 shadow-lg"
@@ -295,11 +319,15 @@ export default function MediaFolderPicker({
                     onClick={() => onSelect && onSelect(item.url)}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.url}
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {currentFolder === "audio" ? (
+                      <Music className="w-10 h-10 text-purple-300" />
+                    ) : (
+                      <img
+                        src={item.url}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
 
                     {/* Active Selected Badge */}
                     {isSelected && (
@@ -325,6 +353,7 @@ export default function MediaFolderPicker({
                     </div>
 
                     <div className="flex items-center gap-1 pt-1 border-t border-purple-500/15">
+                      {canManage && <button type="button" onClick={() => setMoveFor(item)} className="p-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-600/30 text-purple-300 transition cursor-pointer" title="ย้ายไฟล์"><MoreVertical className="w-3.5 h-3.5" /></button>}
                       {onSelect && (
                         <button
                           type="button"
@@ -353,14 +382,14 @@ export default function MediaFolderPicker({
                         )}
                       </button>
 
-                      <button
+                      {canManage && <button
                         type="button"
                         onClick={() => handleDelete(item)}
                         className="p-1.5 rounded-xl bg-rose-950/30 hover:bg-rose-600/30 text-rose-300/80 hover:text-rose-300 transition cursor-pointer"
                         title="ลบไฟล์ออกจากเซิร์ฟเวอร์"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </button>}
                     </div>
                   </div>
                 </div>
@@ -369,12 +398,14 @@ export default function MediaFolderPicker({
           </div>
         )}
       </div>
+
+      {moveFor && <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 p-4" onClick={() => setMoveFor(null)}><div className="w-full max-w-sm rounded-2xl border border-purple-500/30 bg-[#160b2b] p-5" onClick={(event) => event.stopPropagation()}><h4 className="font-semibold text-purple-100">ย้ายไฟล์ไปโฟลเดอร์</h4><div className="mt-4 grid grid-cols-2 gap-2">{FOLDERS.filter((folder) => folder.id !== moveFor.folder).map((folder) => <button key={folder.id} type="button" onClick={() => handleMove(folder.id)} className="rounded-xl border border-purple-500/25 bg-purple-900/30 px-3 py-2 text-xs text-purple-100 hover:bg-purple-600/30 cursor-pointer">{folder.label}</button>)}</div><button type="button" onClick={() => setMoveFor(null)} className="mt-4 w-full rounded-xl px-3 py-2 text-xs text-purple-300 hover:bg-purple-900/30 cursor-pointer">ยกเลิก</button></div></div>}
     </div>
   );
 
   if (isModal) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
         <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto glass-panel rounded-3xl p-6 shadow-2xl border border-purple-500/30">
           <button
             type="button"

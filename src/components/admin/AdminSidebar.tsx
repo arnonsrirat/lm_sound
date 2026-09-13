@@ -97,12 +97,12 @@ export default function AdminSidebar({
   };
 
   const content = (
-    <div className="h-full flex flex-col justify-between py-6 px-4 bg-purple-950/40 backdrop-blur-2xl border-r border-purple-500/20 text-foreground">
+    <div className="h-full flex flex-col justify-between py-6 px-3 bg-[#0b0715] border-r border-purple-500/20 text-foreground">
       {/* Top: Logo & Title */}
-      <div className="space-y-6">
+        <div className="space-y-5">
         <div className="flex items-center justify-between px-2">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-2xl purple-gradient-btn flex items-center justify-center shadow-lg shadow-purple-600/30 group-hover:scale-105 transition">
+          <Link href="/admin" className="flex items-center gap-3 group">
+            <div className="w-11 h-11 rounded-2xl purple-gradient-btn flex items-center justify-center shadow-lg shadow-purple-600/30 group-hover:scale-105 transition">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -135,7 +135,7 @@ export default function AdminSidebar({
           <p className="px-3 text-[11px] font-bold text-purple-300/40 uppercase tracking-wider mb-2">
             เมนูการจัดการ
           </p>
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.map((item, index) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
             return (
@@ -145,7 +145,7 @@ export default function AdminSidebar({
                   onTabChange(item.id);
                   if (onCloseMobile) onCloseMobile();
                 }}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-left transition-all duration-200 cursor-pointer ${
+                className={`${index === 2 ? "mt-4 pt-4 border-t border-purple-500/15" : ""} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 cursor-pointer ${
                   isActive
                     ? "purple-gradient-btn shadow-lg shadow-purple-900/40 font-semibold text-white"
                     : "text-purple-200/80 hover:bg-purple-600/15 hover:text-white"
@@ -200,7 +200,7 @@ export default function AdminSidebar({
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-purple-200/90 bg-purple-900/30 hover:bg-purple-600/20 border border-purple-500/20 transition"
           >
             <Home className="w-3.5 h-3.5" />
-            หน้าหลัก
+            ชมหน้าเว็บ
           </Link>
           <button
             onClick={handleLogout}

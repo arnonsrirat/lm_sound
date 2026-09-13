@@ -38,6 +38,8 @@ model Spot {
   noiseLevel  String   // e.g. "quiet" (เงียบสงบ), "moderate" (ปานกลาง), "lively" (คึกคัก)
   imageUrl    String
   audioUrl    String
+  latitude    Float?
+  longitude   Float?
   authorId    String
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())

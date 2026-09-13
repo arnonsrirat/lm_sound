@@ -42,11 +42,13 @@ export default function AudioPlayerBar() {
   };
 
   const isDesktopHomeWithRightPanel = pathname === "/" && isNowPlayingOpen;
+  const isAdminRoute = pathname.startsWith("/admin");
+  const desktopInset = isAdminRoute ? "md:left-64 lg:left-72" : "md:left-60 lg:left-64";
 
   return (
     <>
       <div
-        className={`fixed bottom-0 left-0 right-0 z-40 bg-[var(--header-bg)] backdrop-blur-2xl border-t border-purple-500/20 shadow-[0_-10px_30px_rgba(112,26,117,0.2)] transition-all ${
+        className={`fixed bottom-0 left-0 right-0 z-40 ${desktopInset} bg-[var(--header-bg)] backdrop-blur-2xl border-t border-purple-500/20 shadow-[0_-10px_30px_rgba(112,26,117,0.2)] transition-all ${
           isDesktopHomeWithRightPanel ? "xl:hidden" : ""
         }`}
       >

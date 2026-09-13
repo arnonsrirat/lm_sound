@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Compass, PlusCircle, User } from "lucide-react";
 
-export default function BottomNav() {
+export default function BottomNav({ role: _role }: { role?: "USER" | "ADMIN" }) {
   const pathname = usePathname();
 
   const items = [

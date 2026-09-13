@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import FeaturedBanner from "@/components/FeaturedBanner";
 import SpotFeed from "@/components/SpotFeed";
 import NowPlayingSidebar from "@/components/NowPlayingSidebar";
+import CampusMap from "@/components/CampusMap";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   // การตั้งค่าเว็บไซต์จาก DB (แอดมินปรับแต่งได้)
   const settings = await getSiteSettings();
+
 
   return (
     <div className="min-h-screen text-foreground flex flex-col transition-colors">
@@ -49,7 +51,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <Sidebar logoDark={settings.logoDark} role={session?.role} />
 
         {/* Center Main Area + Right Sidebar ("เวลา sound เล่น") */}
-        <div className="flex-1 md:pl-60 lg:pl-64 flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 pb-28 md:pb-16 min-w-0">
+        <div className="flex-1 md:pl-60 lg:pl-64 flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 pb-28 min-w-0">
           {/* Center Column: Main Content */}
           <main className="flex-1 min-w-0 space-y-8">
             {/* เสียงแนะนำ (Recommended Sounds Banner with . . . . dot indicators) */}
@@ -65,6 +67,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             />
 
             {/* เสียงยอดนิยม (Popular Sounds with View All and Cards Grid) */}
+            <section className="space-y-3" aria-label="แผนที่จุดอ่านหนังสือในมหาวิทยาลัยทักษิณ">
+              <div>
+                <h2 className="text-xl md:text-2xl font-extrabold text-foreground">แผนที่จุดอ่านหนังสือ</h2>
+                <p className="text-xs text-purple-300/70 mt-1">มหาวิทยาลัยทักษิณ วิทยาเขตพัทลุง</p>
+              </div>
+              <CampusMap spots={spots} />
+            </section>
             <SpotFeed spots={spots} currentUserId={session?.userId} />
           </main>
 
@@ -83,7 +92,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <BottomNav />
+      <BottomNav role={session?.role} />
     </div>
   );
 }

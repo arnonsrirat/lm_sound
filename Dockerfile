@@ -39,7 +39,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Set correct permissions for prerender cache and runtime uploads
-RUN mkdir -p .next ./public/uploads/logos ./public/uploads/banners ./public/uploads/general \
+RUN mkdir -p .next ./public/uploads/logos ./public/uploads/banners ./public/uploads/general ./public/uploads/audio \
     && chown -R nextjs:nodejs .next ./public
 
 # Automatically leverage output traces to reduce image size

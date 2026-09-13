@@ -2,7 +2,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { requireAdmin, ForbiddenError, UnauthorizedError } from "@/lib/auth";
+import { requireAuth, requireAdmin, ForbiddenError, UnauthorizedError } from "@/lib/auth";
 
 export interface MediaItem {
   name: string;
@@ -20,10 +20,13 @@ export interface MediaActionResult<T = unknown> {
 }
 
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
-const ALLOWED_FOLDERS = ["logos", "banners", "general"] as const;
+const ALLOWED_FOLDERS = ["logos", "banners", "general", "audio"] as const;
 export type MediaFolder = (typeof ALLOWED_FOLDERS)[number];
 
-const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"]);
+const ALLOWED_EXTENSIONS = new Set([
+  ".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif",
+  ".mp3", ".wav", ".ogg", ".m4a",
+]);
 
 // In-memory fallback cache for environments where local disk write is restricted or read-only
 const memoryUploadsStore: MediaItem[] = [];
@@ -45,7 +48,7 @@ export async function getMediaFilesAction(
   folder?: string
 ): Promise<MediaActionResult<MediaItem[]>> {
   try {
-    await requireAdmin();
+    await requireAuth();
 
     const foldersToScan =
       folder && ALLOWED_FOLDERS.includes(folder as MediaFolder)
@@ -148,7 +151,10 @@ export async function uploadMediaAction(
     }
 
     const ext = path.extname(file.name).toLowerCase() || ".png";
-    if (!ALLOWED_EXTENSIONS.has(ext)) {
+    const audioExtensions = new Set([".mp3", ".wav", ".ogg", ".m4a"]);
+    const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"]);
+    const allowedExtensions = folder === "audio" ? audioExtensions : imageExtensions;
+    if (!allowedExtensions.has(ext)) {
       return {
         success: false,
         error: "รองรับเฉพาะไฟล์รูปภาพ (PNG, JPG, JPEG, WebP, SVG, GIF)",
@@ -274,5 +280,26 @@ export async function deleteMediaAction(
       }`,
       statusCode: 500,
     };
+  }
+}
+
+export async function moveMediaAction(fileUrl: string, targetFolder: MediaFolder): Promise<MediaActionResult<MediaItem>> {
+  try {
+    await requireAdmin();
+    if (!ALLOWED_FOLDERS.includes(targetFolder)) return { success: false, error: "โฟลเดอร์ไม่ถูกต้อง", statusCode: 400 };
+    const match = fileUrl.match(/^\/uploads\/([^/]+)\/([^/]+)$/);
+    if (!match || !ALLOWED_FOLDERS.includes(match[1] as MediaFolder)) return { success: false, error: "ไฟล์ไม่ถูกต้อง", statusCode: 400 };
+    const sourceFolder = match[1] as MediaFolder;
+    const name = path.basename(match[2]);
+    const source = path.join(UPLOADS_ROOT, sourceFolder, name);
+    const destination = path.join(UPLOADS_ROOT, targetFolder, name);
+    if (sourceFolder === targetFolder) return { success: false, error: "ไฟล์อยู่ในโฟลเดอร์นี้แล้ว", statusCode: 400 };
+    await ensureDir(path.dirname(destination));
+    await fs.rename(source, destination);
+    const mem = memoryUploadsStore.find((item) => item.url === fileUrl);
+    if (mem) { mem.folder = targetFolder; mem.url = `/uploads/${targetFolder}/${name}`; }
+    return { success: true, data: { name, url: `/uploads/${targetFolder}/${name}`, folder: targetFolder, size: mem?.size || 0, updatedAt: new Date().toISOString() }, statusCode: 200 };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "ย้ายไฟล์ไม่สำเร็จ", statusCode: 500 };
   }
 }

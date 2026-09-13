@@ -97,7 +97,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-indigo-400/60" />
                     <span>
-                      {new Date(spot.createdAt || Date.now()).toLocaleDateString("th-TH", {
+                      {new Date(spot.createdAt ?? 0).toLocaleDateString("th-TH", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",

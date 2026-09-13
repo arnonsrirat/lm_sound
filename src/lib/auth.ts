@@ -4,9 +4,23 @@ import { cookies } from "next/headers";
 import { userService, UserRecord } from "./user-service";
 
 export const SESSION_COOKIE_NAME = "lm_sound_session";
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "lm-sound-ambient-secure-jwt-secret-key-2026"
-);
+const DEVELOPMENT_SECRET = "lm-sound-development-secret-only-change-me";
+
+function getJwtSecret(): Uint8Array {
+  const configuredSecret = process.env.SESSION_SECRET || process.env.JWT_SECRET;
+  if (!configuredSecret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SESSION_SECRET must be configured in production");
+    }
+    return new TextEncoder().encode(DEVELOPMENT_SECRET);
+  }
+
+  if (process.env.NODE_ENV === "production" && configuredSecret.length < 32) {
+    throw new Error("SESSION_SECRET must be at least 32 characters in production");
+  }
+
+  return new TextEncoder().encode(configuredSecret);
+}
 
 export interface SessionPayload {
   userId: string;
@@ -37,14 +51,15 @@ export async function createSessionToken(
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d") // 7 days session
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifySessionToken(
   token: string
 ): Promise<SessionPayload | null> {
+  const jwtSecret = getJwtSecret();
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, jwtSecret);
     return {
       userId: payload.userId as string,
       email: payload.email as string,

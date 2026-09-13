@@ -47,6 +47,8 @@ export const spotSchema = z.object({
     .min(1, "กรุณาระบุ URL ของไฟล์เสียงบรรยากาศ")
     .url("รูปแบบ URL เสียงไม่ถูกต้อง")
     .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(mp3|wav|ogg|m4a)$/i, "พาธเสียงต้องเป็นไฟล์เสียง")),
+  latitude: z.number().finite().min(7.78).max(7.84).optional(),
+  longitude: z.number().finite().min(99.90).max(99.98).optional(),
 });
 
 export type SpotInput = z.infer<typeof spotSchema>;

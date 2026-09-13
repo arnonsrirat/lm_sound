@@ -152,33 +152,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     >
   >({});
 
-  // Ensure AudioContext is instantiated
-  const getOrCreateAudioContext = useCallback(() => {
-    if (typeof window === "undefined") return null;
-    if (!audioCtxRef.current) {
-      const AudioCtxClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof window.AudioContext })
-          .webkitAudioContext;
-      const ctx = new AudioCtxClass();
-      const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(masterVolume, ctx.currentTime);
-      masterGain.connect(ctx.destination);
-
-      audioCtxRef.current = ctx;
-      masterGainRef.current = masterGain;
-
-      // Initialize synthesizer channels
-      initSynthesizers(ctx, masterGain);
-    }
-    if (audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume();
-    }
-    return audioCtxRef.current;
-  }, [masterVolume]);
-
   // Create Web Audio generators for each sound channel
-  const initSynthesizers = (ctx: AudioContext, masterGain: GainNode) => {
+  function initSynthesizers(ctx: AudioContext, masterGain: GainNode) {
     // 1. Rain Synthesizer (Filtered Noise with droplet modulation)
     const rainGain = ctx.createGain();
     rainGain.gain.setValueAtTime(0, ctx.currentTime);
@@ -334,7 +309,30 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         } catch {}
       },
     };
-  };
+  }
+
+  // Ensure AudioContext is instantiated
+  const getOrCreateAudioContext = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    if (!audioCtxRef.current) {
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof window.AudioContext })
+          .webkitAudioContext;
+      const ctx = new AudioCtxClass();
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(masterVolume, ctx.currentTime);
+      masterGain.connect(ctx.destination);
+
+      audioCtxRef.current = ctx;
+      masterGainRef.current = masterGain;
+      initSynthesizers(ctx, masterGain);
+    }
+    if (audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume();
+    }
+    return audioCtxRef.current;
+  }, [masterVolume]);
 
   // Sync channel gains whenever channels or playing state changes
   useEffect(() => {

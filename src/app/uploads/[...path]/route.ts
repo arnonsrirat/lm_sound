@@ -10,6 +10,10 @@ const MIME_TYPES: Record<string, string> = {
   ".svg": "image/svg+xml",
   ".gif": "image/gif",
   ".ico": "image/x-icon",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
 };
 
 export async function GET(

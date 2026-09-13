@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import SpotCard from "./SpotCard";
 import { Filter, AlertCircle, PlusCircle } from "lucide-react";
 import Link from "next/link";
@@ -27,19 +27,10 @@ interface SpotFeedProps {
 
 export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
   const searchParams = useSearchParams();
-  const initialNoise = searchParams.get("noiseLevel") || "all";
-  const initialSearch = searchParams.get("search") || "";
-
-  // Instant Client-side State
-  const [activeNoise, setActiveNoise] = useState<string>(initialNoise);
-  const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
-
-  useEffect(() => {
-    const noise = searchParams.get("noiseLevel") || "all";
-    const search = searchParams.get("search") || "";
-    setActiveNoise(noise);
-    setSearchQuery(search);
-  }, [searchParams]);
+  const pathname = usePathname();
+  const router = useRouter();
+  const activeNoise = searchParams.get("noiseLevel") || "all";
+  const searchQuery = searchParams.get("search") || "";
 
   const filterOptions = [
     { key: "all", label: "ทั้งหมด" },
@@ -49,14 +40,13 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
   ];
 
   const handleFilterClick = (key: string) => {
-    setActiveNoise(key);
-    const url = new URL(window.location.href);
+    const params = new URLSearchParams(searchParams.toString());
     if (key === "all") {
-      url.searchParams.delete("noiseLevel");
+      params.delete("noiseLevel");
     } else {
-      url.searchParams.set("noiseLevel", key);
+      params.set("noiseLevel", key);
     }
-    window.history.replaceState(null, "", url.toString());
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Instant 0ms In-Memory Filtering
@@ -138,10 +128,9 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
           <button
             type="button"
             onClick={() => {
-              setSearchQuery("");
-              const url = new URL(window.location.href);
-              url.searchParams.delete("search");
-              window.history.replaceState(null, "", url.toString());
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete("search");
+              router.replace(`${pathname}?${params.toString()}`, { scroll: false });
             }}
             className="text-[11px] text-purple-400 hover:text-cyan-300 underline cursor-pointer"
           >
@@ -168,7 +157,7 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
           </p>
           <Link
             href="/spots/new"
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold text-white twilight-gradient-btn transition shadow-lg shadow-purple-900/30"
+            className="hidden"
           >
             <PlusCircle className="w-4 h-4" />
             <span>แนะนำจุดอ่านหนังสือใหม่</span>

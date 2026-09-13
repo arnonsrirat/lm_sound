@@ -54,6 +54,7 @@ export async function POST(request: Request) {
         username: user.username,
         name: user.name,
         avatar: user.avatar,
+        role: user.role,
       },
     });
   } catch (error) {

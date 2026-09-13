@@ -6,6 +6,8 @@ import { createSpotAction, updateSpotAction } from "@/actions/spot";
 import { noiseLevels, noiseLevelLabels, type NoiseLevel, type SpotInput } from "@/lib/validations/spot";
 import { Save, ArrowLeft, Image as ImageIcon, Music, MapPin, Volume2, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import MediaFolderPicker from "@/components/admin/MediaFolderPicker";
+import CampusMap from "@/components/CampusMap";
 
 interface SpotFormProps {
   initialData?: {
@@ -16,6 +18,8 @@ interface SpotFormProps {
     noiseLevel: string;
     imageUrl: string;
     audioUrl: string;
+    latitude?: number | null;
+    longitude?: number | null;
   };
   isEdit?: boolean;
 }
@@ -42,13 +46,16 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
     description: initialData?.description || "",
     location: initialData?.location || "",
     noiseLevel: (initialData?.noiseLevel as NoiseLevel) || "quiet",
-    imageUrl: initialData?.imageUrl || PRESET_IMAGES[0].url,
-    audioUrl: initialData?.audioUrl || PRESET_AUDIOS[0].url,
+    imageUrl: initialData?.imageUrl || "",
+    audioUrl: initialData?.audioUrl || "",
+    latitude: initialData?.latitude ?? 7.80822,
+    longitude: initialData?.longitude ?? 99.93869,
   });
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pickerType, setPickerType] = useState<"image" | "audio" | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +156,19 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
             {errors.location && <p className="text-rose-400 text-xs mt-1">{errors.location[0]}</p>}
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider">ปักหมุดจุดอ่านหนังสือบนแผนที่วิทยาเขตพัทลุง *</label>
+              <span className="text-[11px] text-cyan-300">{(formData.latitude ?? 7.80822).toFixed(5)}, {(formData.longitude ?? 99.93869).toFixed(5)}</span>
+            </div>
+            <CampusMap
+              spots={[]}
+              selected={{ latitude: formData.latitude ?? 7.80822, longitude: formData.longitude ?? 99.93869 }}
+              interactive
+              onPick={(latitude, longitude) => setFormData({ ...formData, latitude, longitude })}
+            />
+          </div>
+
           {/* Noise Level */}
           <div>
             <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
@@ -192,14 +212,13 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
             </div>
             <div className="relative">
               <ImageIcon className="absolute left-3.5 top-3 w-4 h-4 text-indigo-400/60" />
-              <input
-                type="text"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder="https://..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
-                required
-              />
+              <button
+                type="button"
+                onClick={() => setPickerType("image")}
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-left text-sm text-slate-100 hover:border-purple-500/70 transition cursor-pointer"
+              >
+                {formData.imageUrl ? "เลือกภาพจากคลังแล้ว" : "เลือกภาพจากคลังภาพ"}
+              </button>
             </div>
             {/* Presets */}
             <div className="flex flex-wrap gap-2 mt-2">
@@ -210,7 +229,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
               >
                 ✨ อาร์ตเวิร์ก LhobMoom Sound
               </button>
-              {PRESET_IMAGES.map((preset) => (
+              {([] as Array<{url:string;label:string}>).map((preset) => (
                 <button
                   key={preset.url}
                   type="button"
@@ -234,18 +253,17 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
             </div>
             <div className="relative">
               <Music className="absolute left-3.5 top-3 w-4 h-4 text-indigo-400/60" />
-              <input
-                type="text"
-                value={formData.audioUrl}
-                onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
-                placeholder="https://..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-slate-100 text-sm focus:outline-none focus:border-purple-500/70 focus:ring-1 focus:ring-purple-500/30 transition"
-                required
-              />
+              <button
+                type="button"
+                onClick={() => setPickerType("audio")}
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#080b14]/90 border border-indigo-900/50 text-left text-sm text-slate-100 hover:border-purple-500/70 transition cursor-pointer"
+              >
+                {formData.audioUrl ? "เลือกเสียงจากคลังแล้ว" : "เลือกเสียงจากคลังเสียง"}
+              </button>
             </div>
             {/* Presets */}
             <div className="flex flex-wrap gap-2 mt-2">
-              {PRESET_AUDIOS.map((preset) => (
+              {([] as Array<{url:string;label:string}>).map((preset) => (
                 <button
                   key={preset.url}
                   type="button"
@@ -294,6 +312,21 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
           </div>
         </form>
       </div>
+      {pickerType && (
+        <MediaFolderPicker
+          isModal
+          canManage={false}
+          defaultFolder={pickerType === "audio" ? "audio" : "general"}
+          allowedFolder={pickerType === "audio" ? "audio" : "general"}
+          selectedUrl={pickerType === "audio" ? formData.audioUrl : formData.imageUrl}
+          targetTitle={pickerType === "audio" ? "เลือกเสียงบรรยากาศจากคลังเสียง" : "เลือกภาพสถานที่จากคลังภาพ"}
+          onSelect={(url) => {
+            setFormData({ ...formData, ...(pickerType === "audio" ? { audioUrl: url } : { imageUrl: url }) });
+            setPickerType(null);
+          }}
+          onClose={() => setPickerType(null)}
+        />
+      )}
     </div>
   );
 }

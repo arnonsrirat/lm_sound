@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { spotSchema } from "@/lib/validations/spot";
 import { requireAuth, UnauthorizedError } from "@/lib/auth";
+import { getSpots } from "@/actions/spot";
 
 // GET /api/spots - รายการจุดอ่านหนังสือ (Feed) พร้อม Search และ Filter
 export async function GET(request: NextRequest) {
@@ -10,32 +11,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || undefined;
     const noiseLevel = searchParams.get("noiseLevel") || undefined;
 
-    const whereClause: Record<string, unknown> = {};
-
-    if (search && search.trim() !== "") {
-      whereClause.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { location: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    if (noiseLevel && noiseLevel !== "all") {
-      whereClause.noiseLevel = noiseLevel;
-    }
-
-    const spots = await prisma.spot.findMany({
-      where: whereClause,
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const spots = await getSpots({ search, noiseLevel });
 
     return NextResponse.json({ success: true, data: spots });
   } catch (error) {

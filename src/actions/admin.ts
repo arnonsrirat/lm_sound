@@ -79,6 +79,8 @@ export async function adminCreateSpotAction(
         noiseLevel: formData.get("noiseLevel"),
         imageUrl: formData.get("imageUrl"),
         audioUrl: formData.get("audioUrl"),
+        latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
+        longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       };
     } else {
       rawData = formData;
@@ -142,6 +144,8 @@ export async function adminUpdateSpotAction(
         noiseLevel: formData.get("noiseLevel"),
         imageUrl: formData.get("imageUrl"),
         audioUrl: formData.get("audioUrl"),
+        latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
+        longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       };
     } else {
       rawData = formData;

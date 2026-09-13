@@ -20,7 +20,7 @@ devUsersStore.set("demo@lmsound.com", {
   email: "demo@lmsound.com",
   username: "demouser",
   // Hashed for "password123"
-  passwordHash: "$2a$10$f6f4B9/42oRkHQ9KvZ4u/eE7Z2r8pQk2LqK7KkQc0nN9uQpZ4d3eq",
+  passwordHash: "$2b$10$y.gbqVDVNZ6tTrvGzfSs1eFUcY8diVYd3Oj65dyd8C4Q6XXexfXty",
   name: "LM Sound Explorer",
   avatar: null,
   role: "USER",
@@ -33,7 +33,7 @@ devUsersStore.set("admin@lmsound.com", {
   id: "user_admin_001",
   email: "admin@lmsound.com",
   username: "admin",
-  passwordHash: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+  passwordHash: "$2b$10$lBykvw3zoJfFprsgasJAbuOiKUK8tf8HMZqKaeg95brFWTZfISnxy",
   name: "LM Sound Admin",
   avatar: null,
   role: "ADMIN",

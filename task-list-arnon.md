@@ -51,3 +51,93 @@
 - [x] **Spot Form Pages:**
   - [x] หน้าเพิ่มจุดอ่านหนังสือใหม่ (Create Spot Form)
   - [x] หน้าแก้ไขจุดอ่านหนังสือ (Edit Spot Form) พร้อมแสดงผล Validation Errors
+
+---
+
+## Current Sprint
+
+### In Progress
+
+- [x] Modernize Framework & Dependencies
+  - Owner: Arnon
+  - Area: Shared / Infrastructure
+  - Priority: Critical
+  - Requirements:
+    - Upgrade Next.js to at least 16.3.5 using a stable production release
+    - Upgrade React and React DOM to compatible stable versions
+    - Review directly related dependencies and compatibility
+    - Update the npm lockfile consistently
+    - Resolve lint errors introduced by the React 19.3 upgrade
+    - Validate lint, type checking, Prisma generation, and production build
+    - Preserve existing authentication, authorization, audio, Admin, and User behavior
+  - Status: Completed
+  - Result:
+    - Next.js 16.3.5 and React/React DOM 19.3.0 are installed with a consistent npm lockfile.
+    - React 19.3 lint errors were resolved without changing the audio/auth behavior.
+    - ESLint, TypeScript, Prisma Client generation, and production compilation passed.
+    - Build runtime emitted expected DATABASE_URL errors because this environment has no database credentials; the build still exited successfully.
+
+---
+
+## Next Sprint
+
+### Needs Review
+
+- [ ] Production Security & Database Readiness
+  - Owner: Arnon
+  - Area: Security / Infrastructure
+  - Priority: Critical
+  - Requirements:
+    - Unify JWT session secret configuration and reject unsafe production fallbacks
+    - Align ownership and admin authorization across Server Actions and API routes
+    - Validate database environment configuration and production Docker wiring
+    - Add a repeatable automated test foundation for auth, authorization, and Spot CRUD
+  - Status: Needs Review
+  - Result:
+    - SESSION_SECRET is the canonical JWT secret with production length checks and no hard-coded production fallback.
+    - Spot API ownership now supports the same admin override policy as Server Actions; read APIs share the existing fallback behavior.
+    - Docker Compose now fails early when DATABASE_URL, DIRECT_URL, or SESSION_SECRET is missing.
+    - Added `npm test`, database scripts, and five passing auth/validation tests.
+    - TypeScript, lint, Prisma generation, and production build pass; live database verification remains pending real credentials.
+
+- [x] Local Development Demo Login
+  - Owner: Arnon
+  - Area: Authentication / Development
+  - Priority: High
+  - Requirements:
+    - Keep localhost login usable without a configured database
+    - Ensure seeded in-memory demo credentials match their documented passwords
+  - Status: Completed
+  - Result:
+    - Corrected demo and admin bcrypt hashes; localhost login verified with HTTP 200 for both accounts.
+
+- [ ] Campus Map, Media Library & Spot UX Upgrade
+  - Owner: Arnon (Admin / Shared integration; coordinate User UI with Ninja)
+  - Area: Spot Core / Admin / Shared UX
+  - Priority: Critical
+  - Requirements:
+    - Replace image and audio URL inputs with in-system media library pickers
+    - Add Thaksin University Phatthalung campus-only map pinning and map display
+    - Require authentication before opening the create-spot flow; remove add-spot CTA from home feed
+    - Show campus map and existing spot pins on the home page without allowing navigation outside campus bounds
+    - Replace noise display with a clear dashboard-style gauge
+    - Allow Admin to analyze uploaded ambient audio and confirm or override the suggested noise level
+    - Add reusable modal and toast notifications for these flows
+    - Keep existing visual structure while improving button affordances and click states
+  - Status: Needs Review
+  - Result:
+    - Added campus-bounded Leaflet map with pin selection and home-page spot map.
+    - Added image/audio media-library picker flow and secure audio upload/serving support.
+    - Added campus coordinate validation, create-page login redirect, dashboard-style noise gauge, and admin audio RMS analysis with manual level confirmation.
+    - Removed home-page add CTA and filtered unauthenticated sidebar navigation; existing admin toast/modal flows remain in use.
+    - TypeScript, lint, tests, and production build pass. Build logs still warn when DATABASE_URL is intentionally absent in local demo mode.
+    - ปรับ AdminSidebar ให้ใช้โครงสร้าง dark sidebar แบบหน้าเว็บตัวอย่าง พร้อมเส้นแบ่งกลุ่มเมนูและเมนูหลังบ้านเท่านั้น
+    - Sidebar หน้า Home ทั้งผู้ใช้ทั่วไปและผู้ใช้ที่ล็อกอินแล้วเอาเมนูเสียงแนะนำ/เสียงยอดนิยมออก และเพิ่มเมนูจัดการ Admin เมื่อเป็นผู้ดูแลระบบ
+    - เชื่อมเมนู Admin ใน Sidebar ไปยังแท็บต่าง ๆ ของ `/admin` ผ่าน query string และตัดเมนู “จัดการระบบ” ที่ซ้ำซ้อนออก
+    - Sidebar หน้า Home ถูกลดเหลือเมนู Home เพียงรายการเดียวตามแบบผู้ใช้ทั่วไป โดยย้ายเมนูจัดการไว้เฉพาะใน AdminSidebar ของ `/admin`
+    - ปรับโลโก้ Admin ให้กลับ `/admin` ภายในหลังบ้าน และปุ่ม “ชมหน้าเว็บ” เปิดหน้า Home ผู้ใช้ในแท็บเดิมเพื่อใช้ตรวจสอบการแสดงผลได้ทันที
+    - แก้ z-index ของ Media Picker ไม่ให้แผนที่ลอยทับ modal และจำกัด picker ให้เห็นเฉพาะ `general` สำหรับภาพหรือ `audio` สำหรับเสียง พร้อมปิดการแก้ไข URL ในฟอร์ม Admin
+    - เพิ่มการย้ายไฟล์ในคลังสื่อด้วยเมนูสามจุดเลือกโฟลเดอร์ปลายทาง และรองรับการลากไฟล์ไปยังโฟลเดอร์อื่นเพื่อเปิดขั้นตอนย้าย
+    - ขยายหน้า Themes เป็นตัวปรับแต่งสีทุกส่วนด้วย color picker, คำนวณชุดสี Light/Dark, บันทึก preset ตั้งชื่อพร้อม swatches และเรียกกลับมาแก้ไขได้
+    - แยกตัวแก้ไขเป็นโหมดธีมสว่าง/ธีมมืด พร้อมคำนวณชุดสีอีกโหมดให้อัตโนมัติจากโหมดที่กำลังเลือก
+    - ย้ายหน้า Admin มาแสดงที่ `/` สำหรับ Session ที่มี role `ADMIN`; เส้นทาง `/admin` เดิมเปลี่ยนเป็น redirect กลับ `/` และ Login ทุก role กลับเข้า `/` ตาม session
