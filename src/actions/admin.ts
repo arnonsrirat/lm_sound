@@ -133,13 +133,6 @@ export async function adminUpdateSpotAction(
 
     const existing = await prisma.spot.findUnique({ where: { id: spotId }, select: { id: true } });
     if (!existing) {
-      const fallbackIndex = FALLBACK_SPOTS.findIndex((spot) => spot.id === spotId);
-      if (fallbackIndex >= 0) {
-        FALLBACK_SPOTS.splice(fallbackIndex, 1);
-        revalidatePath("/");
-        revalidatePath("/admin");
-        return { success: true, statusCode: 200 };
-      }
       return { success: false, error: "ไม่พบสถานที่นี้ในระบบ (404)", statusCode: 404 };
     }
 
@@ -198,6 +191,14 @@ export async function adminUpdateSpotAction(
 export async function adminDeleteSpotAction(spotId: string): Promise<ActionResult> {
   try {
     await requireAdmin();
+
+    const fallbackIndex = FALLBACK_SPOTS.findIndex((spot) => spot.id === spotId);
+    if (fallbackIndex >= 0) {
+      FALLBACK_SPOTS.splice(fallbackIndex, 1);
+      revalidatePath("/");
+      revalidatePath("/admin");
+      return { success: true, statusCode: 200 };
+    }
 
     const existing = await prisma.spot.findUnique({ where: { id: spotId }, select: { id: true } });
     if (!existing) {
