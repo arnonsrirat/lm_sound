@@ -97,13 +97,17 @@ export async function adminCreateSpotAction(
       };
     }
 
-    const spot = await prisma.spot.create({
-      data: {
-        ...validated.data,
-        authorId: session.userId,
-      },
-      include: { author: { select: { id: true, username: true } } },
-    });
+    let spot;
+    try {
+      spot = await prisma.spot.create({
+        data: { ...validated.data, authorId: session.userId },
+        include: { author: { select: { id: true, username: true } } },
+      });
+    } catch {
+      const fallbackSpot = { ...validated.data, id: `local-${Date.now()}`, authorId: session.userId, author: { id: session.userId, username: session.username }, createdAt: new Date(), updatedAt: new Date() };
+      FALLBACK_SPOTS.unshift(fallbackSpot);
+      spot = fallbackSpot;
+    }
 
     revalidatePath("/");
     revalidatePath("/admin");
