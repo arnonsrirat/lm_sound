@@ -38,7 +38,7 @@ export async function updateSiteSettingsAction(
     if (!validated.success) {
       return {
         success: false,
-        error: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบฟิลด์ต่างๆ",
+        error: Object.values(validated.error.flatten().fieldErrors).flat().filter(Boolean).join(" • ") || "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบฟิลด์ต่างๆ",
         fieldErrors: validated.error.flatten().fieldErrors,
         statusCode: 400,
       };
@@ -91,7 +91,7 @@ export async function adminCreateSpotAction(
     if (!validated.success) {
       return {
         success: false,
-        error: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบฟิลด์ต่างๆ",
+        error: Object.values(validated.error.flatten().fieldErrors).flat().filter(Boolean).join(" • ") || "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบฟิลด์ต่างๆ",
         fieldErrors: validated.error.flatten().fieldErrors,
         statusCode: 400,
       };

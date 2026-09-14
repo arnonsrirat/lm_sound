@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMediaFilesAction, uploadMediaAction, deleteMediaAction } from "@/actions/media";
+import { getMediaFilesAction, uploadMediaAction, deleteMediaAction, updateMediaNoteAction } from "@/actions/media";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -49,5 +49,16 @@ export async function DELETE(req: NextRequest) {
       { success: false, error: "เกิดข้อผิดพลาดในการลบไฟล์" },
       { status: 500 }
     );
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json() as { fileUrl?: string; note?: string | null };
+    if (!body.fileUrl) return NextResponse.json({ success: false, error: "กรุณาระบุไฟล์ที่ต้องการแก้ไข" }, { status: 400 });
+    const result = await updateMediaNoteAction(body.fileUrl, body.note ?? null);
+    return NextResponse.json(result, { status: result.statusCode || (result.success ? 200 : 400) });
+  } catch {
+    return NextResponse.json({ success: false, error: "บันทึกโน้ตไม่สำเร็จ" }, { status: 500 });
   }
 }

@@ -42,6 +42,7 @@ model GoogleDriveConnection {
 model MediaAsset {
   id              String   @id @default(cuid())
   name            String
+  note            String?
   folder          String
   mimeType        String
   size            Int

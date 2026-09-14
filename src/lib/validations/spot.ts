@@ -41,12 +41,14 @@ export const spotSchema = z.object({
     .string()
     .min(1, "กรุณาระบุ URL ของรูปภาพ")
     .url("รูปแบบ URL รูปภาพไม่ถูกต้อง")
-    .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(jpg|jpeg|png|webp|avif)$/i, "พาธรูปภาพต้องเป็นไฟล์ภาพ")),
+    .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(jpg|jpeg|png|webp|avif)$/i, "พาธรูปภาพต้องเป็นไฟล์ภาพ"))
+    .or(z.string().regex(/^\/api\/admin\/media\/[a-zA-Z0-9_-]+$/, "พาธรูปภาพจากคลังไม่ถูกต้อง")),
   audioUrl: z
     .string()
     .min(1, "กรุณาระบุ URL ของไฟล์เสียงบรรยากาศ")
     .url("รูปแบบ URL เสียงไม่ถูกต้อง")
-    .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(mp3|wav|ogg|m4a)$/i, "พาธเสียงต้องเป็นไฟล์เสียง")),
+    .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(mp3|wav|ogg|m4a)$/i, "พาธเสียงต้องเป็นไฟล์เสียง"))
+    .or(z.string().regex(/^\/api\/admin\/media\/[a-zA-Z0-9_-]+$/, "พาธเสียงจากคลังไม่ถูกต้อง")),
   latitude: z.number().finite().min(7.78).max(7.84).optional(),
   longitude: z.number().finite().min(99.90).max(99.98).optional(),
 });

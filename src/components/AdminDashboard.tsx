@@ -23,6 +23,8 @@ import {
   FolderOpen,
   ArrowRight,
   Upload,
+  Sun,
+  Moon,
 } from "lucide-react";
 import type { SiteSettings, FestivalTheme } from "@/lib/site-settings";
 import { FESTIVAL_THEME_LABELS } from "@/lib/site-settings";
@@ -71,6 +73,22 @@ export default function AdminDashboard({
     onConfirm: () => void | Promise<void>;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const nextIsDark = localStorage.getItem("lmsound-theme") !== "light";
+    setIsDark(nextIsDark);
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    document.documentElement.classList.toggle("light", !nextIsDark);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextIsDark = !isDark;
+    setIsDark(nextIsDark);
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    document.documentElement.classList.toggle("light", !nextIsDark);
+    localStorage.setItem("lmsound-theme", nextIsDark ? "dark" : "light");
+  };
 
   // Picker Modal State for selecting image into a specific settings field
   const [pickerModal, setPickerModal] = useState<{
@@ -204,6 +222,9 @@ export default function AdminDashboard({
           </div>
 
           <div className="flex items-center gap-3">
+            <button type="button" onClick={toggleTheme} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-purple-500/25 text-purple-200 hover:bg-purple-600/20" aria-label="สลับธีมสว่างและมืด" title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}>
+              {isDark ? <Sun className="h-4 w-4 text-amber-300" /> : <Moon className="h-4 w-4 text-purple-500" />}
+            </button>
             <a
               href="/"
               className="hidden"

@@ -7,7 +7,9 @@ import { deleteGoogleDriveFile, moveGoogleDriveFile, uploadToGoogleDrive } from 
 import { prisma } from "@/lib/prisma";
 
 export interface MediaItem {
+  id?: string;
   name: string;
+  note?: string | null;
   url: string;
   folder: string;
   size: number;
@@ -64,7 +66,7 @@ export async function getMediaFilesAction(
       orderBy: { createdAt: "desc" },
     });
     for (const asset of storedAssets) {
-      items.push({ name: asset.name, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
+      items.push({ id: asset.id, name: asset.name, note: asset.note, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
     }
 
     // 1. อ่านไฟล์จากดิสก์ (ถ้าโฟลเดอร์เข้าถึงได้)
@@ -145,6 +147,8 @@ export async function uploadMediaAction(
     await requireAdmin();
 
     const file = formData.get("file") as File | null;
+    const noteInput = formData.get("note");
+    const note = typeof noteInput === "string" && noteInput.trim() ? noteInput.trim().slice(0, 160) : null;
     const folderInput = (formData.get("folder") as string) || "general";
     const folder: MediaFolder = ALLOWED_FOLDERS.includes(folderInput as MediaFolder)
       ? (folderInput as MediaFolder)
@@ -173,8 +177,8 @@ export async function uploadMediaAction(
     }
 
     try {
-      const asset = await uploadToGoogleDrive(file, folder);
-      return { success: true, data: { name: asset.name, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() }, statusCode: 201 };
+      const asset = await uploadToGoogleDrive(file, folder, note);
+      return { success: true, data: { id: asset.id, name: asset.name, note: asset.note, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() }, statusCode: 201 };
     } catch (error) {
       if (error instanceof Error && error.message === "GOOGLE_DRIVE_NOT_CONNECTED") {
         return { success: false, error: "ยังไม่ได้เชื่อมต่อ Google Drive กรุณาเชื่อมต่อก่อนอัปโหลดไฟล์", statusCode: 412 };
@@ -273,7 +277,7 @@ export async function moveMediaAction(fileUrl: string, targetFolder: MediaFolder
       if (asset.folder === targetFolder) return { success: false, error: "ไฟล์อยู่ในโฟลเดอร์นี้แล้ว", statusCode: 400 };
       await moveGoogleDriveFile(asset.driveFileId, targetFolder);
       const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { folder: targetFolder } });
-      return { success: true, data: { name: updated.name, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
+      return { success: true, data: { id: updated.id, name: updated.name, note: updated.note, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
     }
     const match = fileUrl.match(/^\/uploads\/([^/]+)\/([^/]+)$/);
     if (!match || !ALLOWED_FOLDERS.includes(match[1] as MediaFolder)) return { success: false, error: "ไฟล์ไม่ถูกต้อง", statusCode: 400 };
@@ -289,5 +293,18 @@ export async function moveMediaAction(fileUrl: string, targetFolder: MediaFolder
     return { success: true, data: { name, url: `/uploads/${targetFolder}/${name}`, folder: targetFolder, size: mem?.size || 0, updatedAt: new Date().toISOString() }, statusCode: 200 };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "ย้ายไฟล์ไม่สำเร็จ", statusCode: 500 };
+  }
+}
+
+export async function updateMediaNoteAction(fileUrl: string, note: string | null): Promise<MediaActionResult<MediaItem>> {
+  try {
+    await requireAdmin();
+    const asset = await prisma.mediaAsset.findFirst({ where: { url: fileUrl } });
+    if (!asset) return { success: false, error: "ไม่พบไฟล์ในฐานข้อมูล", statusCode: 404 };
+    const normalizedNote = note?.trim() ? note.trim().slice(0, 160) : null;
+    const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { note: normalizedNote } });
+    return { success: true, data: { id: updated.id, name: updated.name, note: updated.note, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "บันทึกโน้ตไม่สำเร็จ", statusCode: 500 };
   }
 }

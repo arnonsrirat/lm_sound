@@ -109,18 +109,21 @@ async function getOrCreateFolder(accessToken: string, name: string, parentId?: s
   return created.id;
 }
 
-export async function uploadToGoogleDrive(file: File, folder: string) {
+export async function uploadToGoogleDrive(file: File, folder: string, note: string | null = null) {
   const { accessToken, connection } = await getAccessToken();
   const rootFolderId = connection.rootFolderId || await getOrCreateFolder(accessToken, "LMSound Uploads");
   if (!connection.rootFolderId) await prisma.googleDriveConnection.update({ where: { id: connection.id }, data: { rootFolderId } });
   const folderId = await getOrCreateFolder(accessToken, folder, rootFolderId);
+  const extension = file.name.includes(".") ? `.${file.name.split(".").pop()?.toLowerCase()}` : "";
+  const sequence = (await prisma.mediaAsset.count({ where: { folder } })) + 1;
+  const generatedName = `lmsound_${folder}_${String(sequence).padStart(4, "0")}${extension}`;
   const boundary = `lmsound-${crypto.randomUUID()}`;
-  const metadata = JSON.stringify({ name: file.name, parents: [folderId] });
+  const metadata = JSON.stringify({ name: generatedName, parents: [folderId] });
   const bytes = Buffer.from(await file.arrayBuffer());
   const body = Buffer.concat([Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${file.type || "application/octet-stream"}\r\n\r\n`), bytes, Buffer.from(`\r\n--${boundary}--`)]);
   const uploaded = await (await driveRequest(`${DRIVE_UPLOAD_API}?uploadType=multipart&fields=id,name,mimeType,size,webViewLink`, accessToken, { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body })).json() as { id: string; name: string; mimeType: string; size?: string; webViewLink?: string };
   const url = `/api/admin/media/${uploaded.id}`;
-  const asset = await prisma.mediaAsset.create({ data: { name: uploaded.name, folder, mimeType: uploaded.mimeType || file.type || "application/octet-stream", size: Number(uploaded.size || file.size), driveFileId: uploaded.id, driveWebViewUrl: uploaded.webViewLink || null, url } });
+  const asset = await prisma.mediaAsset.create({ data: { name: uploaded.name, note, folder, mimeType: uploaded.mimeType || file.type || "application/octet-stream", size: Number(uploaded.size || file.size), driveFileId: uploaded.id, driveWebViewUrl: uploaded.webViewLink || null, url } });
   return asset;
 }
 
