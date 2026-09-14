@@ -19,6 +19,7 @@ import {
   Wind,
   Waves,
   Headphones,
+  History,
 } from "lucide-react";
 
 export default function NowPlayingSidebar() {
@@ -37,6 +38,9 @@ export default function NowPlayingSidebar() {
     setIsNowPlayingOpen,
     applyAmbiencePreset,
     activePresetId,
+    recentlyPlayed,
+    clearRecentlyPlayed,
+    playSpot,
   } = useAudio();
 
   const toggleMute = () => {
@@ -243,18 +247,25 @@ export default function NowPlayingSidebar() {
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5 text-purple-500" />
-            <span>Sound Mixer ผสมเสียง</span>
+            <span>Focus Recipe & Mixer</span>
           </span>
-          <span className="text-[10px] text-purple-400 font-bold uppercase">Real-time</span>
+          {activePresetId === "custom" ? (
+            <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-400/30">
+              Custom Mode
+            </span>
+          ) : (
+            <span className="text-[10px] text-purple-400 font-bold uppercase">Real-time</span>
+          )}
         </div>
 
-        {/* Quick Ambience Presets 1-Click Chips */}
+        {/* Quick Focus Recipe 1-Click Chips */}
         <div className="grid grid-cols-2 gap-1.5">
           {AMBIENCE_PRESETS.map((preset) => (
             <button
               key={preset.id}
               onClick={() => applyAmbiencePreset(preset.id)}
               type="button"
+              title={`${preset.name} (${preset.thaiName}) - ${preset.description}`}
               className={`px-2 py-1.5 rounded-xl text-[10px] font-bold text-left transition flex items-center gap-1.5 border cursor-pointer ${
                 activePresetId === preset.id
                   ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-pink-400 shadow-sm shadow-purple-900/40 scale-[1.02]"
@@ -301,6 +312,71 @@ export default function NowPlayingSidebar() {
             </div>
           ))}
         </div>
+
+        {/* Recently Played History Queue */}
+        {recentlyPlayed && recentlyPlayed.length > 0 && (
+          <div className="mt-4 pt-3.5 border-t border-purple-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-200">
+                <History className="w-3.5 h-3.5 text-fuchsia-400" />
+                <span>เพิ่งเปิดฟังล่าสุด</span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                  {recentlyPlayed.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={clearRecentlyPlayed}
+                className="text-[10px] text-purple-400/60 hover:text-red-400 transition cursor-pointer"
+                title="ล้างประวัติการฟัง"
+              >
+                ล้าง
+              </button>
+            </div>
+            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5">
+              {recentlyPlayed.map((track) => {
+                const isCurrent = track.id === activeTrack.id;
+                return (
+                  <button
+                    key={track.id}
+                    type="button"
+                    onClick={() => playSpot(track)}
+                    className={`w-full flex items-center gap-2 p-1.5 rounded-xl text-left transition border cursor-pointer ${
+                      isCurrent
+                        ? "bg-purple-600/30 border-purple-400/50 text-white shadow-sm ring-1 ring-purple-400/30"
+                        : "bg-purple-950/20 border-purple-500/15 hover:bg-purple-900/30 text-purple-200/90"
+                    }`}
+                  >
+                    <div className="w-7 h-7 rounded-lg overflow-hidden shrink-0 bg-purple-900/50 flex items-center justify-center">
+                      {track.imageUrl ? (
+                        <img
+                          src={track.imageUrl}
+                          alt={track.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Music2 className="w-3.5 h-3.5 text-purple-400" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold truncate leading-tight">
+                        {track.title}
+                      </p>
+                      <p className="text-[9px] text-purple-300/60 truncate leading-tight">
+                        {track.location || track.subtitle}
+                      </p>
+                    </div>
+                    {isCurrent && isPlaying ? (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0 mr-1" />
+                    ) : (
+                      <Play className="w-3 h-3 text-purple-400/50 group-hover:text-white shrink-0 mr-1" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );

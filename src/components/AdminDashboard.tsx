@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
+import Link from "next/link";
 import {
   Save,
   Plus,
@@ -225,13 +226,13 @@ export default function AdminDashboard({
             <button type="button" onClick={toggleTheme} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-purple-500/25 text-purple-200 hover:bg-purple-600/20" aria-label="สลับธีมสว่างและมืด" title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}>
               {isDark ? <Sun className="h-4 w-4 text-amber-300" /> : <Moon className="h-4 w-4 text-purple-500" />}
             </button>
-            <a
+            <Link
               href="/"
               className="hidden"
             >
               <span>ชมหน้าเว็บ</span>
               <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            </Link>
 
             {(tab === "logos-banners" || tab === "themes" || tab === "texts") && (
               <button

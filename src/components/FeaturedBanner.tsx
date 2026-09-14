@@ -125,8 +125,14 @@ export default function FeaturedBanner({ spots, spot, bannerSettings }: Featured
 
   return (
     <section id="recommended" className="relative mb-8 group scroll-mt-20">
-      {/* Outer Glow container */}
-      <div className="relative rounded-3xl overflow-hidden border border-purple-500/35 bg-[#0f071d] shadow-2xl backdrop-blur-xl">
+      {/* Outer Glow container with Living Sound State */}
+      <div
+        className={`relative rounded-3xl overflow-hidden border backdrop-blur-xl transition-all duration-500 ${
+          isThisItemPlaying
+            ? "border-pink-500/70 shadow-[0_0_35px_rgba(236,72,153,0.3)] ring-2 ring-pink-500/40 living-card-active bg-[#120724]"
+            : "border-purple-500/35 bg-[#0f071d] shadow-2xl"
+        }`}
+      >
         {/* Background Image / Ambient Artwork (แบนเนอร์แยกตามธีมสว่าง/มืด — แอดมินตั้งได้) */}
         <div className="absolute inset-0">
           <img
@@ -137,7 +143,9 @@ export default function FeaturedBanner({ spots, spot, bannerSettings }: Featured
                 : bannerSettings?.bannerLight || currentItem.imageUrl || "/logo.png"
             }
             alt={currentItem.title}
-            className="w-full h-full object-cover object-center opacity-30 group-hover:scale-105 transition-transform duration-1000 ease-out"
+            className={`w-full h-full object-cover object-center transition-all duration-1000 ease-out ${
+              isThisItemPlaying ? "scale-105 opacity-40 brightness-105" : "opacity-30 group-hover:scale-105"
+            }`}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0414] via-[#0e071c]/90 to-[#180d2e]/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0414] via-transparent to-transparent" />
@@ -162,13 +170,30 @@ export default function FeaturedBanner({ spots, spot, bannerSettings }: Featured
         {/* Banner Content */}
         <div className="relative z-10 p-6 md:p-8 lg:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="max-w-xl space-y-3">
-            {/* Tag Badge (ข้อความหัวแบนเนอร์ — แอดมินแก้ได้) */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold purple-pill backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-              <span>{bannerSettings?.bannerTitle || "เสียงแนะนำ (Recommended Soundscape)"}</span>
-            </div>
+            {/* Tag Badge / Living Sound Indicator */}
+            {isThisItemPlaying ? (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-black/60 border border-pink-400/50 text-pink-200 backdrop-blur-md shadow-lg animate-in fade-in duration-300">
+                <div className="flex items-end gap-1 h-3.5">
+                  <span className="w-1 bg-pink-400 rounded-full animate-[waveBounce_0.8s_ease-in-out_infinite]" />
+                  <span className="w-1 bg-fuchsia-400 rounded-full animate-[waveBounce_1.1s_ease-in-out_infinite_0.15s]" />
+                  <span className="w-1 bg-purple-400 rounded-full animate-[waveBounce_0.9s_ease-in-out_infinite_0.3s]" />
+                  <span className="w-1 bg-cyan-400 rounded-full animate-[waveBounce_1.2s_ease-in-out_infinite_0.1s]" />
+                </div>
+                <span className="font-bold tracking-wide flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>กำลังถ่ายทอดเสียงสด (LIVE AMBIENT SOUND)</span>
+                </span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold purple-pill backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                <span>{bannerSettings?.bannerTitle || "เสียงแนะนำ (Recommended Soundscape)"}</span>
+              </div>
+            )}
 
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-snug">
+            <h2 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-snug transition-colors ${
+              isThisItemPlaying ? "text-pink-100" : "text-white"
+            }`}>
               {currentItem.title}
             </h2>
 
@@ -191,27 +216,32 @@ export default function FeaturedBanner({ spots, spot, bannerSettings }: Featured
 
           {/* Action Button */}
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <button
-              onClick={handlePlayToggle}
-              type="button"
-              className={`inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm shadow-xl transition-all transform active:scale-95 cursor-pointer ${
-                isThisItemPlaying
-                  ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-purple-500/50 ring-4 ring-purple-500/30 animate-pulse"
-                  : "purple-gradient-btn"
-              }`}
-            >
-              {isThisItemPlaying ? (
-                <>
-                  <Pause className="w-5 h-5 fill-current" />
-                  <span>หยุดฟังเสียง</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5 fill-current ml-0.5" />
-                  <span>ทดลองฟังเสียงบรรยากาศ</span>
-                </>
+            <div className="relative">
+              {isThisItemPlaying && (
+                <div className="absolute -inset-1.5 rounded-full border-2 border-pink-400/60 sound-ripple pointer-events-none" />
               )}
-            </button>
+              <button
+                onClick={handlePlayToggle}
+                type="button"
+                className={`inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-sm shadow-xl transition-all transform active:scale-95 cursor-pointer relative z-10 ${
+                  isThisItemPlaying
+                    ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-purple-500/50 ring-2 ring-pink-300 animate-pulse"
+                    : "purple-gradient-btn"
+                }`}
+              >
+                {isThisItemPlaying ? (
+                  <>
+                    <Pause className="w-5 h-5 fill-current" />
+                    <span>หยุดฟังเสียง</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5 fill-current ml-0.5" />
+                    <span>ทดลองฟังเสียงบรรยากาศ</span>
+                  </>
+                )}
+              </button>
+            </div>
 
             {currentItem.id.startsWith("spot-") && (
               <Link

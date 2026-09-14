@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Play, Pause, MapPin, Trash2, Edit3, User, Heart } from "lucide-react";
+import { Play, Pause, MapPin, Trash2, Edit3, User, Heart, Sparkles } from "lucide-react";
 import { noiseLevelLabels, type NoiseLevel } from "@/lib/validations/spot";
 import { deleteSpotAction } from "@/actions/spot";
 import { useAudio } from "@/context/AudioContext";
@@ -25,6 +25,8 @@ export interface SpotCardProps {
     } | null;
   };
   currentUserId?: string | null;
+  matchScore?: number;
+  isTopMatch?: boolean;
 }
 
 // แยกสิ่งอำนวยความสะดวกจากเนื้อหา (Spot Amenities Tags)
@@ -58,23 +60,25 @@ function getAmenities(title: string, description: string): Array<{ label: string
   return amenities.slice(0, 3);
 }
 
-export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
+export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }: SpotCardProps) {
   const { isPlaying, activeTrack, playSpot, togglePlay } = useAudio();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  const isThisPlaying = isPlaying && activeTrack.id === spot.id;
-
-  // โหลดสถานะ Favorite จาก LocalStorage
-  useEffect(() => {
+  const [isFavorite, setIsFavorite] = useState(() => {
+    if (typeof window === "undefined") return false;
     try {
       const raw = localStorage.getItem("lmsound_favorites");
       if (raw) {
         const favs: string[] = JSON.parse(raw);
-        setIsFavorite(favs.includes(spot.id));
+        return favs.includes(spot.id);
       }
     } catch {}
+    return false;
+  });
 
+  const isThisPlaying = isPlaying && activeTrack.id === spot.id;
+
+  // Sync favorite changes across tabs and components
+  useEffect(() => {
     const handleFavSync = () => {
       try {
         const raw = localStorage.getItem("lmsound_favorites");
@@ -142,7 +146,7 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
       if (!res.success) {
         alert(res.error || "เกิดข้อผิดพลาดในการลบ");
       }
-    } catch (err) {
+    } catch {
       alert("ไม่สามารถลบได้");
     } finally {
       setIsDeleting(false);
@@ -154,7 +158,7 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
       id={`spot-${spot.id}`}
       className={`glass-card rounded-2xl overflow-hidden flex flex-col group relative border bg-[var(--card-bg)] shadow-xl transition-all duration-300 ${
         isThisPlaying
-          ? "border-pink-500/60 shadow-pink-500/20 ring-1 ring-pink-500/30"
+          ? "border-pink-500/80 ring-2 ring-pink-500/50 shadow-2xl living-card-active scale-[1.01]"
           : "border-purple-500/25 hover:border-purple-400/50"
       }`}
     >
@@ -163,7 +167,9 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
         <img
           src={spot.imageUrl}
           alt={spot.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
+            isThisPlaying ? "scale-105 brightness-95" : "group-hover:scale-105"
+          }`}
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/35 to-transparent" />
@@ -183,9 +189,9 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
           <Heart className={`w-4 h-4 ${isFavorite ? "fill-current animate-pulse" : ""}`} />
         </button>
 
-        {/* Audio Wave Visualizer Overlay (แสดงเมื่อการ์ดใบนี้กำลังเล่นเสียง) */}
+        {/* Living Sound Visualizer Overlay (แสดงเมื่อการ์ดใบนี้กำลังเล่นเสียง) */}
         {isThisPlaying && (
-          <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-pink-400/40 shadow-lg z-20 animate-in fade-in duration-300">
+          <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-pink-400/50 shadow-lg z-20 animate-in fade-in duration-300">
             {/* 6-Bar Animated Audio Waves */}
             <div className="flex items-end gap-1 h-3.5">
               <span className="w-1 bg-pink-400 rounded-full animate-[waveBounce_0.8s_ease-in-out_infinite]" />
@@ -195,37 +201,65 @@ export default function SpotCard({ spot, currentUserId }: SpotCardProps) {
               <span className="w-1 bg-pink-400 rounded-full animate-[waveBounce_0.7s_ease-in-out_infinite_0.25s]" />
               <span className="w-1 bg-fuchsia-400 rounded-full animate-[waveBounce_1.0s_ease-in-out_infinite_0.2s]" />
             </div>
-            <span className="text-[10px] font-bold text-pink-200 tracking-wide">
-              กำลังเล่นเสียงบรรยากาศ
+            <span className="text-[10px] font-bold text-pink-200 tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>LIVE SOUND</span>
             </span>
           </div>
         )}
 
-        {/* Audio Preview Play Button in Purple Theme */}
-        <button
-          onClick={handleTogglePlay}
-          type="button"
-          aria-label={isThisPlaying ? "หยุดฟังเสียงบรรยากาศ" : "ฟังเสียงบรรยากาศ"}
-          className={`absolute bottom-3 right-3 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 cursor-pointer z-20 ${
-            isThisPlaying
-              ? "bg-gradient-to-tr from-pink-500 to-purple-600 text-white shadow-purple-500/50 animate-pulse ring-2 ring-pink-400/50"
-              : "bg-purple-950/85 text-purple-200 hover:text-white hover:bg-purple-600/60 backdrop-blur-md border border-purple-400/40 hover:scale-105"
-          }`}
-        >
-          {isThisPlaying ? (
-            <Pause className="w-5 h-5 fill-current" />
-          ) : (
-            <Play className="w-5 h-5 ml-0.5 fill-current" />
+        {/* Audio Preview Play Button with Sound Ripple Effect */}
+        <div className="absolute bottom-3 right-3 z-20">
+          {isThisPlaying && (
+            <div className="absolute -inset-1.5 rounded-full border-2 border-pink-400/60 sound-ripple pointer-events-none" />
           )}
-        </button>
+          <button
+            onClick={handleTogglePlay}
+            type="button"
+            aria-label={isThisPlaying ? "หยุดฟังเสียงบรรยากาศ" : "ฟังเสียงบรรยากาศ"}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 cursor-pointer relative z-10 ${
+              isThisPlaying
+                ? "bg-gradient-to-tr from-pink-500 to-purple-600 text-white shadow-purple-500/50 ring-2 ring-pink-300 animate-pulse"
+                : "bg-purple-950/85 text-purple-200 hover:text-white hover:bg-purple-600/60 backdrop-blur-md border border-purple-400/40 hover:scale-105"
+            }`}
+          >
+            {isThisPlaying ? (
+              <Pause className="w-5 h-5 fill-current" />
+            ) : (
+              <Play className="w-5 h-5 ml-0.5 fill-current" />
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Living Audio Spectrum Wave Indicator */}
+      {isThisPlaying && (
+        <div className="w-full h-1 bg-gradient-to-r from-pink-500 via-fuchsia-400 to-purple-500 animate-pulse" />
+      )}
 
       {/* Card Content */}
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          {/* 180-degree Noise Gauge */}
-          <div className="mb-2.5">
+          {/* 180-degree Noise Gauge with Active Sound Indicator & Sound Match Badge */}
+          <div className="mb-2.5 flex items-center justify-between">
             <NoiseGauge noiseLevel={spot.noiseLevel} />
+            <div className="flex items-center gap-1.5">
+              {matchScore !== undefined && matchScore >= 65 && (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${
+                  isTopMatch
+                    ? "bg-gradient-to-r from-amber-500/25 to-pink-500/25 text-amber-200 border-amber-400/50 animate-pulse"
+                    : "bg-teal-500/20 text-teal-200 border-teal-400/30"
+                }`}>
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>{isTopMatch ? "🏆 Best Match" : `${matchScore}% Match`}</span>
+                </span>
+              )}
+              {isThisPlaying && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-400/30 animate-pulse">
+                  <span>กำลังเล่น</span>
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-purple-300/80 mb-2">

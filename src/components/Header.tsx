@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut, ShieldCheck, MapPin, Play, X } from "lucide-react";
+import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut, ShieldCheck, MapPin, Play, X, Flame } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
+import StudyStatsModal from "@/components/StudyStatsModal";
 
 export interface HeaderSettings {
   logoLight: string;
@@ -37,7 +38,7 @@ export default function Header({
   const siteTagline = settings?.siteTagline || "Spatial & Ambient Soundscape";
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { playSpot } = useAudio();
+  const { playSpot, studyStats, isStatsModalOpen, setIsStatsModalOpen } = useAudio();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [isDark, setIsDark] = useState(true);
@@ -313,6 +314,24 @@ export default function Header({
             <span>เพิ่มจุดใหม่</span>
           </Link>
 
+          {/* Daily Study Streak Badge */}
+          <button
+            onClick={() => setIsStatsModalOpen(true)}
+            type="button"
+            aria-label="ดูสถิติการอ่านและสตรีคประจำวัน"
+            title={`สตรีคอ่านหนังสือ: ${studyStats.streakDays || 0} วัน (${studyStats.todayMinutes} นาทีวันนี้)`}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/20 to-rose-500/15 border border-orange-500/40 text-orange-200 hover:text-white hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/15 transition cursor-pointer shadow-sm group"
+          >
+            <Flame className="w-3.5 h-3.5 text-orange-400 group-hover:scale-110 group-hover:text-amber-300 transition-transform animate-pulse" />
+            <span className="text-xs font-bold text-amber-300">
+              {studyStats.streakDays || 0}
+              <span className="text-[10px] font-normal text-orange-200/90 ml-0.5">วัน</span>
+            </span>
+            <span className="text-[10px] text-zinc-400 hidden sm:inline">
+              | {studyStats.todayMinutes}น.
+            </span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -371,6 +390,12 @@ export default function Header({
           )}
         </div>
       </div>
+
+      {/* Study Stats & Streak Modal */}
+      <StudyStatsModal
+        isOpen={isStatsModalOpen}
+        onClose={() => setIsStatsModalOpen(false)}
+      />
     </header>
   );
 }

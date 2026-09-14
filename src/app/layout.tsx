@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AudioProvider } from "@/context/AudioContext";
 import AudioPlayerBar from "@/components/AudioPlayerBar";
+import AmbientAura from "@/components/AmbientAura";
 import { getSiteSettings } from "@/lib/site-settings";
 
 const geistSans = Geist({
@@ -20,6 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${settings.siteName} - Ambient Soundscapes & Relaxation`,
     description: settings.bannerSubtitle,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: settings.siteName || "LMSound",
+    },
+    formatDetection: {
+      telephone: false,
+    },
   };
 }
 
@@ -38,9 +47,10 @@ export default async function RootLayout({
       lang="th"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark ${festivalClass}`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-purple-500/30 selection:text-purple-200 transition-colors">
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-purple-500/30 selection:text-purple-200 transition-colors relative">
         <AudioProvider>
-          <div className="flex-1 flex flex-col">{children}</div>
+          <AmbientAura />
+          <div className="flex-1 flex flex-col relative z-0">{children}</div>
           <AudioPlayerBar />
         </AudioProvider>
       </body>
