@@ -1,8 +1,176 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-.lmsound-map-pin { background: transparent; border: 0; }
-.lmsound-map-pin-dot { display: block; width: 18px; height: 18px; border-radius: 9999px 9999px 9999px 0; transform: rotate(-45deg); background: #a855f7; border: 2px solid #f5d0fe; box-shadow: 0 2px 10px rgba(168, 85, 247, .65); }
+/* Map Pin Styles with 3 Noise-Level Types */
+.lmsound-map-pin {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.lmsound-pin-container {
+  position: relative;
+  width: 36px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Pulsing radar ring beneath pin */
+.lmsound-pin-pulse {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  opacity: 0.6;
+  animation: pinPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes pinPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  70% { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* Pin Teardrop Body */
+.lmsound-pin-body {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2.5px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  position: relative;
+  z-index: 10;
+}
+
+.lmsound-pin-container:hover .lmsound-pin-body {
+  transform: rotate(-45deg) scale(1.22);
+}
+
+/* Pin Icon centered inside teardrop */
+.lmsound-pin-icon {
+  transform: rotate(45deg);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* 1. Quiet Pin (เขียวมรกต - โซนเงียบสงบ) */
+.lmsound-pin-quiet .lmsound-pin-body {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.75), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.lmsound-pin-quiet .lmsound-pin-pulse {
+  background: rgba(16, 185, 129, 0.55);
+}
+.lmsound-pin-quiet:hover .lmsound-pin-body {
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.95), 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* 2. Moderate Pin (ส้มอำพัน/ทอง - โซนปานกลาง) */
+.lmsound-pin-moderate .lmsound-pin-body {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.75), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.lmsound-pin-moderate .lmsound-pin-pulse {
+  background: rgba(245, 158, 11, 0.55);
+}
+.lmsound-pin-moderate:hover .lmsound-pin-body {
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.95), 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* 3. Lively Pin (แดงชมพู/ส้มแดง - โซนคึกคัก) */
+.lmsound-pin-lively .lmsound-pin-body {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.75), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.lmsound-pin-lively .lmsound-pin-pulse {
+  background: rgba(244, 63, 94, 0.55);
+}
+.lmsound-pin-lively:hover .lmsound-pin-body {
+  box-shadow: 0 0 24px rgba(244, 63, 94, 0.95), 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Hologram Card & Glowing effects */
+.hologram-card {
+  background: linear-gradient(135deg, rgba(26, 12, 58, 0.88) 0%, rgba(13, 6, 28, 0.94) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.25), inset 0 0 20px rgba(232, 121, 249, 0.08);
+}
+
+.hologram-glow {
+  text-shadow: 0 0 12px rgba(232, 121, 249, 0.6), 0 0 24px rgba(139, 92, 246, 0.4);
+}
+
+@keyframes radarSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-radar {
+  animation: radarSweep 4s linear infinite;
+}
+
+/* SweetAlert Pop-in Smooth Animation */
+@keyframes sweetAlertPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translateY(12px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03) translateY(-2px);
+  }
+  75% {
+    transform: scale(0.985) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-sweetalert {
+  animation: sweetAlertPopIn 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Audio Waveform Equalizer Bounce Animation */
+@keyframes waveBounce {
+  0%, 100% {
+    height: 3px;
+    opacity: 0.6;
+  }
+  50% {
+    height: 14px;
+    opacity: 1;
+  }
+}
+
+/* Lucky Spot Dice Rolling Animation */
+@keyframes diceSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(180deg) scale(1.2); }
+  50% { transform: rotate(360deg) scale(0.95); }
+  75% { transform: rotate(540deg) scale(1.15); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+
+.animate-dice {
+  animation: diceSpin 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 
 /* ============================================
    โทนหลัก: ธีมมืด = ม่วงดำ (default)

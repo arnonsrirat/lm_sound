@@ -70,6 +70,50 @@ export const PRESET_TRACKS: AudioTrack[] = [
   },
 ];
 
+export interface AmbiencePreset {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  volumes: {
+    rain: number;
+    whitenoise: number;
+    ambient: number;
+    waves: number;
+  };
+}
+
+export const AMBIENCE_PRESETS: AmbiencePreset[] = [
+  {
+    id: "rainy-library",
+    name: "ฝนตกริมหน้าต่างห้องสมุด",
+    emoji: "🌧️",
+    description: "เสียงสายฝนและลมกระทบกระจก เหมาะแก่การอ่านหนังสือลึกซึ้ง",
+    volumes: { rain: 0.8, whitenoise: 0.3, ambient: 0.4, waves: 0.0 },
+  },
+  {
+    id: "lake-breeze",
+    name: "คลื่นลมริมทะเลสาบพัทลุง",
+    emoji: "🌊",
+    description: "เสียงเกลียวคลื่นและลมผิวน้ำ ผ่อนคลายสมองหลังอ่านเตรียมสอบ",
+    volumes: { rain: 0.0, whitenoise: 0.15, ambient: 0.45, waves: 0.75 },
+  },
+  {
+    id: "rainy-cafe",
+    name: "คาเฟ่เคล้าเสียงฝนพรำ",
+    emoji: "☕",
+    description: "บรรยากาศอบอุ่นในร้านกาแฟพร้อมไอฝนโปรยปรายรอบทิศทาง",
+    volumes: { rain: 0.65, whitenoise: 0.35, ambient: 0.5, waves: 0.0 },
+  },
+  {
+    id: "forest-focus",
+    name: "สวนป่าสมาธิยามบ่าย",
+    emoji: "🌲",
+    description: "เสียงลมพัดผ่านแมกไม้ใต้ร่มจามจุรี สงบเงียบและมีสมาธิ",
+    volumes: { rain: 0.1, whitenoise: 0.25, ambient: 0.75, waves: 0.1 },
+  },
+];
+
 interface AudioContextType {
   isPlaying: boolean;
   masterVolume: number;
@@ -78,6 +122,7 @@ interface AudioContextType {
   mixerChannels: MixerChannel[];
   isMixerOpen: boolean;
   isNowPlayingOpen: boolean;
+  activePresetId: string | null;
   togglePlay: () => void;
   play: () => void;
   pause: () => void;
@@ -88,6 +133,7 @@ interface AudioContextType {
   prevTrack: () => void;
   setChannelVolume: (channelId: string, volume: number) => void;
   toggleChannel: (channelId: string) => void;
+  applyAmbiencePreset: (presetId: string) => void;
   setIsMixerOpen: (open: boolean) => void;
   setIsNowPlayingOpen: (open: boolean) => void;
 }
@@ -100,6 +146,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [activeTrack, setActiveTrack] = useState<AudioTrack>(PRESET_TRACKS[0]);
   const [isMixerOpen, setIsMixerOpen] = useState(false);
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(true);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
   const htmlAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -493,6 +540,27 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  // 1-Click Ambience Preset Applicator
+  const applyAmbiencePreset = (presetId: string) => {
+    const preset = AMBIENCE_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+
+    setActivePresetId(presetId);
+    setMixerChannels((prev) =>
+      prev.map((ch) => {
+        const vol = preset.volumes[ch.id as keyof typeof preset.volumes];
+        return {
+          ...ch,
+          volume: vol !== undefined ? vol : ch.volume,
+          enabled: vol !== undefined ? vol > 0 : ch.enabled,
+        };
+      })
+    );
+
+    getOrCreateAudioContext();
+    setIsPlaying(true);
+  };
+
   return (
     <AudioContext.Provider
       value={{
@@ -503,6 +571,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         mixerChannels,
         isMixerOpen,
         isNowPlayingOpen,
+        activePresetId,
         togglePlay,
         play,
         pause,
@@ -513,6 +582,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         prevTrack,
         setChannelVolume,
         toggleChannel,
+        applyAmbiencePreset,
         setIsMixerOpen,
         setIsNowPlayingOpen,
       }}

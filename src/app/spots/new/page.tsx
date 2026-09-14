@@ -10,17 +10,18 @@ export default async function NewSpotPage() {
   if (!session) redirect("/login?next=/spots/new");
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen text-foreground flex flex-col transition-colors">
       <Header currentUser={session ? { userId: session.userId, username: session.username } : null} />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        <Sidebar />
-        <main className="flex-1 md:pl-64 p-4 sm:p-6 pb-24 md:pb-12 min-w-0">
+        <Sidebar role={session?.role} />
+        <main className="flex-1 md:pl-60 lg:pl-64 p-4 sm:p-6 pb-36 sm:pb-32 md:pb-28 min-w-0">
           <SpotForm />
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav role={session?.role} />
     </div>
   );
 }
+

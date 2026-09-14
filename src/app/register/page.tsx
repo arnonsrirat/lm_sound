@@ -97,47 +97,57 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-zinc-950 text-zinc-100 overflow-hidden px-4 py-12">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-background text-foreground overflow-hidden px-4 py-8 sm:py-12">
       {/* Dynamic Ambient Background with Glowing Orbs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[550px] h-[550px] rounded-full bg-teal-500/15 blur-[140px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-600/20 blur-[130px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-purple-900/10 blur-[160px]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[550px] h-[550px] rounded-full bg-fuchsia-500/15 blur-[140px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-600/20 blur-[130px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-purple-900/15 blur-[160px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
       {/* Main Glassmorphic Form Card */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="backdrop-blur-2xl bg-zinc-900/70 border border-white/10 rounded-3xl p-8 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+        {/* Back Link */}
+        <div className="mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-purple-300 hover:text-white transition"
+          >
+            <span>← กลับสู่หน้าแรก</span>
+          </Link>
+        </div>
+
+        <div className="backdrop-blur-2xl bg-[var(--card-bg)] border border-purple-500/30 rounded-3xl p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
           {/* Logo & Header */}
           <div className="flex flex-col items-center text-center mb-6">
             <Link
               href="/"
-              className="group flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-400 to-indigo-500 p-0.5 shadow-lg shadow-teal-500/25 mb-4 hover:scale-105 transition-transform duration-300"
+              className="group flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-fuchsia-500 p-0.5 shadow-lg shadow-purple-500/30 mb-3 hover:scale-105 transition-transform duration-300"
             >
-              <div className="w-full h-full bg-zinc-950 rounded-[14px] flex items-center justify-center">
-                <Volume2 className="w-7 h-7 text-teal-400 group-hover:rotate-6 transition-transform" />
+              <div className="w-full h-full bg-[#0d071a] rounded-[14px] flex items-center justify-center">
+                <Volume2 className="w-7 h-7 text-fuchsia-400 group-hover:rotate-6 transition-transform" />
               </div>
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white purple-gradient-text">
               สร้างบัญชีใหม่
             </h1>
-            <p className="text-sm text-zinc-400 mt-1.5">
+            <p className="text-xs sm:text-sm text-purple-300/70 mt-1">
               เข้าร่วมเป็นส่วนหนึ่งของคอมมูนิตี้เสียงผ่อนคลาย LM Sound
             </p>
           </div>
 
           {/* Feedback Alerts */}
           {serverError && (
-            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs sm:text-sm animate-in fade-in">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5" />
               <span>{serverError}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm animate-in fade-in">
-              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs sm:text-sm animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5" />
               <span>{successMessage}</span>
             </div>
           )}
@@ -148,12 +158,12 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="username"
-                className="block text-xs font-medium text-zinc-300 mb-1"
+                className="block text-xs font-bold text-purple-300 mb-1"
               >
                 ชื่อผู้ใช้ (Username)
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -164,10 +174,10 @@ export default function RegisterPage() {
                   placeholder="เช่น sound_ninja"
                   value={formData.username}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-purple-950/30 border text-sm text-foreground placeholder-purple-400/40 focus:outline-none focus:ring-2 transition-all ${
                     errors.username
                       ? "border-red-500/60 focus:ring-red-500/30"
-                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                      : "border-purple-500/30 focus:border-fuchsia-400 focus:ring-purple-500/20"
                   }`}
                 />
               </div>
@@ -180,12 +190,12 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-xs font-medium text-zinc-300 mb-1"
+                className="block text-xs font-bold text-purple-300 mb-1"
               >
                 อีเมล (Email)
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -196,10 +206,10 @@ export default function RegisterPage() {
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-purple-950/30 border text-sm text-foreground placeholder-purple-400/40 focus:outline-none focus:ring-2 transition-all ${
                     errors.email
                       ? "border-red-500/60 focus:ring-red-500/30"
-                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                      : "border-purple-500/30 focus:border-fuchsia-400 focus:ring-purple-500/20"
                   }`}
                 />
               </div>
@@ -212,22 +222,23 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-xs font-medium text-zinc-300 mb-1"
+                className="block text-xs font-bold text-purple-300 mb-1"
               >
-                ชื่อที่ต้องการให้แสดง (ไม่บังคับ)
+                ชื่อ-นามสกุล (ไม่บังคับ)
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
                   <Smile className="w-4 h-4" />
                 </div>
                 <input
                   id="name"
                   name="name"
                   type="text"
-                  placeholder="ชื่อ หรือ นามแฝง"
+                  autoComplete="name"
+                  placeholder="สมชาย ใจดี"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950/60 border border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-purple-950/30 border border-purple-500/30 text-sm text-foreground placeholder-purple-400/40 focus:outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 />
               </div>
             </div>
@@ -236,12 +247,12 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-xs font-medium text-zinc-300 mb-1"
+                className="block text-xs font-bold text-purple-300 mb-1"
               >
                 รหัสผ่าน
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -252,16 +263,16 @@ export default function RegisterPage() {
                   placeholder="อย่างน้อย 6 ตัวอักษร"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-purple-950/30 border text-sm text-foreground placeholder-purple-400/40 focus:outline-none focus:ring-2 transition-all ${
                     errors.password
                       ? "border-red-500/60 focus:ring-red-500/30"
-                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                      : "border-purple-500/30 focus:border-fuchsia-400 focus:ring-purple-500/20"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-purple-400 hover:text-purple-200 transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -279,12 +290,12 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-xs font-medium text-zinc-300 mb-1"
+                className="block text-xs font-bold text-purple-300 mb-1"
               >
                 ยืนยันรหัสผ่าน
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -295,16 +306,16 @@ export default function RegisterPage() {
                   placeholder="กรอกรหัสผ่านอีกครั้ง"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-zinc-950/60 border text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-purple-950/30 border text-sm text-foreground placeholder-purple-400/40 focus:outline-none focus:ring-2 transition-all ${
                     errors.confirmPassword
                       ? "border-red-500/60 focus:ring-red-500/30"
-                      : "border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20"
+                      : "border-purple-500/30 focus:border-fuchsia-400 focus:ring-purple-500/20"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-purple-400 hover:text-purple-200 transition-colors"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -324,7 +335,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-600 text-white font-medium text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full mt-3 py-3 px-4 rounded-xl purple-gradient-btn text-white font-bold text-sm shadow-lg shadow-purple-900/40 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer border border-purple-400/30"
             >
               {loading ? (
                 <>
@@ -341,11 +352,11 @@ export default function RegisterPage() {
           </form>
 
           {/* Login Link */}
-          <div className="mt-6 text-center text-xs text-zinc-400">
+          <div className="mt-6 text-center text-xs text-purple-300/70">
             มีบัญชีสมาชิกอยู่แล้ว?{" "}
             <Link
               href="/login"
-              className="text-teal-400 font-semibold hover:text-teal-300 transition-colors"
+              className="text-fuchsia-400 font-bold hover:text-fuchsia-300 transition-colors ml-1"
             >
               เข้าสู่ระบบที่นี่
             </Link>

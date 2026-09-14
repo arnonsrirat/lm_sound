@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut, ShieldCheck } from "lucide-react";
+import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut, ShieldCheck, MapPin, Play, X } from "lucide-react";
+import { useAudio } from "@/context/AudioContext";
 
 export interface HeaderSettings {
   logoLight: string;
@@ -11,6 +12,16 @@ export interface HeaderSettings {
   siteName: string;
   siteTagline: string;
   role?: "USER" | "ADMIN";
+}
+
+interface AutocompleteSpot {
+  id: string;
+  title: string;
+  location: string;
+  noiseLevel: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  description?: string;
 }
 
 export default function Header({
@@ -26,8 +37,14 @@ export default function Header({
   const siteTagline = settings?.siteTagline || "Spatial & Ambient Soundscape";
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { playSpot } = useAudio();
+
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [isDark, setIsDark] = useState(true);
+  const [searchResults, setSearchResults] = useState<AutocompleteSpot[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("lmsound-theme");
@@ -53,8 +70,50 @@ export default function Header({
     });
   }, [isDark, logoLight, logoDark]);
 
+  // ปิด Dropdown เมื่อคลิกข้างนอก
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Instant Autocomplete Search Fetcher with Debounce
+  useEffect(() => {
+    const query = searchTerm.trim();
+    if (!query) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowDropdown(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/spots?search=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults((data.spots || []).slice(0, 5));
+        }
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowDropdown(false);
     const params = new URLSearchParams(searchParams.toString());
     if (searchTerm.trim()) {
       params.set("search", searchTerm.trim());
@@ -62,6 +121,25 @@ export default function Header({
       params.delete("search");
     }
     router.push(`/?${params.toString()}`);
+  };
+
+  const handleSelectResult = (spot: AutocompleteSpot) => {
+    setShowDropdown(false);
+    router.push(`/spots/${spot.id}`);
+  };
+
+  const handleQuickPlay = (e: React.MouseEvent, spot: AutocompleteSpot) => {
+    e.stopPropagation();
+    setShowDropdown(false);
+    playSpot({
+      id: spot.id,
+      title: spot.title,
+      subtitle: spot.description || spot.location,
+      category: spot.noiseLevel,
+      imageUrl: spot.imageUrl,
+      audioUrl: spot.audioUrl,
+      location: spot.location,
+    });
   };
 
   const toggleTheme = () => {
@@ -89,11 +167,10 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-purple-500/20 bg-[var(--header-bg)] backdrop-blur-xl shadow-lg transition-colors">
-      <div className="flex h-16 items-center justify-between px-4 md:px-8 max-w-7xl mx-auto gap-4">
-        {/* Left: Brand Logo as in wireframe */}
-        <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <div className="relative w-10 h-10 rounded-2xl overflow-hidden shadow-lg shadow-purple-600/30 group-hover:scale-105 transition border border-purple-400/40 p-0.5 bg-gradient-to-tr from-purple-600 to-fuchsia-500">
-            {/* โลโก้แยกตามธีมสว่าง/มืด (แอดมินตั้งได้) */}
+      <div className="flex h-16 items-center justify-between px-3 sm:px-6 md:px-8 max-w-7xl mx-auto gap-2 sm:gap-4">
+        {/* Left: Brand Logo */}
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden shadow-lg shadow-purple-600/30 group-hover:scale-105 transition border border-purple-400/40 p-0.5 bg-gradient-to-tr from-purple-600 to-fuchsia-500">
             <img
               src="/logo.png"
               alt={`${siteName} Logo`}
@@ -103,44 +180,140 @@ export default function Header({
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-lg tracking-tight purple-gradient-text group-hover:opacity-90 transition">
+            <span className="font-extrabold text-base sm:text-lg tracking-tight purple-gradient-text group-hover:opacity-90 transition">
               {siteName}
             </span>
-            <span className="text-[10px] text-purple-300/80 uppercase tracking-widest hidden sm:block font-medium">
+            <span className="text-[10px] text-purple-300/80 uppercase tracking-widest hidden lg:block font-medium">
               {siteTagline}
             </span>
           </div>
         </Link>
 
-        {/* Center: Search Bar ("ค้นหา" as in wireframe) */}
-        <form
-          onSubmit={handleSearchSubmit}
-          className="flex-1 max-w-md mx-2 relative"
+        {/* Center: Search Bar with Instant Autocomplete Dropdown */}
+        <div
+          ref={searchContainerRef}
+          className="flex-1 max-w-[170px] xs:max-w-[240px] sm:max-w-md mx-1 sm:mx-2 relative"
         >
-          <div className="relative flex items-center">
-            <Search className="absolute left-3.5 w-4 h-4 text-purple-400 pointer-events-none" />
+          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+            <Search className="absolute left-3 w-3.5 sm:w-4 h-3.5 sm:h-4 text-purple-400 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ค้นหาเสียงบรรยากาศ, จุดอ่านหนังสือ, โซนเงียบ..."
-              className="w-full pl-10 pr-4 py-2 bg-purple-950/25 border border-purple-500/25 rounded-full text-sm text-foreground placeholder:text-purple-300/50 focus:outline-none focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/20 transition shadow-inner"
+              onFocus={() => {
+                if (searchTerm.trim()) setShowDropdown(true);
+              }}
+              placeholder="ค้นหาจุดอ่านหนังสือ..."
+              className="w-full pl-8 sm:pl-10 pr-7 sm:pr-8 py-1.5 sm:py-2 bg-purple-950/25 border border-purple-500/25 rounded-full text-xs sm:text-sm text-foreground placeholder:text-purple-300/50 focus:outline-none focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/20 transition shadow-inner"
             />
-          </div>
-        </form>
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setShowDropdown(false);
+                }}
+                className="absolute right-2.5 p-0.5 rounded-full hover:bg-purple-500/20 text-purple-400 hover:text-white transition"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </form>
 
-        {/* Right: Theme Toggle ("เปลี่ยนแนว สว่าง กับ ดาร์ก") & Login */}
-        <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          {/* Add Spot Button */}
-          <Link
-            href="/spots/new"
-            className="hidden"
-          >
+          {/* Autocomplete Dropdown Results */}
+          {showDropdown && searchTerm.trim().length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-purple-500/35 bg-[#0e071e]/95 backdrop-blur-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="px-3 py-2 border-b border-purple-500/20 flex items-center justify-between text-[11px] text-purple-300/70">
+                <span>ผลการค้นหาด่วน ({searchResults.length})</span>
+                {isSearching && <span className="animate-pulse text-fuchsia-300">กำลังค้นหา...</span>}
+              </div>
+
+              {searchResults.length > 0 ? (
+                <div className="p-1.5 divide-y divide-purple-500/10 max-h-72 overflow-y-auto scrollbar-none">
+                  {searchResults.map((spot) => (
+                    <div
+                      key={spot.id}
+                      onClick={() => handleSelectResult(spot)}
+                      className="p-2 rounded-xl flex items-center justify-between gap-2.5 hover:bg-purple-600/20 transition cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {spot.imageUrl ? (
+                          <img
+                            src={spot.imageUrl}
+                            alt={spot.title}
+                            className="w-10 h-10 rounded-lg object-cover shrink-0 border border-purple-500/30"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-purple-900/40 flex items-center justify-center text-purple-300 shrink-0">
+                            <MapPin className="w-4 h-4" />
+                          </div>
+                        )}
+                        <div className="min-w-0 text-left">
+                          <p className="text-xs font-bold text-white group-hover:text-fuchsia-300 transition truncate">
+                            {spot.title}
+                          </p>
+                          <p className="text-[10px] text-purple-300/70 truncate flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-3 h-3 text-pink-400 shrink-0" />
+                            <span>{spot.location}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${
+                            spot.noiseLevel === "quiet"
+                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                              : spot.noiseLevel === "lively"
+                              ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                              : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          }`}
+                        >
+                          {spot.noiseLevel === "quiet"
+                            ? "เงียบ"
+                            : spot.noiseLevel === "lively"
+                            ? "คึกคัก"
+                            : "ปานกลาง"}
+                        </span>
+                        {spot.audioUrl && (
+                          <button
+                            onClick={(e) => handleQuickPlay(e, spot)}
+                            type="button"
+                            title="ฟังเสียงบรรยากาศทันที"
+                            className="p-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600 text-white transition shadow cursor-pointer"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !isSearching ? (
+                <div className="p-4 text-center text-xs text-purple-300/60">
+                  ไม่พบจุดอ่านหนังสือที่ตรงกับ &ldquo;{searchTerm}&rdquo;
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={handleSearchSubmit}
+                className="w-full py-2 bg-purple-900/30 hover:bg-purple-900/60 text-center text-xs font-bold text-purple-200 border-t border-purple-500/20 transition cursor-pointer"
+              >
+                ดูผลการค้นหาทั้งหมดบนหน้าฟีด &rarr;
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Theme Toggle & Login */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <Link href="/spots/new" className="hidden">
             <PlusCircle className="w-3.5 h-3.5 text-purple-400" />
             <span>เพิ่มจุดใหม่</span>
           </Link>
 
-          {/* Theme Toggle ("เปลี่ยนแนว สว่าง กับ ดาร์ก" as annotated in wireframe) */}
+          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             type="button"
@@ -155,7 +328,7 @@ export default function Header({
             )}
           </button>
 
-          {/* User / Login as annotated in wireframe */}
+          {/* User / Login */}
           {currentUser ? (
             <div className="flex items-center gap-2">
               {settings?.role === "ADMIN" && (

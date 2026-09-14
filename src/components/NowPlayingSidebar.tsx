@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAudio } from "@/context/AudioContext";
+import { useAudio, AMBIENCE_PRESETS } from "@/context/AudioContext";
 import {
   Play,
   Pause,
@@ -35,6 +35,8 @@ export default function NowPlayingSidebar() {
     toggleChannel,
     isNowPlayingOpen,
     setIsNowPlayingOpen,
+    applyAmbiencePreset,
+    activePresetId,
   } = useAudio();
 
   const toggleMute = () => {
@@ -244,6 +246,25 @@ export default function NowPlayingSidebar() {
             <span>Sound Mixer ผสมเสียง</span>
           </span>
           <span className="text-[10px] text-purple-400 font-bold uppercase">Real-time</span>
+        </div>
+
+        {/* Quick Ambience Presets 1-Click Chips */}
+        <div className="grid grid-cols-2 gap-1.5">
+          {AMBIENCE_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => applyAmbiencePreset(preset.id)}
+              type="button"
+              className={`px-2 py-1.5 rounded-xl text-[10px] font-bold text-left transition flex items-center gap-1.5 border cursor-pointer ${
+                activePresetId === preset.id
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-pink-400 shadow-sm shadow-purple-900/40 scale-[1.02]"
+                  : "bg-purple-950/40 hover:bg-purple-800/40 text-purple-200 border-purple-500/20 hover:border-purple-400/40"
+              }`}
+            >
+              <span className="text-xs">{preset.emoji}</span>
+              <span className="truncate">{preset.name}</span>
+            </button>
+          ))}
         </div>
 
         <div className="space-y-2.5">

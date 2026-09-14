@@ -48,75 +48,79 @@ export default function AudioPlayerBar() {
   return (
     <>
       <div
-        className={`fixed bottom-0 left-0 right-0 z-40 ${desktopInset} bg-[var(--header-bg)] backdrop-blur-2xl border-t border-purple-500/20 shadow-[0_-10px_30px_rgba(112,26,117,0.2)] transition-all ${
+        className={`fixed z-40 transition-all ${
+          /* บนมือถือ: ลอยอยู่เหนือ BottomNav (bottom-[60px]) ขอบมน สไตล์ Floating Player */
+          /* บน Desktop: เต็มจอชิดขอบล่างตาม sidebar inset */
+          `bottom-[60px] md:bottom-0 left-2 right-2 ${desktopInset} rounded-2xl md:rounded-none`
+        } bg-[var(--header-bg)]/95 backdrop-blur-2xl border border-purple-500/30 md:border-x-0 md:border-b-0 md:border-t shadow-[0_-10px_30px_rgba(112,26,117,0.3)] ${
           isDesktopHomeWithRightPanel ? "xl:hidden" : ""
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 md:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Side: Track Info & Animated Equalizer */}
-          <div className="flex items-center gap-3.5 min-w-0 w-1/3 sm:w-1/3">
-            <div className="relative group flex items-center justify-center w-12 h-12 rounded-xl bg-purple-950/40 border border-purple-500/30 shrink-0 overflow-hidden shadow-inner">
+          <div className="flex items-center gap-2 sm:gap-3.5 min-w-0 flex-1 sm:flex-initial sm:w-1/3">
+            <div className="relative group flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl bg-purple-950/50 border border-purple-500/30 shrink-0 overflow-hidden shadow-inner">
               {isPlaying ? (
                 /* Animated Equalizer Bars */
-                <div className="flex items-end gap-[3px] h-5">
-                  <span className="w-1 bg-purple-400 rounded-full eq-bar-1" />
-                  <span className="w-1 bg-fuchsia-400 rounded-full eq-bar-2" />
-                  <span className="w-1 bg-pink-400 rounded-full eq-bar-3" />
-                  <span className="w-1 bg-cyan-400 rounded-full eq-bar-4" />
+                <div className="flex items-end gap-[2px] sm:gap-[3px] h-3.5 sm:h-5">
+                  <span className="w-0.5 sm:w-1 bg-purple-400 rounded-full eq-bar-1" />
+                  <span className="w-0.5 sm:w-1 bg-fuchsia-400 rounded-full eq-bar-2" />
+                  <span className="w-0.5 sm:w-1 bg-pink-400 rounded-full eq-bar-3" />
+                  <span className="w-0.5 sm:w-1 bg-cyan-400 rounded-full eq-bar-4" />
                 </div>
               ) : (
-                <Sparkles className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 group-hover:scale-110 transition-transform" />
               )}
             </div>
 
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold text-foreground truncate">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[100px] xs:max-w-[130px] sm:max-w-[200px]">
                   {activeTrack.title}
                 </h4>
                 <span className="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
                   {activeTrack.category}
                 </span>
               </div>
-              <p className="text-xs text-purple-300/70 truncate mt-0.5">
+              <p className="text-[10px] sm:text-xs text-purple-300/70 truncate max-w-[100px] xs:max-w-[130px] sm:max-w-[200px]">
                 {activeTrack.location || activeTrack.subtitle}
               </p>
             </div>
           </div>
 
           {/* Center: Playback Controls */}
-          <div className="flex items-center justify-center gap-2 sm:gap-4 flex-1">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-4 shrink-0">
             <button
               onClick={prevTrack}
               title="แทร็กก่อนหน้า"
-              className="p-2 text-purple-300/80 hover:text-white hover:bg-purple-600/20 rounded-full transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-purple-300/80 hover:text-white hover:bg-purple-600/20 rounded-full transition-colors cursor-pointer"
             >
-              <SkipBack className="w-5 h-5" />
+              <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
-            {/* Glowing Big Play/Pause Button in Purple Gradient */}
+            {/* Glowing Play/Pause Button */}
             <button
               onClick={togglePlay}
               title={isPlaying ? "หยุดชั่วคราว" : "เล่นเสียงบรรยากาศ"}
-              className={`flex items-center justify-center w-12 h-12 rounded-full text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${
+              className={`flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${
                 isPlaying
-                  ? "purple-gradient-btn shadow-purple-500/40 hover:shadow-purple-500/60"
+                  ? "purple-gradient-btn shadow-purple-500/40 hover:shadow-purple-500/60 ring-2 ring-purple-400/40"
                   : "bg-white text-zinc-950 hover:bg-purple-100 shadow-white/20"
               }`}
             >
               {isPlaying ? (
-                <Pause className="w-5 h-5 fill-current" />
+                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               ) : (
-                <Play className="w-5 h-5 fill-current ml-0.5" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
               )}
             </button>
 
             <button
               onClick={nextTrack}
               title="แทร็กถัดไป"
-              className="p-2 text-purple-300/80 hover:text-white hover:bg-purple-600/20 rounded-full transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-purple-300/80 hover:text-white hover:bg-purple-600/20 rounded-full transition-colors cursor-pointer"
             >
-              <SkipForward className="w-5 h-5" />
+              <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
