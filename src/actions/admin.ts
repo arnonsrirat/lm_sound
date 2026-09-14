@@ -135,11 +135,6 @@ export async function adminUpdateSpotAction(
   try {
     await requireAdmin();
 
-    const existing = await prisma.spot.findUnique({ where: { id: spotId }, select: { id: true } });
-    if (!existing) {
-      return { success: false, error: "ไม่พบสถานที่นี้ในระบบ (404)", statusCode: 404 };
-    }
-
     let rawData: Record<string, unknown>;
     if (formData instanceof FormData) {
       rawData = {
@@ -156,6 +151,7 @@ export async function adminUpdateSpotAction(
       rawData = formData;
     }
 
+    const fallbackIndex = FALLBACK_SPOTS.findIndex((spot) => spot.id === spotId);
     const validated = spotSchema.safeParse(rawData);
     if (!validated.success) {
       return {
@@ -164,6 +160,23 @@ export async function adminUpdateSpotAction(
         fieldErrors: validated.error.flatten().fieldErrors,
         statusCode: 400,
       };
+    }
+
+    if (fallbackIndex >= 0) {
+      const updated = {
+        ...FALLBACK_SPOTS[fallbackIndex],
+        ...validated.data,
+        updatedAt: new Date(),
+      };
+      FALLBACK_SPOTS[fallbackIndex] = updated;
+      revalidatePath("/");
+      revalidatePath("/admin");
+      return { success: true, data: updated, statusCode: 200 };
+    }
+
+    const existing = await prisma.spot.findUnique({ where: { id: spotId }, select: { id: true } });
+    if (!existing) {
+      return { success: false, error: "ไม่พบสถานที่นี้ในระบบ (404)", statusCode: 404 };
     }
 
     const updated = await prisma.spot.update({

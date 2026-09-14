@@ -14,6 +14,9 @@ services:
       - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET is required}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     volumes:
-      - ./public/uploads:/app/public/uploads
+      - lmsound_uploads:/app/public/uploads
     env_file:
       - .env
+
+volumes:
+  lmsound_uploads:

@@ -3,6 +3,11 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Demo data is opt-in; production deploys must never create test records.
+  if (process.env.SEED_DEMO_DATA !== "true") {
+    console.log("Seed skipped (set SEED_DEMO_DATA=true to load demo data).");
+    return;
+  }
   console.log("🌱 เริ่มต้นการ Seed ข้อมูล หลบมุม Sound...");
 
   // 1. สร้างผู้ใช้ตัวอย่าง (เพื่อทดสอบ Relation และ Authorization Guard)
@@ -75,6 +80,11 @@ async function main() {
       authorId: user2.id,
     },
   ];
+
+  if ((await prisma.spot.count()) > 0) {
+    console.log("Seed skipped: database already contains spots.");
+    return;
+  }
 
   for (const spot of sampleSpots) {
     await prisma.spot.create({

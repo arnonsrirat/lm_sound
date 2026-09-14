@@ -30,6 +30,30 @@ model SiteSetting {
   updatedAt            DateTime @updatedAt
 }
 
+model GoogleDriveConnection {
+  id                    String   @id @default(cuid())
+  accountEmail          String?
+  refreshTokenEncrypted String
+  rootFolderId          String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model MediaAsset {
+  id              String   @id @default(cuid())
+  name            String
+  folder          String
+  mimeType        String
+  size            Int
+  driveFileId     String   @unique
+  driveWebViewUrl String?
+  url             String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([folder, createdAt])
+}
+
 model Spot {
   id          String   @id @default(cuid())
   title       String

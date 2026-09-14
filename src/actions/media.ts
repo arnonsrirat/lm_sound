@@ -3,6 +3,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { requireAuth, requireAdmin, ForbiddenError, UnauthorizedError } from "@/lib/auth";
+import { deleteGoogleDriveFile, moveGoogleDriveFile, uploadToGoogleDrive } from "@/lib/google-drive";
+import { prisma } from "@/lib/prisma";
 
 export interface MediaItem {
   name: string;
@@ -57,6 +59,14 @@ export async function getMediaFilesAction(
 
     const items: MediaItem[] = [];
 
+    const storedAssets = await prisma.mediaAsset.findMany({
+      where: folder && ALLOWED_FOLDERS.includes(folder as MediaFolder) ? { folder } : undefined,
+      orderBy: { createdAt: "desc" },
+    });
+    for (const asset of storedAssets) {
+      items.push({ name: asset.name, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
+    }
+
     // 1. อ่านไฟล์จากดิสก์ (ถ้าโฟลเดอร์เข้าถึงได้)
     for (const f of foldersToScan) {
       const folderPath = path.join(UPLOADS_ROOT, f);
@@ -94,7 +104,7 @@ export async function getMediaFilesAction(
     // 2. รวมไฟล์จาก In-Memory Fallback (ถ้ามี)
     for (const memItem of memoryUploadsStore) {
       if (foldersToScan.includes(memItem.folder as MediaFolder)) {
-        if (!items.some((i) => i.name === memItem.name)) {
+            if (!items.some((i) => i.name === memItem.name)) {
           items.push(memItem);
         }
       }
@@ -162,52 +172,16 @@ export async function uploadMediaAction(
       };
     }
 
-    const folderPath = path.join(UPLOADS_ROOT, folder);
-    const baseName = path
-      .basename(file.name, ext)
-      .replace(/[^a-zA-Z0-9_-]/g, "_")
-      .slice(0, 35);
-    const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const fileName = `${baseName || "img"}_${uniqueSuffix}${ext}`;
-    const filePath = path.join(folderPath, fileName);
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    let finalUrl = `/uploads/${folder}/${fileName}`;
-    let writeSuccess = false;
-
-    // พยายามบันทึกลงดิสก์
     try {
-      const dirOk = await ensureDir(folderPath);
-      if (dirOk) {
-        await fs.writeFile(filePath, buffer);
-        writeSuccess = true;
+      const asset = await uploadToGoogleDrive(file, folder);
+      return { success: true, data: { name: asset.name, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() }, statusCode: 201 };
+    } catch (error) {
+      if (error instanceof Error && error.message === "GOOGLE_DRIVE_NOT_CONNECTED") {
+        return { success: false, error: "ยังไม่ได้เชื่อมต่อ Google Drive กรุณาเชื่อมต่อก่อนอัปโหลดไฟล์", statusCode: 412 };
       }
-    } catch (diskErr) {
-      console.warn(
-        `Disk write failed for ${filePath} (likely permission/readonly container):`,
-        diskErr
-      );
+      console.error("Google Drive upload error:", error);
+      return { success: false, error: "อัปโหลดไป Google Drive ไม่สำเร็จ", statusCode: 502 };
     }
-
-    // ถ้าบันทึกลงดิสก์ไม่สำเร็จ (เช่น ติด Permission Denied EACCES หรือ Read-only filesystem ใน Docker)
-    // ให้ Fallback แปลงเป็น Data URL เพื่อให้แอดมินใช้งานได้ทันทีโดยเว็บไม่พัง
-    if (!writeSuccess) {
-      const mimeType = file.type || "image/png";
-      finalUrl = `data:${mimeType};base64,${buffer.toString("base64")}`;
-    }
-
-    const mediaItem: MediaItem = {
-      name: fileName,
-      url: finalUrl,
-      folder,
-      size: file.size,
-      updatedAt: new Date().toISOString(),
-    };
-
-    memoryUploadsStore.unshift(mediaItem);
-
-    return { success: true, data: mediaItem, statusCode: 200 };
   } catch (err) {
     if (err instanceof ForbiddenError) {
       return { success: false, error: err.message, statusCode: 403 };
@@ -234,6 +208,13 @@ export async function deleteMediaAction(
 ): Promise<MediaActionResult> {
   try {
     await requireAdmin();
+
+    const asset = await prisma.mediaAsset.findFirst({ where: { url: fileUrl } });
+    if (asset) {
+      await deleteGoogleDriveFile(asset.driveFileId);
+      await prisma.mediaAsset.delete({ where: { id: asset.id } });
+      return { success: true, statusCode: 200 };
+    }
 
     // ลบออกจาก memory store
     const memIndex = memoryUploadsStore.findIndex((i) => i.url === fileUrl);
@@ -287,6 +268,13 @@ export async function moveMediaAction(fileUrl: string, targetFolder: MediaFolder
   try {
     await requireAdmin();
     if (!ALLOWED_FOLDERS.includes(targetFolder)) return { success: false, error: "โฟลเดอร์ไม่ถูกต้อง", statusCode: 400 };
+    const asset = await prisma.mediaAsset.findFirst({ where: { url: fileUrl } });
+    if (asset) {
+      if (asset.folder === targetFolder) return { success: false, error: "ไฟล์อยู่ในโฟลเดอร์นี้แล้ว", statusCode: 400 };
+      await moveGoogleDriveFile(asset.driveFileId, targetFolder);
+      const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { folder: targetFolder } });
+      return { success: true, data: { name: updated.name, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
+    }
     const match = fileUrl.match(/^\/uploads\/([^/]+)\/([^/]+)$/);
     if (!match || !ALLOWED_FOLDERS.includes(match[1] as MediaFolder)) return { success: false, error: "ไฟล์ไม่ถูกต้อง", statusCode: 400 };
     const sourceFolder = match[1] as MediaFolder;

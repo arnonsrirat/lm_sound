@@ -63,6 +63,13 @@ export default function AdminDashboard({
   const [settings, setSettings] = useState<SiteSettings>(initialSettings);
   const [spots, setSpots] = useState<SpotItem[]>(initialSpots);
   const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    danger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Picker Modal State for selecting image into a specific settings field
@@ -76,6 +83,15 @@ export default function AdminDashboard({
   const notify = (ok: boolean, msg: string) => {
     setToast({ ok, msg });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const askConfirm = (
+    title: string,
+    description: string,
+    onConfirm: () => void | Promise<void>,
+    options?: { confirmLabel?: string; danger?: boolean }
+  ) => {
+    setConfirmDialog({ title, description, onConfirm, ...options });
   };
 
   const handleSaveSettings = () => {
@@ -123,6 +139,21 @@ export default function AdminDashboard({
           {toast.ok ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
           {toast.msg}
         </div>
+      )}
+
+      {confirmDialog && (
+        <AdminConfirmModal
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          confirmLabel={confirmDialog.confirmLabel}
+          danger={confirmDialog.danger}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={async () => {
+            const action = confirmDialog.onConfirm;
+            setConfirmDialog(null);
+            await action();
+          }}
+        />
       )}
 
       {/* Admin Sidebar Navigation */}
@@ -205,7 +236,7 @@ export default function AdminDashboard({
           style={{ paddingBottom: "8rem", scrollPaddingBottom: "8rem" }}
         >
           {tab === "spots" && (
-            <SpotsTab spots={spots} setSpots={setSpots} notify={notify} />
+            <SpotsTab spots={spots} setSpots={setSpots} notify={notify} askConfirm={askConfirm} />
           )}
 
           {tab === "logos-banners" && (
@@ -221,11 +252,14 @@ export default function AdminDashboard({
           )}
 
           {tab === "media" && (
-            <div className="glass-panel rounded-3xl p-5 md:p-6">
+            <div className="space-y-4">
+              <GoogleDriveConnectionPanel notify={notify} askConfirm={askConfirm} />
+              <div className="glass-panel rounded-3xl p-5 md:p-6">
               <MediaFolderPicker
                 targetTitle="คลังรูปภาพทั้งหมด (Logos, Banners & General)"
                 defaultFolder="logos"
               />
+              </div>
             </div>
           )}
 
@@ -248,7 +282,7 @@ export default function AdminDashboard({
           )}
 
           {tab === "users" && (
-            <UsersTab currentUserId={currentUser?.userId} notify={notify} />
+            <UsersTab currentUserId={currentUser?.userId} notify={notify} askConfirm={askConfirm} />
           )}
         </main>
       </div>
@@ -436,26 +470,32 @@ function SpotsTab({
   spots,
   setSpots,
   notify,
+  askConfirm,
 }: {
   spots: SpotItem[];
   setSpots: (s: SpotItem[]) => void;
   notify: (ok: boolean, msg: string) => void;
+  askConfirm: (title: string, description: string, onConfirm: () => void | Promise<void>, options?: { confirmLabel?: string; danger?: boolean }) => void;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [editingSpot, setEditingSpot] = useState<SpotItem | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = (spot: SpotItem) => {
-    if (!confirm(`ลบสถานที่ "${spot.title}" ?`)) return;
-    startTransition(async () => {
-      const res = await adminDeleteSpotAction(spot.id);
-      if (res.success) {
-        setSpots(spots.filter((s) => s.id !== spot.id));
-        notify(true, "ลบสถานที่เรียบร้อย");
-      } else {
-        notify(false, res.error || "ลบไม่สำเร็จ");
-      }
-    });
+    askConfirm(
+      "ยืนยันการลบสถานที่",
+      `ต้องการลบ "${spot.title}" ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+      () => startTransition(async () => {
+        const res = await adminDeleteSpotAction(spot.id);
+        if (res.success) {
+          setSpots(spots.filter((s) => s.id !== spot.id));
+          notify(true, "ลบสถานที่เรียบร้อย");
+        } else {
+          notify(false, res.error || "ลบไม่สำเร็จ");
+        }
+      }),
+      { confirmLabel: "ลบสถานที่", danger: true }
+    );
   };
 
   return (
@@ -927,9 +967,11 @@ function TextsTab({
 function UsersTab({
   currentUserId,
   notify,
+  askConfirm,
 }: {
   currentUserId?: string;
   notify: (ok: boolean, msg: string) => void;
+  askConfirm: (title: string, description: string, onConfirm: () => void | Promise<void>, options?: { confirmLabel?: string; danger?: boolean }) => void;
 }) {
   const [users, setUsers] = useState<
     Array<{
@@ -968,19 +1010,20 @@ function UsersTab({
 
   const handleToggleRole = (userId: string, currentRole: "USER" | "ADMIN") => {
     const nextRole = currentRole === "ADMIN" ? "USER" : "ADMIN";
-    if (!confirm(`เปลี่ยนสิทธิ์ของผู้ใช้เป็น ${nextRole} หรือไม่?`)) return;
-
-    startTransition(async () => {
-      const res = await setUserRoleAction(userId, nextRole);
-      if (res.success) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, role: nextRole } : u))
-        );
-        notify(true, `เปลี่ยนสิทธิ์เป็น ${nextRole} เรียบร้อยแล้ว`);
-      } else {
-        notify(false, res.error || "เปลี่ยนสิทธิ์ไม่สำเร็จ");
-      }
-    });
+    askConfirm(
+      "ยืนยันการเปลี่ยนสิทธิ์",
+      `ต้องการเปลี่ยนสิทธิ์ผู้ใช้นี้เป็น ${nextRole} ใช่หรือไม่?`,
+      () => startTransition(async () => {
+        const res = await setUserRoleAction(userId, nextRole);
+        if (res.success) {
+          setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: nextRole } : u)));
+          notify(true, `เปลี่ยนสิทธิ์เป็น ${nextRole} เรียบร้อยแล้ว`);
+        } else {
+          notify(false, res.error || "เปลี่ยนสิทธิ์ไม่สำเร็จ");
+        }
+      }),
+      { confirmLabel: "ยืนยันการเปลี่ยนสิทธิ์" }
+    );
   };
 
   return (
@@ -1064,4 +1107,76 @@ function UsersTab({
       )}
     </div>
   );
+}
+
+function AdminConfirmModal({
+  title,
+  description,
+  confirmLabel = "ยืนยัน",
+  danger = false,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  danger?: boolean;
+  onCancel: () => void;
+  onConfirm: () => void | Promise<void>;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title">
+      <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-purple-400/30 bg-[#170c2c] shadow-2xl shadow-purple-950/80 animate-in zoom-in-95 fade-in duration-200">
+        <div className="p-6 text-center">
+          <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${danger ? "bg-rose-500/15 text-rose-300" : "bg-purple-500/15 text-purple-200"}`}>
+            <ShieldAlert className="h-7 w-7" />
+          </div>
+          <h3 id="admin-confirm-title" className="text-lg font-black text-purple-50">{title}</h3>
+          <p className="mt-2 text-sm leading-6 text-purple-200/70">{description}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-purple-500/15 bg-purple-950/30 p-4">
+          <button type="button" onClick={onCancel} className="rounded-2xl px-4 py-2.5 text-sm font-semibold text-purple-200 hover:bg-purple-800/30 transition cursor-pointer">ยกเลิก</button>
+          <button type="button" onClick={() => void onConfirm()} className={`rounded-2xl px-4 py-2.5 text-sm font-bold text-white shadow-lg transition cursor-pointer ${danger ? "bg-rose-500 hover:bg-rose-400 shadow-rose-950/40" : "purple-gradient-btn shadow-purple-900/40"}`}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GoogleDriveConnectionPanel({
+  notify,
+  askConfirm,
+}: {
+  notify: (ok: boolean, msg: string) => void;
+  askConfirm: (title: string, description: string, onConfirm: () => void | Promise<void>, options?: { confirmLabel?: string; danger?: boolean }) => void;
+}) {
+  const [status, setStatus] = useState<{ configured: boolean; connected: boolean; accountEmail: string | null } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadStatus = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/admin/google-drive/status", { cache: "no-store" });
+      const data = await response.json();
+      if (data.success) setStatus(data.data);
+    } catch {
+      notify(false, "ตรวจสอบสถานะ Google Drive ไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadStatus(); }, []);
+
+  if (loading) return <div className="glass-panel rounded-3xl p-4 text-xs text-purple-300/70 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> กำลังตรวจสอบ Google Drive…</div>;
+
+  if (!status?.configured) {
+    return <div className="rounded-3xl border border-amber-400/35 bg-amber-500/10 p-5"><div className="flex items-start gap-3"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-300" /><div><h3 className="font-bold text-amber-100">ยังไม่ได้ตั้งค่า Google Drive</h3><p className="mt-1 text-xs leading-5 text-amber-100/75">ตั้งค่า GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET และ Redirect URI ก่อน เพื่อให้ไฟล์ถูกเก็บใน Cloud และบันทึก metadata ลงฐานข้อมูล</p></div></div></div>;
+  }
+
+  if (!status.connected) {
+    return <div className="rounded-3xl border border-cyan-400/35 bg-cyan-400/10 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><FolderOpen className="h-5 w-5 shrink-0 text-cyan-200" /><div><h3 className="font-bold text-cyan-100">เชื่อมต่อ Google Drive ก่อนอัปโหลด</h3><p className="mt-1 text-xs text-cyan-100/70">คลังสื่อจะอัปโหลดไฟล์เข้า Drive และเก็บข้อมูลไฟล์ไว้ในฐานข้อมูล</p></div></div><a href="/api/admin/google-drive/connect" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-4 py-2.5 text-xs font-bold text-slate-950 hover:bg-cyan-300 transition"><ExternalLink className="h-4 w-4" />เชื่อมต่อ Drive</a></div>;
+  }
+
+  return <div className="rounded-3xl border border-emerald-400/35 bg-emerald-500/10 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" /><div><h3 className="font-bold text-emerald-100">เชื่อมต่อ Google Drive แล้ว</h3><p className="mt-1 text-xs text-emerald-100/70">บัญชี: {status.accountEmail || "Google Drive"} — ไฟล์ใหม่จะเก็บบน Cloud พร้อม metadata ในฐานข้อมูล</p></div></div><button type="button" onClick={() => askConfirm("ตัดการเชื่อมต่อ Google Drive", "หลังตัดการเชื่อมต่อจะไม่สามารถอัปโหลด จัดการ หรือดึงไฟล์จาก Drive ได้ จนกว่าจะเชื่อมต่อใหม่", async () => { const response = await fetch("/api/admin/google-drive/status", { method: "DELETE" }); const data = await response.json(); if (data.success) { setStatus({ configured: true, connected: false, accountEmail: null }); notify(true, "ตัดการเชื่อมต่อ Google Drive แล้ว"); } else notify(false, data.error || "ตัดการเชื่อมต่อไม่สำเร็จ"); }, { confirmLabel: "ตัดการเชื่อมต่อ", danger: true })} className="rounded-2xl border border-rose-400/30 px-4 py-2.5 text-xs font-bold text-rose-200 hover:bg-rose-500/15 transition cursor-pointer">ตัดการเชื่อมต่อ</button></div>;
 }
