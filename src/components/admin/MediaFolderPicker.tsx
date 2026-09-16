@@ -156,14 +156,17 @@ export default function MediaFolderPicker({
 
   // พยายามแปลงเสียงขนาดใหญ่เป็น Opus/WebM บนเครื่องผู้ใช้ก่อนส่งไป R2
   // ถ้า browser หรือ codec ไม่รองรับ จะคืนไฟล์เดิมเพื่อไม่ให้การอัปโหลดล้มเหลว
-  const prepareAudioForUpload = async (file: File) => {
+  const prepareAudioForUpload = async (file: File, onProgress?: (progress: number, phase: "processing") => void) => {
     if (!file.type.startsWith("audio/") || file.size <= 10 * 1024 * 1024 || typeof window === "undefined") return file;
     const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass || typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) return file;
     let context: AudioContext | null = null;
+    let progressTimer: number | null = null;
     try {
       context = new AudioContextClass();
+      onProgress?.(2, "processing");
       const buffer = await context.decodeAudioData(await file.arrayBuffer());
+      onProgress?.(5, "processing");
       const destination = context.createMediaStreamDestination();
       const source = context.createBufferSource();
       source.buffer = buffer;
@@ -177,23 +180,29 @@ export default function MediaFolderPicker({
       });
       recorder.start(250);
       source.start();
+      progressTimer = window.setInterval(() => {
+        const ratio = buffer.duration > 0 ? Math.min(1, context ? context.currentTime / buffer.duration : 0) : 0;
+        onProgress?.(Math.max(5, Math.min(35, 5 + Math.round(ratio * 30))), "processing");
+      }, 500);
       source.onended = () => recorder.stop();
       const compressed = await recording;
+      onProgress?.(38, "processing");
       if (compressed.size >= file.size * 0.92) return file;
       return new File([compressed], `${file.name.replace(/\.[^.]+$/, "")}.webm`, { type: "audio/webm", lastModified: file.lastModified });
     } catch {
       return file;
     } finally {
+      if (progressTimer !== null) window.clearInterval(progressTimer);
       await context?.close().catch(() => undefined);
     }
   };
 
-  const prepareFileForUpload = async (file: File) => file.type.startsWith("audio/") ? prepareAudioForUpload(file) : prepareImageForUpload(file);
+  const prepareFileForUpload = async (file: File, onProgress?: (progress: number, phase: "processing") => void) => file.type.startsWith("audio/") ? prepareAudioForUpload(file, onProgress) : prepareImageForUpload(file);
 
   const putToR2 = (uploadUrl: string, file: File, onProgress: (loaded: number) => void) => new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("PUT", uploadUrl);
-    request.timeout = 120000;
+    request.timeout = 600000;
     request.setRequestHeader("Content-Type", file.type);
     request.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(event.loaded); };
     request.onerror = () => reject(new Error("NETWORK_ERROR"));
@@ -205,7 +214,9 @@ export default function MediaFolderPicker({
 
   const uploadFile = async (file: File, note = "", timeTag = "", onProgress?: (progress: number, phase: "uploading" | "processing") => void) => {
     try {
-      const preparedFile = await prepareFileForUpload(file);
+      onProgress?.(1, "processing");
+      const preparedFile = await prepareFileForUpload(file, onProgress);
+      onProgress?.(6, "uploading");
       const startResponse = await fetch("/api/uploads/presign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, folder: currentFolder, contentType: preparedFile.type, size: preparedFile.size }) });
       const startData = await startResponse.json() as { success?: boolean; data?: { uploadUrl: string; fileKey: string; uploadToken: string }; error?: string };
       if (!startResponse.ok || !startData.success || !startData.data) throw new Error(startData.error || "เริ่มอัปโหลดไม่สำเร็จ");
@@ -435,7 +446,7 @@ export default function MediaFolderPicker({
           </p>
         </div>
 
-        {/* Upload Button */}
+        {/* File input remains shared by the active-folder upload action below. */}
         <div className="flex items-center gap-2">
           {canManage && <input
             type="file"
@@ -445,29 +456,6 @@ export default function MediaFolderPicker({
              multiple
              className="hidden"
           />}
-          {canManage && <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || driveReady === false}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold purple-gradient-btn shadow-lg shadow-purple-900/30 cursor-pointer disabled:opacity-60"
-          >
-            {isUploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            อัปโหลดเข้า {currentFolder.toUpperCase()}
-          </button>}
-
-          <button
-            type="button"
-            onClick={() => loadFiles(currentFolder)}
-            disabled={isLoading}
-            className="p-2.5 rounded-2xl bg-purple-900/30 hover:bg-purple-600/20 border border-purple-500/20 text-purple-300 transition cursor-pointer"
-            title="รีเฟรชโฟลเดอร์"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
           {multiSelect && onSelectMany && (
             <button type="button" onClick={() => { onSelectMany(gallerySelection); onClose?.(); }} disabled={gallerySelection.length === 0} className="rounded-2xl bg-emerald-400 px-4 py-2.5 text-xs font-bold text-slate-950 disabled:opacity-50">
               ยืนยัน {gallerySelection.length} รูป
@@ -589,11 +577,34 @@ export default function MediaFolderPicker({
 
       {/* Media Grid */}
       <div className="rounded-3xl border border-purple-500/20 bg-purple-950/20 p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-3 text-xs text-purple-300/70">
-          <span>
-            ไฟล์ในโฟลเดอร์ <strong>uploads/{currentFolder}/</strong> ({items.length} รายการ)
-          </span>
-            <span className="text-[11px] text-purple-300/40">{multiSelect ? "เลือกได้หลายรูป แล้วกดยืนยัน" : "คลิกที่รูปเพื่อเลือกใช้งาน"}</span>
+        <div className="mb-3 flex flex-col gap-3 text-xs text-purple-300/70 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <span className="block truncate">
+              ไฟล์ในโฟลเดอร์ <strong>uploads/{currentFolder}/</strong> ({items.length} รายการ)
+            </span>
+            <span className="mt-1 block text-[11px] text-purple-300/40">{multiSelect ? "เลือกได้หลายรูป แล้วกดยืนยัน" : "คลิกที่รูปเพื่อเลือกใช้งาน"}</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {canManage && <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || driveReady === false}
+              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold purple-gradient-btn shadow-lg shadow-purple-900/30 cursor-pointer disabled:opacity-60"
+            >
+              {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              อัปโหลด
+            </button>}
+            <button
+              type="button"
+              onClick={() => loadFiles(currentFolder)}
+              disabled={isLoading}
+              className="rounded-xl border border-purple-500/20 bg-purple-900/30 p-2 text-purple-300 transition hover:bg-purple-600/20 cursor-pointer"
+              title={`รีเฟรชโฟลเดอร์ ${currentFolder}`}
+              aria-label={`รีเฟรชโฟลเดอร์ ${currentFolder}`}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -608,8 +619,8 @@ export default function MediaFolderPicker({
               ยังไม่มีไฟล์ในโฟลเดอร์ {currentFolder}
             </p>
             <p className="text-xs text-purple-300/50 mt-1 max-w-sm mx-auto">
-              กดปุ่ม &ldquo;อัปโหลดเข้า {currentFolder.toUpperCase()}&rdquo; ด้านบน
-              เพื่อเพิ่มภาพใหม่เข้าสู่ระบบ
+              กดปุ่ม &ldquo;อัปโหลด&rdquo; ข้างชื่อโฟลเดอร์
+              เพื่อเพิ่มไฟล์ใหม่เข้าสู่ระบบ
             </p>
           </div>
         ) : (
