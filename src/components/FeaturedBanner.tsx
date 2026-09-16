@@ -18,6 +18,8 @@ interface RecommendedSpot {
 interface FeaturedBannerProps {
   spots?: RecommendedSpot[];
   spot?: RecommendedSpot | null;
+  /** ใช้ภาพของสถานที่เมื่อแบนเนอร์กำลังแสดงคำแนะนำตามช่วงเวลา */
+  useSpotImage?: boolean;
   bannerSettings?: {
     bannerLight: string;
     bannerDark: string;
@@ -65,7 +67,7 @@ const DEFAULT_RECOMMENDED: RecommendedSpot[] = [
   },
 ];
 
-export default function FeaturedBanner({ spots, spot, bannerSettings }: FeaturedBannerProps) {
+export default function FeaturedBanner({ spots, spot, useSpotImage = false, bannerSettings }: FeaturedBannerProps) {
   const { isPlaying, activeTrack, playSpot, togglePlay } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDark, setIsDark] = useState(false);
@@ -138,13 +140,15 @@ export default function FeaturedBanner({ spots, spot, bannerSettings }: Featured
           <img
             key={currentItem.id}
             src={
-              isDark
+              useSpotImage
+                ? currentItem.imageUrl || "/logo.png"
+                : isDark
                 ? bannerSettings?.bannerDark || currentItem.imageUrl || "/logo.png"
                 : bannerSettings?.bannerLight || currentItem.imageUrl || "/logo.png"
             }
             alt={currentItem.title}
             className={`w-full h-full object-cover object-center transition-all duration-1000 ease-out ${
-              isThisItemPlaying ? "scale-105 opacity-40 brightness-105" : "opacity-30 group-hover:scale-105"
+              isThisItemPlaying ? "scale-105 opacity-50 brightness-105" : useSpotImage ? "opacity-45 group-hover:scale-105" : "opacity-30 group-hover:scale-105"
             }`}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0414] via-[#0e071c]/90 to-[#180d2e]/40" />
