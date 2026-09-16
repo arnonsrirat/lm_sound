@@ -56,7 +56,7 @@ export default async function RootLayout({
           <ToastViewport />
           <InstallAppPrompt />
           <FaviconSync light={settings.logoLight} dark={settings.logoDark} />
-          <div className="flex-1 flex flex-col relative z-0">{children}</div>
+          <div className="lmsound-page-shell flex-1 flex flex-col relative z-0">{children}</div>
           <AudioPlayerBar />
         </AudioProvider>
       </body>

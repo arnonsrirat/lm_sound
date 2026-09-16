@@ -298,6 +298,23 @@ body {
   background-attachment: fixed;
 }
 
+/* เว้นพื้นที่ให้เครื่องเล่นเสียงแบบ fixed เสมอ เพื่อไม่ให้ทับเนื้อหาหรือปุ่มด้านล่าง */
+.lmsound-page-shell {
+  padding-bottom: 0;
+}
+
+@supports selector(body:has(*)) {
+  body:has(.lmsound-audio-player) .lmsound-page-shell {
+    padding-bottom: calc(9rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 768px) {
+  body:has(.lmsound-audio-player) .lmsound-page-shell {
+    padding-bottom: 6rem;
+  }
+}
+
 /* ซ่อนแถบเล่นเพลงขณะเปิดฟอร์ม modal ของแอดมิน เพื่อไม่ให้บังปุ่มและแผนที่บนมือถือ */
 body.lmsound-editor-open .lmsound-audio-player {
   display: none !important;
