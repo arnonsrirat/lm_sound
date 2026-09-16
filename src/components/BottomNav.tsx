@@ -22,6 +22,11 @@ export default function BottomNav({ role }: { role?: "USER" | "ADMIN" }) {
     return () => { cancelled = true; };
   }, [pathname]);
 
+  useEffect(() => {
+    document.body.classList.toggle("lmsound-profile-open", profileOpen);
+    return () => document.body.classList.remove("lmsound-profile-open");
+  }, [profileOpen]);
+
   const items = [
     { label: "แผนที่", href: "/", icon: Map, action: "map" },
     { label: "เพลงผ่อนคลาย", href: "/relaxation", icon: Headphones },

@@ -8,6 +8,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import ToastViewport from "@/components/ToastViewport";
 import InstallAppPrompt from "@/components/InstallAppPrompt";
 import FaviconSync from "@/components/FaviconSync";
+import SitePreloader from "@/components/SitePreloader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-purple-500/30 selection:text-purple-200 transition-colors relative">
         <AudioProvider>
+          <SitePreloader />
           <AmbientAura />
           <ToastViewport />
           <InstallAppPrompt />
