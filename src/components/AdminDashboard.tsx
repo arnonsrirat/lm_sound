@@ -30,6 +30,7 @@ import {
 import type { SiteSettings, FestivalTheme } from "@/lib/site-settings";
 import { FESTIVAL_THEME_LABELS } from "@/lib/site-settings";
 import type { SpotItem } from "@/lib/fallbackSpots";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 import { availabilityStatuses, timeTags, type SpotInput, type AvailabilityStatus, type PendingFieldKey, type AmenityKey } from "@/lib/validations/spot";
 import {
   updateSiteSettingsAction,
@@ -46,6 +47,7 @@ import CampusMap from "@/components/CampusMap";
 import type { MediaFolder } from "@/actions/media";
 import { AMENITY_OPTIONS } from "@/components/AmenityBadges";
 import { notify as showNotice } from "@/lib/notify";
+import RelaxationAdminPanel from "@/components/admin/RelaxationAdminPanel";
 
 interface AdminDashboardProps {
   initialSettings: SiteSettings;
@@ -193,6 +195,7 @@ export default function AdminDashboard({
                   {tab === "spots" && "จัดการสถานที่"}
                   {tab === "logos-banners" && "โลโก้ & แบนเนอร์"}
                   {tab === "media" && "คลังสื่อ & โฟลเดอร์รูปภาพ"}
+                  {tab === "relaxation" && "จัดการเพลงผ่อนคลาย & เพลย์ลิสต์"}
                   {tab === "themes" && "ธีมเทศกาล"}
                   {tab === "texts" && "ข้อความเว็บไซต์"}
                   {tab === "users" && "จัดการผู้ใช้งาน"}
@@ -202,6 +205,7 @@ export default function AdminDashboard({
                 {tab === "spots" && "จัดการจุดอ่านหนังสือ & บรรยากาศ"}
                 {tab === "logos-banners" && "จัดการโลโก้ & แบนเนอร์ (เลือกจากโฟลเดอร์)"}
                 {tab === "media" && "คลังไฟล์รูปภาพ & โฟลเดอร์จัดเก็บ"}
+                {tab === "relaxation" && "จัดการรายการเพลงและอัลบั้มที่เผยแพร่"}
                 {tab === "themes" && "ปรับแต่งธีมเทศกาล & ฤดูกาล"}
                 {tab === "texts" && "ปรับแต่งข้อความ & สโลแกนเว็บไซต์"}
                 {tab === "users" && "ผู้ใช้งาน & สิทธิ์ในระบบ"}
@@ -262,8 +266,7 @@ export default function AdminDashboard({
 
           {tab === "media" && (
             <div className="space-y-4">
-              <GoogleDriveConnectionPanel notify={notify} askConfirm={askConfirm} />
-              <GoogleDriveStorageUsage />
+              <R2StoragePanel />
               <div className="glass-panel rounded-3xl p-5 md:p-6">
               <MediaFolderPicker
                 targetTitle="คลังสื่อทั้งหมด รวมอัลบั้มเพลงผ่อนคลาย"
@@ -272,6 +275,8 @@ export default function AdminDashboard({
               </div>
             </div>
           )}
+
+          {tab === "relaxation" && <RelaxationAdminPanel />}
 
           {tab === "themes" && (
             <ThemesTab
@@ -319,6 +324,13 @@ function GoogleDriveStorageUsage() {
   const format = (bytes: number) => `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
   const percent = usage.limit ? Math.min(100, (usage.used / usage.limit) * 100) : null;
   return <div className="glass-panel rounded-3xl p-5"><div className="flex items-center justify-between gap-3"><div><h3 className="font-bold text-foreground">พื้นที่ Google Drive</h3><p className="mt-1 text-xs text-foreground/60">พื้นที่ที่ใช้โดยบัญชี Google Drive ที่เชื่อมต่ออยู่</p></div><span className="text-sm font-bold text-cyan-300">{format(usage.used)}{usage.limit ? ` / ${format(usage.limit)}` : ""}</span></div>{percent !== null && <><div className="mt-3 h-2 overflow-hidden rounded-full bg-purple-950/40"><div className={`h-full rounded-full ${percent > 85 ? "bg-rose-400" : "bg-cyan-400"}`} style={{ width: `${percent}%` }} /></div><p className="mt-1 text-right text-[11px] text-foreground/60">ใช้ไป {percent.toFixed(1)}%</p></>}</div>;
+}
+
+function R2StoragePanel() {
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  useEffect(() => { void fetch("/api/uploads/status", { cache: "no-store" }).then((response) => response.json()).then((data) => setConfigured(Boolean(data.success && data.data?.configured))).catch(() => setConfigured(false)); }, []);
+  if (configured === null) return <div className="glass-panel rounded-3xl p-4 text-xs text-purple-300/70 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> กำลังตรวจสอบ Cloudflare R2…</div>;
+  return <div className={`rounded-3xl border p-5 ${configured ? "border-emerald-400/35 bg-emerald-500/10" : "border-amber-400/35 bg-amber-500/10"}`}><div className="flex items-start gap-3"><FolderOpen className={`h-5 w-5 shrink-0 ${configured ? "text-emerald-300" : "text-amber-300"}`} /><div><h3 className={`font-bold ${configured ? "text-emerald-100" : "text-amber-100"}`}>{configured ? "เชื่อมต่อ Cloudflare R2 แล้ว" : "ยังไม่ได้ตั้งค่า Cloudflare R2"}</h3><p className={`mt-1 text-xs leading-5 ${configured ? "text-emerald-100/75" : "text-amber-100/75"}`}>{configured ? "ไฟล์ใหม่จะอัปโหลดตรงจากอุปกรณ์ไปยัง R2 และฐานข้อมูลจะเก็บเฉพาะ metadata" : "เพิ่ม R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME และ R2_PUBLIC_URL ใน production environment"}</p></div></div></div>;
 }
 
 /* ========================================================================= */
@@ -429,7 +441,7 @@ function LogosBannersTab({
                       <div className="h-28 flex items-center justify-center">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={currentVal}
+                          src={getOptimizedImageUrl(currentVal)}
                           alt={c.title}
                           className="max-h-24 max-w-full object-contain drop-shadow-md group-hover:scale-105 transition"
                         />
@@ -438,7 +450,7 @@ function LogosBannersTab({
                       <div className="h-32 w-full flex items-center justify-center overflow-hidden rounded-xl">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={currentVal}
+                          src={getOptimizedImageUrl(currentVal)}
                           alt={c.title}
                           className="h-full w-full object-cover group-hover:scale-105 transition"
                         />
@@ -564,7 +576,7 @@ function SpotsTab({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={spot.imageUrl}
+              src={getOptimizedImageUrl(spot.imageUrl)}
               alt={spot.title}
               className="w-16 h-16 rounded-2xl object-cover border border-purple-500/25 shrink-0"
             />
@@ -811,7 +823,7 @@ function AdminSpotForm({
               className={`w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border text-sm ${fieldErrors.imageUrl ? "border-rose-400 ring-2 ring-rose-400/20" : "border-purple-500/25"}`}
               placeholder="เลือกภาพจากคลังภาพ"
             />
-            <div className="mt-2 grid grid-cols-4 gap-2">{imageUrls.map((url) => <img key={url} src={url} alt="ภาพสถานที่" className="h-14 w-full rounded-lg object-cover" />)}</div>
+            <div className="mt-2 grid grid-cols-4 gap-2">{imageUrls.map((url) => <img key={url} src={getOptimizedImageUrl(url)} alt="ภาพสถานที่" loading="lazy" decoding="async" className="h-14 w-full rounded-lg object-cover" />)}</div>
             {fieldErrors.imageUrl && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.imageUrl[0]}</p>}
           </div>
 

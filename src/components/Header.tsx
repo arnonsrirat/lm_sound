@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Moon, Sun, User as UserIcon, PlusCircle, LogOut, ShieldCheck, MapPin, Play, X, Flame } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
 import StudyStatsModal from "@/components/StudyStatsModal";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 export interface HeaderSettings {
   logoLight: string;
@@ -240,9 +241,11 @@ export default function Header({
                       <div className="flex items-center gap-2.5 min-w-0">
                         {spot.imageUrl ? (
                           <img
-                            src={spot.imageUrl}
+                            src={getOptimizedImageUrl(spot.imageUrl)}
                             alt={spot.title}
                             className="w-10 h-10 rounded-lg object-cover shrink-0 border border-purple-500/30"
+                            loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-purple-900/40 flex items-center justify-center text-purple-300 shrink-0">

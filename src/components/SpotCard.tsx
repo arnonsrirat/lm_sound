@@ -10,6 +10,7 @@ import { useAudio } from "@/context/AudioContext";
 import NoiseGauge from "@/components/NoiseGauge";
 import { notify } from "@/lib/notify";
 import { AmenityBadges } from "@/components/AmenityBadges";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 export interface SpotCardProps {
   spot: {
@@ -173,13 +174,14 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
       {/* Top Image & Floating Badges */}
       <div className="relative h-48 w-full overflow-hidden bg-purple-950/40">
         <img
-          src={spot.imageUrl}
+          src={getOptimizedImageUrl(spot.imageUrl)}
           alt={spot.title}
           className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
             isThisPlaying ? "scale-105 brightness-95" : "group-hover:scale-105"
           }`}
           loading="lazy"
           decoding="async"
+          fetchPriority="low"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/35 to-transparent" />
 

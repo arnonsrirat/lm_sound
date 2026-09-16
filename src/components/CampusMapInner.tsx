@@ -5,6 +5,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "re
 import L from "leaflet";
 import type { LatLngExpression } from "leaflet";
 import { AmenityBadges } from "@/components/AmenityBadges";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 export interface CampusMapSpot {
   id: string;
@@ -148,11 +149,12 @@ export default function CampusMapInner({
               <div className="min-w-[170px] overflow-hidden rounded-xl p-0.5 text-slate-800">
                 {spot.imageUrl && (
                   <img
-                    src={spot.imageUrl}
+                    src={getOptimizedImageUrl(spot.imageUrl)}
                     alt={spot.title}
                     className="mb-1.5 h-20 w-full rounded-lg object-cover"
                     loading="lazy"
                     decoding="async"
+                    fetchPriority="low"
                   />
                 )}
                 <strong className="block text-sm font-bold text-purple-950 leading-snug">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Play, Pause, MapPin, Sparkles, Volume2, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useAudio } from "@/context/AudioContext";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 interface RecommendedSpot {
   id: string;
@@ -139,17 +140,19 @@ export default function FeaturedBanner({ spots, spot, useSpotImage = false, bann
         <div className="absolute inset-0">
           <img
             key={currentItem.id}
-            src={
+            src={getOptimizedImageUrl(
               useSpotImage
                 ? currentItem.imageUrl || "/logo.png"
                 : isDark
                 ? bannerSettings?.bannerDark || currentItem.imageUrl || "/logo.png"
-                : bannerSettings?.bannerLight || currentItem.imageUrl || "/logo.png"
-            }
+                : bannerSettings?.bannerLight || currentItem.imageUrl || "/logo.png",
+            )}
             alt={currentItem.title}
             className={`w-full h-full object-cover object-center transition-all duration-1000 ease-out ${
               isThisItemPlaying ? "scale-105 opacity-50 brightness-105" : useSpotImage ? "opacity-45 group-hover:scale-105" : "opacity-30 group-hover:scale-105"
             }`}
+            loading="eager"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0414] via-[#0e071c]/90 to-[#180d2e]/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0414] via-transparent to-transparent" />

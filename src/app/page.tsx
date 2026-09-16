@@ -81,7 +81,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             {/* เสียงยอดนิยม (Popular Sounds with Instant Filters and Cards Grid) */}
             <SpotFeed spots={spots} currentUserId={session?.userId} />
-            <div id="relaxation-library"><RelaxationLibrary /></div>
+            <div id="relaxation-library"><RelaxationLibrary locked={!session} /></div>
           </main>
 
 

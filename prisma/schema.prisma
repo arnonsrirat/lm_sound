@@ -58,6 +58,9 @@ model GoogleDriveConnection {
 model MediaAsset {
   id              String   @id @default(cuid())
   name            String
+  originalName    String?
+  fileKey         String?  @unique
+  storageProvider String   @default("google-drive")
   note            String?
   timeTag         String?
   isPublished     Boolean  @default(false)
@@ -67,14 +70,40 @@ model MediaAsset {
   folder          String
   mimeType        String
   size            Int
-  driveFileId     String   @unique
+  driveFileId     String?  @unique
   driveWebViewUrl String?
   url             String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   ratings         TrackRating[]
+  playlistTracks  RelaxationPlaylistTrack[]
 
   @@index([folder, createdAt])
+}
+
+model RelaxationPlaylist {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  coverUrl    String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tracks      RelaxationPlaylistTrack[]
+
+  @@index([isPublished, updatedAt])
+}
+
+model RelaxationPlaylistTrack {
+  id         String   @id @default(cuid())
+  playlistId String
+  assetId    String
+  position   Int      @default(0)
+  playlist   RelaxationPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  asset      MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, assetId])
+  @@index([playlistId, position])
 }
 
 model TrackRating {

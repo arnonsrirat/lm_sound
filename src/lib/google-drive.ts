@@ -134,6 +134,14 @@ export async function getGoogleDriveFile(fileId: string) {
   return driveRequest(`${DRIVE_API}/files/${fileId}?alt=media`, accessToken);
 }
 
+export async function getGoogleDriveThumbnail(fileId: string) {
+  const { accessToken } = await getAccessToken();
+  const metadata = await (await driveRequest(`${DRIVE_API}/files/${fileId}?fields=thumbnailLink`, accessToken)).json() as { thumbnailLink?: string };
+  if (!metadata.thumbnailLink) return null;
+  const response = await fetch(metadata.thumbnailLink, { cache: "no-store" });
+  return response.ok ? response : null;
+}
+
 export async function deleteGoogleDriveFile(fileId: string) {
   const { accessToken } = await getAccessToken();
   await driveRequest(`${DRIVE_API}/files/${fileId}`, accessToken, { method: "DELETE" });
