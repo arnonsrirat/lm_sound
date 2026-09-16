@@ -7,9 +7,10 @@ import { isR2Configured } from "@/lib/r2/client";
 
 export const dynamic = "force-dynamic";
 
-const MAX_SIZE = 10 * 1024 * 1024;
+// รับไฟล์ต้นฉบับได้ถึง 50MB; รูปและเสียงจะถูกลดขนาดฝั่ง browser ก่อนส่งจริงเมื่อทำได้
+const MAX_SIZE = 50 * 1024 * 1024;
 const FOLDERS = new Set(["logos", "banners", "general", "audio", "relaxation"]);
-const EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif", ".mp3", ".wav", ".ogg", ".m4a"]);
+const EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif", ".mp3", ".wav", ".ogg", ".m4a", ".webm"]);
 
 function signUpload(userId: string, key: string, originalName: string, mimeType: string, size: number) {
   const secret = process.env.SESSION_SECRET || process.env.JWT_SECRET || "development-only";
@@ -33,9 +34,9 @@ export async function POST(request: Request) {
     const size = Number(body.size || 0);
     const folder = typeof body.folder === "string" ? body.folder : "general";
     const extension = path.extname(fileName).toLowerCase();
-    if (!fileName || !FOLDERS.has(folder) || !EXTENSIONS.has(extension) || size <= 0 || size > MAX_SIZE) return NextResponse.json({ success: false, error: "ไฟล์ไม่ถูกต้องหรือมีขนาดเกิน 10 MB" }, { status: 400 });
+    if (!fileName || !FOLDERS.has(folder) || !EXTENSIONS.has(extension) || size <= 0 || size > MAX_SIZE) return NextResponse.json({ success: false, error: "ไฟล์ไม่ถูกต้องหรือมีขนาดเกิน 50 MB" }, { status: 400 });
     if ((folder === "audio" || folder === "relaxation") !== contentType.startsWith("audio/")) return NextResponse.json({ success: false, error: "ชนิดไฟล์ไม่ตรงกับคลังที่เลือก" }, { status: 400 });
-    const safeExtension = contentType === "image/webp" ? ".webp" : extension;
+    const safeExtension = contentType === "image/webp" ? ".webp" : contentType === "audio/webm" ? ".webm" : extension;
     const key = `users/${session.userId}/${folder}/${crypto.randomUUID()}${safeExtension}`;
     const uploadUrl = await createR2PresignedPut(key, contentType);
     const uploadToken = signUpload(session.userId, key, fileName, contentType, size);

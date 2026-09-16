@@ -39,7 +39,7 @@ const FOLDERS: { id: MediaFolder; label: string; desc: string }[] = [
   { id: "logos", label: "โฟลเดอร์โลโก้ (Logos)", desc: "รูปโลโก้สำหรับธีมสว่างและมืด" },
   { id: "banners", label: "โฟลเดอร์แบนเนอร์ (Banners)", desc: "ภาพหัวเว็บ / Banner แนะนำ" },
   { id: "general", label: "คลังภาพทั่วไป (General)", desc: "รูปสปอตและสื่อประกอบอื่นๆ" },
-  { id: "audio", label: "คลังเสียงบรรยากาศ (Audio)", desc: "ไฟล์เสียง MP3, WAV, OGG และ M4A" },
+  { id: "audio", label: "คลังเสียงบรรยากาศ (Audio)", desc: "ไฟล์เสียง MP3, WAV, OGG, M4A และ WebM" },
   { id: "relaxation", label: "อัลบั้มเพลงผ่อนคลาย (Relaxation)", desc: "เพลงที่เลือกแสดงให้ผู้ใช้ฟังและให้คะแนน" },
 ];
 
@@ -137,7 +137,7 @@ export default function MediaFolderPicker({
   }, []);
 
   const prepareImageForUpload = async (file: File) => {
-    if (!file.type.startsWith("image/") || ["image/svg+xml", "image/gif"].includes(file.type) || file.size < 350 * 1024 || typeof createImageBitmap === "undefined") return file;
+    if (!file.type.startsWith("image/") || ["image/svg+xml", "image/gif"].includes(file.type) || typeof createImageBitmap === "undefined") return file;
     try {
       const bitmap = await createImageBitmap(file);
       const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
@@ -154,6 +154,42 @@ export default function MediaFolderPicker({
     }
   };
 
+  // พยายามแปลงเสียงขนาดใหญ่เป็น Opus/WebM บนเครื่องผู้ใช้ก่อนส่งไป R2
+  // ถ้า browser หรือ codec ไม่รองรับ จะคืนไฟล์เดิมเพื่อไม่ให้การอัปโหลดล้มเหลว
+  const prepareAudioForUpload = async (file: File) => {
+    if (!file.type.startsWith("audio/") || file.size <= 10 * 1024 * 1024 || typeof window === "undefined") return file;
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass || typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) return file;
+    let context: AudioContext | null = null;
+    try {
+      context = new AudioContextClass();
+      const buffer = await context.decodeAudioData(await file.arrayBuffer());
+      const destination = context.createMediaStreamDestination();
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(destination);
+      const chunks: Blob[] = [];
+      const recorder = new MediaRecorder(destination.stream, { mimeType: "audio/webm;codecs=opus", audioBitsPerSecond: 96000 });
+      const recording = new Promise<Blob>((resolve, reject) => {
+        recorder.ondataavailable = (event) => { if (event.data.size > 0) chunks.push(event.data); };
+        recorder.onerror = () => reject(new Error("AUDIO_COMPRESS_FAILED"));
+        recorder.onstop = () => resolve(new Blob(chunks, { type: "audio/webm" }));
+      });
+      recorder.start(250);
+      source.start();
+      source.onended = () => recorder.stop();
+      const compressed = await recording;
+      if (compressed.size >= file.size * 0.92) return file;
+      return new File([compressed], `${file.name.replace(/\.[^.]+$/, "")}.webm`, { type: "audio/webm", lastModified: file.lastModified });
+    } catch {
+      return file;
+    } finally {
+      await context?.close().catch(() => undefined);
+    }
+  };
+
+  const prepareFileForUpload = async (file: File) => file.type.startsWith("audio/") ? prepareAudioForUpload(file) : prepareImageForUpload(file);
+
   const putToR2 = (uploadUrl: string, file: File, onProgress: (loaded: number) => void) => new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("PUT", uploadUrl);
@@ -169,7 +205,7 @@ export default function MediaFolderPicker({
 
   const uploadFile = async (file: File, note = "", timeTag = "", onProgress?: (progress: number, phase: "uploading" | "processing") => void) => {
     try {
-      const preparedFile = await prepareImageForUpload(file);
+      const preparedFile = await prepareFileForUpload(file);
       const startResponse = await fetch("/api/uploads/presign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, folder: currentFolder, contentType: preparedFile.type, size: preparedFile.size }) });
       const startData = await startResponse.json() as { success?: boolean; data?: { uploadUrl: string; fileKey: string; uploadToken: string }; error?: string };
       if (!startResponse.ok || !startData.success || !startData.data) throw new Error(startData.error || "เริ่มอัปโหลดไม่สำเร็จ");
