@@ -29,6 +29,14 @@ export async function getAdminRelaxationData() {
   return { tracks, playlists };
 }
 
+export async function setRelaxationTrackPublished(assetId: string, isPublished: boolean) {
+  const session = await requireAuth();
+  if (session.role !== "ADMIN") throw new Error("เฉพาะผู้ดูแลระบบเท่านั้น");
+  const asset = await prisma.mediaAsset.updateMany({ where: { id: assetId, folder: "relaxation" }, data: { isPublished } });
+  if (!asset.count) throw new Error("ไม่พบเพลงในคลังเพลงผ่อนคลาย");
+  return { success: true, isPublished };
+}
+
 export async function saveRelaxationPlaylist(input: { id?: string; name: string; description?: string; coverUrl?: string; isPublished?: boolean; assetIds: string[] }) {
   const session = await requireAuth();
   if (session.role !== "ADMIN") throw new Error("เฉพาะผู้ดูแลระบบเท่านั้น");

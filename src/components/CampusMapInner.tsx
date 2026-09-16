@@ -26,12 +26,13 @@ const CAMPUS_BOUNDS = L.latLngBounds([7.74, 99.86], [7.88, 100.02]);
 // แคช Leaflet divIcon สำหรับแต่ละระดับเสียง 3 แบบ
 const pinIconsCache: Record<string, L.DivIcon> = {};
 
-function getPinIconByNoiseLevel(noiseLevel?: string): L.DivIcon {
+function getPinIconByNoiseLevel(noiseLevel?: string, selected = false): L.DivIcon {
   const level = (noiseLevel && ["quiet", "moderate", "lively"].includes(noiseLevel)
     ? noiseLevel
     : "moderate") as "quiet" | "moderate" | "lively";
 
-  if (pinIconsCache[level]) return pinIconsCache[level];
+  const cacheKey = `${level}:${selected ? "selected" : "normal"}`;
+  if (pinIconsCache[cacheKey]) return pinIconsCache[cacheKey];
 
   let iconSvg = "";
   if (level === "quiet") {
@@ -48,7 +49,7 @@ function getPinIconByNoiseLevel(noiseLevel?: string): L.DivIcon {
   const icon = L.divIcon({
     className: "lmsound-map-pin",
     html: `
-      <div class="lmsound-pin-container lmsound-pin-${level}">
+      <div class="lmsound-pin-container lmsound-pin-${level} ${selected ? "lmsound-pin-selected" : ""}">
         <div class="lmsound-pin-pulse"></div>
         <div class="lmsound-pin-body">
           <div class="lmsound-pin-icon">
@@ -62,7 +63,7 @@ function getPinIconByNoiseLevel(noiseLevel?: string): L.DivIcon {
     popupAnchor: [0, -42],
   });
 
-  pinIconsCache[level] = icon;
+  pinIconsCache[cacheKey] = icon;
   return icon;
 }
 
@@ -112,12 +113,14 @@ export default function CampusMapInner({
   onPick,
   interactive = false,
   onMarkerClick,
+  selectedSpotId,
 }: {
   spots: CampusMapSpot[];
   selected?: { latitude: number; longitude: number } | null;
   onPick?: (latitude: number, longitude: number) => void;
   interactive?: boolean;
   onMarkerClick?: (spot: CampusMapSpot) => void;
+  selectedSpotId?: string | null;
 }) {
   return (
     <MapContainer
@@ -143,7 +146,7 @@ export default function CampusMapInner({
           <Marker
             key={spot.id}
             position={[spot.latitude, spot.longitude]}
-            icon={getPinIconByNoiseLevel(spot.noiseLevel)}
+            icon={getPinIconByNoiseLevel(spot.noiseLevel, selectedSpotId === spot.id)}
           >
             <Popup>
               <div className="min-w-[170px] overflow-hidden rounded-xl p-0.5 text-slate-800">
@@ -179,7 +182,7 @@ export default function CampusMapInner({
       {selected && (
         <Marker
           position={[selected.latitude, selected.longitude]}
-          icon={getPinIconByNoiseLevel("moderate")}
+          icon={getPinIconByNoiseLevel("moderate", true)}
         />
       )}
     </MapContainer>

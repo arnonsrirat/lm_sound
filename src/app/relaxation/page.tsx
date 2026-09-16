@@ -4,6 +4,7 @@ import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import RelaxationLibrary from "@/components/RelaxationLibrary";
 import { getSession } from "@/lib/auth";
+import { getSpots } from "@/actions/spot";
 
 export const metadata: Metadata = {
   title: "คลังเพลงผ่อนคลาย | LMSound",
@@ -12,12 +13,13 @@ export const metadata: Metadata = {
 
 export default async function RelaxationPage() {
   const session = await getSession();
+  const spots = await getSpots();
 
   return (
     <div className="min-h-screen text-foreground flex flex-col transition-colors">
       <Header currentUser={session ? { userId: session.userId, username: session.username } : null} />
       <div className="flex-1 flex max-w-[1680px] w-full mx-auto relative">
-        <Sidebar role={session?.role} />
+        <Sidebar role={session?.role} spots={spots} />
         <main className="flex-1 md:pl-60 lg:pl-64 px-4 py-6 sm:px-6 sm:py-8 md:px-8 pb-32">
           <div className="mx-auto max-w-5xl">
             <div className="mb-6">

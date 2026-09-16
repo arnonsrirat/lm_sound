@@ -22,6 +22,10 @@ export interface SiteSettings {
   siteTagline: string;
   // ธีมเทศกาล
   festivalTheme: FestivalTheme;
+  festivalStartDate: string;
+  festivalEndDate: string;
+  festivalStartTime: string;
+  festivalEndTime: string;
   // ข้อความหัวแบนเนอร์
   bannerTitle: string;
   bannerSubtitle: string;
@@ -35,6 +39,10 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "LM Sound",
   siteTagline: "Spatial & Ambient Soundscape",
   festivalTheme: "default",
+  festivalStartDate: "",
+  festivalEndDate: "",
+  festivalStartTime: "00:00",
+  festivalEndTime: "23:59",
   bannerTitle: "เสียงแนะนำ (Recommended Soundscape)",
   bannerSubtitle: "ค้นพบมุมอ่านหนังสือที่ใช่ พร้อมเสียงบรรยากาศจริงก่อนเดินทาง",
 };

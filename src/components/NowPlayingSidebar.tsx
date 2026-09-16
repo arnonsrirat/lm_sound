@@ -41,7 +41,16 @@ export default function NowPlayingSidebar() {
     recentlyPlayed,
     clearRecentlyPlayed,
     playSpot,
+    currentTime,
+    duration,
+    isLiveStream,
+    seek,
   } = useAudio();
+
+  const formatTime = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+    return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+  };
 
   const toggleMute = () => {
     if (masterVolume > 0) {
@@ -211,6 +220,24 @@ export default function NowPlayingSidebar() {
         >
           <SkipForward className="w-5 h-5" />
         </button>
+      </div>
+
+      <div className="mb-5 rounded-2xl border border-purple-500/20 bg-purple-950/25 px-3 py-2.5">
+        <div className="mb-1.5 flex items-center justify-between text-[10px] text-purple-200/70">
+          <span>{isLiveStream ? "เสียงสด / วนบรรยากาศ" : formatTime(currentTime)}</span>
+          <span>{isLiveStream ? "LIVE" : formatTime(duration)}</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max={Math.max(duration, 0.01)}
+          step="0.1"
+          value={isLiveStream ? 0 : Math.min(currentTime, duration || 0)}
+          disabled={isLiveStream || duration <= 0}
+          onChange={(event) => seek(Number(event.target.value))}
+          aria-label="เลื่อนตำแหน่งเพลง"
+          className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-purple-900/50 accent-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-40"
+        />
       </div>
 
       {/* Master Volume Bar */}

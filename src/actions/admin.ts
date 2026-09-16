@@ -19,6 +19,10 @@ const settingsSchema = z.object({
   festivalTheme: z.enum(["default", "songkran", "loykratong", "newyear", "christmas"], {
     message: "ธีมเทศกาลไม่ถูกต้อง",
   }),
+  festivalStartDate: z.string().optional(),
+  festivalEndDate: z.string().optional(),
+  festivalStartTime: z.string().optional(),
+  festivalEndTime: z.string().optional(),
   bannerTitle: z.string().max(150, "หัวข้อแบนเนอร์ต้องไม่เกิน 150 ตัวอักษร"),
   bannerSubtitle: z.string().max(300, "ข้อความแบนเนอร์ต้องไม่เกิน 300 ตัวอักษร"),
 });

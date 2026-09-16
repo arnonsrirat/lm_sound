@@ -42,8 +42,16 @@ export default async function RootLayout({
 }) {
   // ธีมเทศกาลที่แอดมินตั้งไว้ (สลับชุดสีทั้งเว็บ) — fallback เป็น default ถ้า DB ไม่พร้อม
   const settings = await getSiteSettings();
+  const now = new Date();
+  const day = now.toISOString().slice(0, 10);
+  const minute = now.getHours() * 60 + now.getMinutes();
+  const toMinute = (value: string) => { const [hours, minutes] = value.split(":").map(Number); return (hours || 0) * 60 + (minutes || 0); };
+  const hasDateWindow = Boolean(settings.festivalStartDate && settings.festivalEndDate);
+  const inDateWindow = !hasDateWindow || (day >= settings.festivalStartDate && day <= settings.festivalEndDate);
+  const inTimeWindow = !hasDateWindow || (toMinute(settings.festivalStartTime) <= toMinute(settings.festivalEndTime) ? minute >= toMinute(settings.festivalStartTime) && minute <= toMinute(settings.festivalEndTime) : minute >= toMinute(settings.festivalStartTime) || minute <= toMinute(settings.festivalEndTime));
+  const activeFestivalTheme = inDateWindow && inTimeWindow ? settings.festivalTheme : "default";
   const festivalClass =
-    settings.festivalTheme !== "default" ? `festival-${settings.festivalTheme}` : "";
+    activeFestivalTheme !== "default" ? `festival-${activeFestivalTheme}` : "";
 
   return (
     <html

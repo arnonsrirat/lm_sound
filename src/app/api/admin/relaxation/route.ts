@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteRelaxationPlaylist, getAdminRelaxationData, saveRelaxationPlaylist } from "@/actions/engagement";
+import { deleteRelaxationPlaylist, getAdminRelaxationData, saveRelaxationPlaylist, setRelaxationTrackPublished } from "@/actions/engagement";
 
 export async function GET() {
   try { return NextResponse.json({ success: true, data: await getAdminRelaxationData() }); }
@@ -14,4 +14,14 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try { const { id } = await request.json() as { id?: string }; if (!id) return NextResponse.json({ success: false, error: "ไม่พบเพลย์ลิสต์" }, { status: 400 }); return NextResponse.json(await deleteRelaxationPlaylist(id)); }
   catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "ลบเพลย์ลิสต์ไม่สำเร็จ" }, { status: 400 }); }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json() as { assetId?: string; isPublished?: boolean };
+    if (!body.assetId || typeof body.isPublished !== "boolean") return NextResponse.json({ success: false, error: "ข้อมูลสถานะเพลงไม่ครบ" }, { status: 400 });
+    return NextResponse.json(await setRelaxationTrackPublished(body.assetId, body.isPublished));
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "อัปเดตสถานะเพลงไม่สำเร็จ" }, { status: 400 });
+  }
 }

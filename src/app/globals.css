@@ -55,6 +55,14 @@
   transform: rotate(-45deg) scale(1.22);
 }
 
+.lmsound-pin-selected .lmsound-pin-body {
+  background: linear-gradient(145deg, #38bdf8, #2563eb) !important;
+  border-color: #bae6fd !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .3), 0 0 24px rgba(14, 165, 233, .95) !important;
+  transform: rotate(-45deg) scale(1.14);
+}
+.lmsound-pin-selected .lmsound-pin-pulse { background: #38bdf8 !important; opacity: .75; }
+
 /* Pin Icon centered inside teardrop */
 .lmsound-pin-icon {
   transform: rotate(45deg);

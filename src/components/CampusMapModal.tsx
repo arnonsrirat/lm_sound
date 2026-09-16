@@ -183,6 +183,7 @@ export default function CampusMapModal({
                   : null
               }
               onMarkerClick={(spot) => setSelectedSpot(spot)}
+              selectedSpotId={selectedSpot?.id}
               interactive={true}
             />
           </div>
@@ -306,7 +307,7 @@ export default function CampusMapModal({
 
           {/* Hologram Floating Spot Card (การ์ดโฮโลแกรมแสดงรายละเอียดสำคัญ) */}
           {selectedSpot && (
-            <div className="campus-map-hologram-card absolute bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:bottom-5 z-[1000] sm:w-[370px] hologram-card rounded-3xl p-4 sm:p-5 animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto shadow-2xl">
+            <div className="campus-map-hologram-card absolute bottom-3 left-3 right-3 sm:right-auto sm:left-5 sm:bottom-5 z-[1000] sm:w-[350px] max-h-[48%] overflow-y-auto hologram-card rounded-3xl p-4 sm:p-5 animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto shadow-2xl">
               {/* Header inside Hologram Card */}
               <div className="flex items-start justify-between gap-3 mb-2.5">
                 <div className="min-w-0">
