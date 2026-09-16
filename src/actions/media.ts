@@ -11,6 +11,10 @@ export interface MediaItem {
   name: string;
   note?: string | null;
   timeTag?: string | null;
+  isPublished?: boolean;
+  playCount?: number;
+  averageRating?: number;
+  ratingCount?: number;
   url: string;
   folder: string;
   size: number;
@@ -25,7 +29,7 @@ export interface MediaActionResult<T = unknown> {
 }
 
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
-const ALLOWED_FOLDERS = ["logos", "banners", "general", "audio"] as const;
+const ALLOWED_FOLDERS = ["logos", "banners", "general", "audio", "relaxation"] as const;
 export type MediaFolder = (typeof ALLOWED_FOLDERS)[number];
 
 const ALLOWED_EXTENSIONS = new Set([
@@ -67,7 +71,7 @@ export async function getMediaFilesAction(
       orderBy: { createdAt: "desc" },
     });
     for (const asset of storedAssets) {
-      items.push({ id: asset.id, name: asset.name, note: asset.note, timeTag: asset.timeTag, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
+      items.push({ id: asset.id, name: asset.name, note: asset.note, timeTag: asset.timeTag, isPublished: asset.isPublished, playCount: asset.playCount, averageRating: asset.averageRating, ratingCount: asset.ratingCount, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
     }
 
     // 1. อ่านไฟล์จากดิสก์ (ถ้าโฟลเดอร์เข้าถึงได้)
@@ -170,7 +174,7 @@ export async function uploadMediaAction(
     const ext = path.extname(file.name).toLowerCase() || ".png";
     const audioExtensions = new Set([".mp3", ".wav", ".ogg", ".m4a"]);
     const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"]);
-    const allowedExtensions = folder === "audio" ? audioExtensions : imageExtensions;
+    const allowedExtensions = folder === "audio" || folder === "relaxation" ? audioExtensions : imageExtensions;
     if (!allowedExtensions.has(ext)) {
       return {
         success: false,
@@ -181,7 +185,7 @@ export async function uploadMediaAction(
 
     try {
       const asset = await uploadToGoogleDrive(file, folder, note, timeTag);
-      return { success: true, data: { id: asset.id, name: asset.name, note: asset.note, timeTag: asset.timeTag, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() }, statusCode: 201 };
+      return { success: true, data: { id: asset.id, name: asset.name, note: asset.note, timeTag: asset.timeTag, isPublished: asset.isPublished, playCount: asset.playCount, averageRating: asset.averageRating, ratingCount: asset.ratingCount, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() }, statusCode: 201 };
     } catch (error) {
       if (error instanceof Error && error.message === "GOOGLE_DRIVE_NOT_CONNECTED") {
         return { success: false, error: "ยังไม่ได้เชื่อมต่อ Google Drive กรุณาเชื่อมต่อก่อนอัปโหลดไฟล์", statusCode: 412 };
@@ -299,15 +303,15 @@ export async function moveMediaAction(fileUrl: string, targetFolder: MediaFolder
   }
 }
 
-export async function updateMediaNoteAction(fileUrl: string, note: string | null, timeTag: string | null = null): Promise<MediaActionResult<MediaItem>> {
+export async function updateMediaNoteAction(fileUrl: string, note: string | null, timeTag: string | null = null, isPublished?: boolean): Promise<MediaActionResult<MediaItem>> {
   try {
     await requireAdmin();
     const asset = await prisma.mediaAsset.findFirst({ where: { url: fileUrl } });
     if (!asset) return { success: false, error: "ไม่พบไฟล์ในฐานข้อมูล", statusCode: 404 };
     const normalizedNote = note?.trim() ? note.trim().slice(0, 160) : null;
     const normalizedTimeTag = timeTag?.trim() ? timeTag.trim().slice(0, 40) : null;
-    const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { note: normalizedNote, timeTag: normalizedTimeTag } });
-      return { success: true, data: { id: updated.id, name: updated.name, note: updated.note, timeTag: updated.timeTag, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
+    const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { note: normalizedNote, timeTag: normalizedTimeTag, ...(typeof isPublished === "boolean" ? { isPublished } : {}) } });
+      return { success: true, data: { id: updated.id, name: updated.name, note: updated.note, timeTag: updated.timeTag, isPublished: updated.isPublished, playCount: updated.playCount, averageRating: updated.averageRating, ratingCount: updated.ratingCount, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "บันทึกโน้ตไม่สำเร็จ", statusCode: 500 };
   }

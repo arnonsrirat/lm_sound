@@ -18,6 +18,8 @@ export interface SpotItem {
   } | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  averageRating?: number;
+  ratingCount?: number;
 }
 
 export const FALLBACK_SPOTS: SpotItem[] = [

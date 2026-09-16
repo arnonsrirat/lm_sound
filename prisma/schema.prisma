@@ -18,6 +18,9 @@ model User {
   password  String
   role      String   @default("USER") // "USER" | "ADMIN"
   spots     Spot[]
+  trackRatings TrackRating[]
+  spotRatings SpotRating[]
+  spotFavorites SpotFavorite[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -44,6 +47,10 @@ model MediaAsset {
   name            String
   note            String?
   timeTag         String?
+  isPublished     Boolean  @default(false)
+  playCount       Int      @default(0)
+  averageRating   Float    @default(0)
+  ratingCount     Int      @default(0)
   folder          String
   mimeType        String
   size            Int
@@ -52,8 +59,46 @@ model MediaAsset {
   url             String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  ratings         TrackRating[]
 
   @@index([folder, createdAt])
+}
+
+model TrackRating {
+  id        String   @id @default(cuid())
+  assetId   String
+  userId    String
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  asset     MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([assetId, userId])
+  @@index([assetId])
+}
+
+model SpotRating {
+  id        String   @id @default(cuid())
+  spotId    String
+  userId    String
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  spot      Spot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([spotId, userId])
+  @@index([spotId])
+}
+
+model SpotFavorite {
+  id        String   @id @default(cuid())
+  spotId    String
+  userId    String
+  createdAt DateTime @default(now())
+  spot      Spot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([spotId, userId])
+  @@index([spotId])
 }
 
 model Spot {
@@ -67,10 +112,14 @@ model Spot {
   audioUrl    String
   timeTag     String?
   availabilityStatus String @default("READY")
+  averageRating Float @default(0)
+  ratingCount Int @default(0)
   latitude    Float?
   longitude   Float?
   authorId    String
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ratings     SpotRating[]
+  favorites   SpotFavorite[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

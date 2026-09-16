@@ -38,6 +38,7 @@ const FOLDERS: { id: MediaFolder; label: string; desc: string }[] = [
   { id: "banners", label: "โฟลเดอร์แบนเนอร์ (Banners)", desc: "ภาพหัวเว็บ / Banner แนะนำ" },
   { id: "general", label: "คลังภาพทั่วไป (General)", desc: "รูปสปอตและสื่อประกอบอื่นๆ" },
   { id: "audio", label: "คลังเสียงบรรยากาศ (Audio)", desc: "ไฟล์เสียง MP3, WAV, OGG และ M4A" },
+  { id: "relaxation", label: "อัลบั้มเพลงผ่อนคลาย (Relaxation)", desc: "เพลงที่เลือกแสดงให้ผู้ใช้ฟังและให้คะแนน" },
 ];
 
 export default function MediaFolderPicker({
@@ -299,7 +300,7 @@ export default function MediaFolderPicker({
             type="file"
             ref={fileInputRef}
             onChange={handleFileSelected}
-            accept={currentFolder === "audio" ? "audio/mpeg,audio/wav,audio/ogg,audio/mp4" : "image/png,image/jpeg,image/webp,image/svg+xml,image/gif"}
+            accept={currentFolder === "audio" || currentFolder === "relaxation" ? "audio/mpeg,audio/wav,audio/ogg,audio/mp4" : "image/png,image/jpeg,image/webp,image/svg+xml,image/gif"}
              multiple
              className="hidden"
           />}
@@ -486,7 +487,7 @@ export default function MediaFolderPicker({
                     onClick={() => setPreviewFor(item)}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {currentFolder === "audio" ? (
+                    {currentFolder === "audio" || currentFolder === "relaxation" ? (
                       <Music className="w-10 h-10 text-purple-300" />
                     ) : (
                       <img
@@ -520,6 +521,7 @@ export default function MediaFolderPicker({
                       <p className="text-[10px] text-purple-300/50 mt-0.5">อัลบั้ม {new Date(item.updatedAt).toLocaleDateString("th-TH")}</p>
                       {item.timeTag && <p className="mt-1 text-[10px] text-fuchsia-200/80">ช่วงเวลา: {item.timeTag}</p>}
                       {item.note && <p className="mt-1 line-clamp-1 text-[10px] text-cyan-200/75" title={item.note}>{item.note}</p>}
+                      {item.folder === "relaxation" && canManage && <button type="button" onClick={async () => { const response = await fetch("/api/admin/media", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileUrl: item.url, note: item.note, timeTag: item.timeTag, isPublished: !item.isPublished }) }); const data = await response.json(); if (data.success) { setItems((previous) => previous.map((entry) => entry.url === item.url ? data.data : entry)); notify(data.data.isPublished ? "เผยแพร่เพลงแล้ว" : "ซ่อนเพลงแล้ว"); } }} className="mt-1 w-full rounded-lg border border-fuchsia-400/30 px-1 py-1 text-[10px] text-fuchsia-200">{item.isPublished ? "✓ แสดงในคลัง" : "ซ่อนอยู่ · กดเพื่อแสดง"}</button>}
                     </div>
 
                     <div className="flex items-center gap-1 pt-1 border-t border-purple-500/15">
@@ -576,7 +578,7 @@ export default function MediaFolderPicker({
 
       {noteFor && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 p-4"><div className="w-full max-w-md rounded-2xl border border-cyan-400/35 bg-[#160b2b] p-5"><h4 className="font-bold text-cyan-100">แก้ไขชื่อโน้ต</h4><p className="mt-1 text-xs text-purple-200/70">ชื่อไฟล์จริงจะไม่ถูกเปลี่ยน</p><input autoFocus value={editingNote} onChange={(event) => setEditingNote(event.target.value)} maxLength={160} placeholder="ตั้งชื่อที่จำง่าย เช่น รูปหน้าแรก" className="mt-4 w-full rounded-xl border border-purple-500/30 bg-purple-950/40 px-3 py-2.5 text-sm text-purple-100 outline-none focus:border-cyan-300" /><div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => setNoteFor(null)} className="rounded-xl px-3 py-2 text-xs text-purple-300 hover:bg-purple-900/30">ยกเลิก</button><button type="button" onClick={() => void saveNote()} className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-300">บันทึกโน้ต</button></div></div></div>}
 
-      {previewFor && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/80 p-4" onClick={() => setPreviewFor(null)}><div className="w-full max-w-3xl rounded-2xl border border-purple-400/35 bg-[#160b2b] p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="mb-3 flex items-center justify-between gap-3"><div className="min-w-0"><h4 className="truncate font-bold text-purple-100">{previewFor.note || previewFor.name}</h4><p className="truncate text-xs text-purple-300/60">{previewFor.name}</p></div><button type="button" onClick={() => setPreviewFor(null)} className="rounded-xl p-2 text-purple-300 hover:bg-purple-900/40"><X className="h-5 w-5" /></button></div>{previewFor.folder === "audio" ? <audio controls autoPlay src={previewFor.url} className="w-full" /> : <img src={previewFor.url} alt={previewFor.note || previewFor.name} className="max-h-[70vh] w-full rounded-xl object-contain" />}</div></div>}
+      {previewFor && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/80 p-4" onClick={() => setPreviewFor(null)}><div className="w-full max-w-3xl rounded-2xl border border-purple-400/35 bg-[#160b2b] p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="mb-3 flex items-center justify-between gap-3"><div className="min-w-0"><h4 className="truncate font-bold text-purple-100">{previewFor.note || previewFor.name}</h4><p className="truncate text-xs text-purple-300/60">{previewFor.name}</p></div><button type="button" onClick={() => setPreviewFor(null)} className="rounded-xl p-2 text-purple-300 hover:bg-purple-900/40"><X className="h-5 w-5" /></button></div>{previewFor.folder === "audio" || previewFor.folder === "relaxation" ? <audio controls autoPlay src={previewFor.url} className="w-full" /> : <img src={previewFor.url} alt={previewFor.note || previewFor.name} className="max-h-[70vh] w-full rounded-xl object-contain" />}</div></div>}
 
       {deleteFor && <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 p-4"><div className="w-full max-w-sm rounded-2xl border border-rose-400/30 bg-[#160b2b] p-5 text-center"><div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/15 text-rose-300"><Trash2 className="h-5 w-5" /></div><h4 className="font-bold text-purple-100">ยืนยันการลบไฟล์</h4><p className="mt-2 break-all text-xs text-purple-200/70">“{deleteFor.name}” จะถูกลบออกจากคลัง</p><div className="mt-5 grid grid-cols-2 gap-2"><button type="button" onClick={() => setDeleteFor(null)} className="rounded-xl px-3 py-2 text-xs text-purple-300 hover:bg-purple-900/30 cursor-pointer">ยกเลิก</button><button type="button" onClick={() => { const item = deleteFor; setDeleteFor(null); void handleDelete(item); }} className="rounded-xl bg-rose-500 px-3 py-2 text-xs font-bold text-white hover:bg-rose-400 cursor-pointer">ลบไฟล์</button></div></div></div>}
 

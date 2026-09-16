@@ -8,6 +8,7 @@ import FeaturedBanner from "@/components/FeaturedBanner";
 import SpotFeed from "@/components/SpotFeed";
 import NowPlayingSidebar from "@/components/NowPlayingSidebar";
 import MobileCampusMapBar from "@/components/MobileCampusMapBar";
+import RelaxationLibrary from "@/components/RelaxationLibrary";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         />
 
         {/* Center Main Area + Right Sidebar ("เวลา sound เล่น") */}
-        <div className="flex-1 md:pl-60 lg:pl-64 flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 pb-28 min-w-0">
+        <div className="flex-1 md:pl-60 lg:pl-64 flex flex-col xl:flex-row gap-6 p-4 sm:p-6 md:p-8 pb-40 min-w-0">
           {/* Center Column: Main Content */}
           <main className="flex-1 min-w-0 space-y-6">
             {/* เสียงแนะนำ (Recommended Sounds Banner with . . . . dot indicators) */}
@@ -71,10 +72,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             />
 
             {/* Mobile Campus Map Action Bar (แสดงเฉพาะจอมือถือ) */}
-            <MobileCampusMapBar spots={spots} />
+            <MobileCampusMapBar spots={spots} isLoggedIn={Boolean(session)} />
 
             {/* เสียงยอดนิยม (Popular Sounds with Instant Filters and Cards Grid) */}
             <SpotFeed spots={spots} currentUserId={session?.userId} />
+            <RelaxationLibrary />
           </main>
 
 

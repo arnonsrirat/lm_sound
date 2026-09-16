@@ -45,7 +45,7 @@ export default async function RootLayout({
   return (
     <html
       lang="th"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark ${festivalClass}`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased light ${festivalClass}`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-purple-500/30 selection:text-purple-200 transition-colors relative">
         <AudioProvider>

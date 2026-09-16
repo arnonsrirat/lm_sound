@@ -14,6 +14,40 @@ export interface ActionResult<T = unknown> {
   statusCode?: number;
 }
 
+/** ผู้ใช้เสนอชื่อโซนและตำแหน่งเท่านั้น ส่วนข้อมูลประกอบให้ Admin ตรวจสอบก่อนเผยแพร่ */
+export async function suggestSpotAction(input: { title: string; location: string; latitude: number; longitude: number }): Promise<ActionResult> {
+  try {
+    const session = await requireAuth();
+    const validated = spotSchema.pick({ title: true, location: true, latitude: true, longitude: true }).safeParse(input);
+    if (!validated.success) return { success: false, error: "กรุณากรอกชื่อโซนและตำแหน่งให้ถูกต้อง", fieldErrors: validated.error.flatten().fieldErrors, statusCode: 400 };
+    const fallback = FALLBACK_SPOTS[0];
+    const spot = await prisma.spot.create({
+      data: {
+        title: validated.data.title,
+        location: validated.data.location,
+        description: "ผู้ใช้ส่งข้อมูลเบื้องต้นแล้ว รอผู้ดูแลระบบตรวจสอบและเติมรายละเอียดก่อนเผยแพร่",
+        noiseLevel: "moderate",
+        imageUrl: fallback.imageUrl,
+        imageUrls: fallback.imageUrls?.length ? fallback.imageUrls : [fallback.imageUrl],
+        audioUrl: fallback.audioUrl,
+        timeTag: null,
+        availabilityStatus: "PENDING_UPDATE",
+        latitude: validated.data.latitude,
+        longitude: validated.data.longitude,
+        authorId: session.userId,
+      },
+      include: { author: { select: { id: true, username: true } } },
+    });
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true, data: spot, statusCode: 201 };
+  } catch (err) {
+    if (err instanceof UnauthorizedError) return { success: false, error: "กรุณาเข้าสู่ระบบก่อนเสนอจุดใหม่", statusCode: 401 };
+    console.error("Suggest Spot Error:", err);
+    return { success: false, error: "ยังไม่สามารถส่งจุดใหม่ได้ กรุณาลองอีกครั้ง", statusCode: 500 };
+  }
+}
+
 /**
  * 1. Create Spot (Server Action)
  * บันทึกจุดอ่านหนังสือใหม่ พร้อมผูก authorId จาก Session

@@ -8,6 +8,7 @@ import { MapPin, User, ArrowLeft, Edit3, Calendar, Compass } from "lucide-react"
 import Link from "next/link";
 import SpotDetailInteractive from "@/components/SpotDetailInteractive";
 import CampusMap from "@/components/CampusMap";
+import SpotEngagement from "@/components/SpotEngagement";
 
 interface SpotDetailPageProps {
   params: Promise<{ id: string }>;
@@ -129,6 +130,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
                   longitude: spot.longitude,
                 }}
               />
+              <SpotEngagement spotId={spot.id} averageRating={spot.averageRating} ratingCount={spot.ratingCount} />
 
               {/* Description */}
               <div className="space-y-2 pt-2 border-t border-purple-500/15">

@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Compass, Navigation, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Compass, Navigation, MapPin, PlusCircle } from "lucide-react";
 import CampusMapModal from "./CampusMapModal";
 import type { CampusMapSpot } from "./CampusMapInner";
 
-export default function MobileCampusMapBar({ spots = [] }: { spots: CampusMapSpot[] }) {
+export default function MobileCampusMapBar({ spots = [], isLoggedIn = false }: { spots: CampusMapSpot[]; isLoggedIn?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <div className="md:hidden w-full">
+      <div id="campus-map" className="w-full flex flex-col sm:flex-row gap-2">
         <button
           onClick={() => setIsOpen(true)}
           type="button"
-          className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/70 via-[#130926]/90 to-purple-900/60 backdrop-blur-xl shadow-lg shadow-purple-950/50 hover:border-fuchsia-400/50 transition active:scale-[0.98] cursor-pointer"
+          className="flex-1 flex items-center justify-between p-3.5 rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/70 via-[#130926]/90 to-purple-900/60 backdrop-blur-xl shadow-lg shadow-purple-950/50 hover:border-fuchsia-400/50 transition active:scale-[0.98] cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-fuchsia-300">
@@ -41,6 +42,11 @@ export default function MobileCampusMapBar({ spots = [] }: { spots: CampusMapSpo
             <span>เปิดแผนที่</span>
           </div>
         </button>
+        <Link href={isLoggedIn ? "/spots/new" : "/login?next=/spots/new"} className="flex items-center justify-center gap-2 rounded-2xl border border-fuchsia-400/35 bg-fuchsia-500/10 px-4 py-3 text-xs font-bold text-fuchsia-200 hover:bg-fuchsia-500/20 sm:min-w-[190px]">
+          <PlusCircle className="h-4 w-4" />
+          {isLoggedIn ? "เสนอจุดใหม่ (รออนุมัติ)" : "เข้าสู่ระบบเพื่อเพิ่มจุด"}
+        </Link>
+        <p className="sr-only">{isLoggedIn ? "ผู้ใช้กรอกได้เฉพาะชื่อโซนและตำแหน่ง ข้อมูลส่วนอื่นรอแอดมินตรวจสอบ" : "ต้องเข้าสู่ระบบก่อนเพิ่มจุด"}</p>
       </div>
 
       <CampusMapModal

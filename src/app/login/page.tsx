@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginSchema } from "@/lib/validation";
 import {
   Volume2,
@@ -18,6 +18,9 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next")?.startsWith("/") ? searchParams.get("next")! : "/";
+  const authRequired = searchParams.get("reason") === "auth-required";
 
   const [formData, setFormData] = useState({
     emailOrUsername: "",
@@ -82,7 +85,7 @@ export default function LoginPage() {
 
       setSuccessMessage("เข้าสู่ระบบสำเร็จ! กำลังนำท่านเข้าสู่ระบบ...");
       setTimeout(() => {
-        router.push(data.user?.role === "ADMIN" ? "/admin" : "/");
+        router.push(data.user?.role === "ADMIN" ? "/admin" : nextPath);
         router.refresh();
       }, 1000);
     } catch {
@@ -134,6 +137,7 @@ export default function LoginPage() {
           </div>
 
           {/* Feedback Alerts */}
+          {authRequired && <div className="mb-5 rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 p-3.5 text-xs text-fuchsia-200">กรุณาเข้าสู่ระบบก่อนเพิ่มจุดอ่านหนังสือ ระบบจะส่งข้อมูลให้แอดมินตรวจสอบและอนุมัติก่อนเผยแพร่</div>}
           {serverError && (
             <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs sm:text-sm animate-in fade-in">
               <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5" />

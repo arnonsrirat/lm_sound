@@ -195,7 +195,7 @@ export default function AudioPlayerBar() {
         className={`fixed z-40 transition-all ${
           /* บนมือถือ: ลอยอยู่เหนือ BottomNav (bottom-[60px]) ขอบมน สไตล์ Floating Player */
           /* บน Desktop: เต็มจอชิดขอบล่างตาม sidebar inset */
-          `bottom-[60px] md:bottom-0 left-2 right-2 ${desktopInset} rounded-2xl md:rounded-none overflow-hidden`
+          `bottom-[72px] md:bottom-0 left-2 right-2 ${desktopInset} rounded-2xl md:rounded-none overflow-hidden`
         } bg-[var(--header-bg)]/95 backdrop-blur-2xl border border-purple-500/30 md:border-x-0 md:border-b-0 md:border-t shadow-[0_-10px_30px_rgba(112,26,117,0.3)] ${
           isDesktopHomeWithRightPanel ? "xl:hidden" : ""
         }`}

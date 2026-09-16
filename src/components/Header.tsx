@@ -41,7 +41,7 @@ export default function Header({
   const { playSpot, studyStats, isStatsModalOpen, setIsStatsModalOpen } = useAudio();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
   const [searchResults, setSearchResults] = useState<AutocompleteSpot[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -49,7 +49,7 @@ export default function Header({
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("lmsound-theme");
-    const nextIsDark = savedTheme !== "light";
+    const nextIsDark = savedTheme === "dark";
     if (!nextIsDark) {
       document.documentElement.classList.add("light");
       document.documentElement.classList.remove("dark");
@@ -168,7 +168,7 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-purple-500/20 bg-[var(--header-bg)] backdrop-blur-xl shadow-lg transition-colors">
-      <div className="flex h-16 items-center justify-between px-3 sm:px-6 md:px-8 max-w-7xl mx-auto gap-2 sm:gap-4">
+      <div className="flex h-16 items-center justify-between px-2 sm:px-6 md:px-8 max-w-7xl mx-auto gap-1.5 sm:gap-4 min-w-0">
         {/* Left: Brand Logo */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
           <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden shadow-lg shadow-purple-600/30 group-hover:scale-105 transition border border-purple-400/40 p-0.5 bg-gradient-to-tr from-purple-600 to-fuchsia-500">
@@ -180,8 +180,8 @@ export default function Header({
               className="w-full h-full object-cover rounded-[14px] logo-theme-img"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-base sm:text-lg tracking-tight purple-gradient-text group-hover:opacity-90 transition">
+          <div className="flex flex-col min-w-0">
+            <span className="font-extrabold text-sm sm:text-lg tracking-tight purple-gradient-text group-hover:opacity-90 transition truncate max-w-[76px] sm:max-w-none">
               {siteName}
             </span>
             <span className="text-[10px] text-purple-300/80 uppercase tracking-widest hidden lg:block font-medium">
@@ -193,7 +193,7 @@ export default function Header({
         {/* Center: Search Bar with Instant Autocomplete Dropdown */}
         <div
           ref={searchContainerRef}
-          className="flex-1 max-w-[170px] xs:max-w-[240px] sm:max-w-md mx-1 sm:mx-2 relative"
+          className="flex-1 min-w-0 max-w-[170px] xs:max-w-[240px] sm:max-w-md mx-1 sm:mx-2 relative"
         >
           <form onSubmit={handleSearchSubmit} className="relative flex items-center">
             <Search className="absolute left-3 w-3.5 sm:w-4 h-3.5 sm:h-4 text-purple-400 pointer-events-none" />
@@ -308,7 +308,7 @@ export default function Header({
         </div>
 
         {/* Right: Theme Toggle & Login */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0 min-w-0">
           <Link href="/spots/new" className="hidden">
             <PlusCircle className="w-3.5 h-3.5 text-purple-400" />
             <span>เพิ่มจุดใหม่</span>
@@ -320,7 +320,7 @@ export default function Header({
             type="button"
             aria-label="ดูสถิติการอ่านและสตรีคประจำวัน"
             title={`สตรีคอ่านหนังสือ: ${studyStats.streakDays || 0} วัน (${studyStats.todayMinutes} นาทีวันนี้)`}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/20 to-rose-500/15 border border-orange-500/40 text-orange-200 hover:text-white hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/15 transition cursor-pointer shadow-sm group"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/20 to-rose-500/15 border border-orange-500/40 text-orange-200 hover:text-white hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/15 transition cursor-pointer shadow-sm group"
           >
             <Flame className="w-3.5 h-3.5 text-orange-400 group-hover:scale-110 group-hover:text-amber-300 transition-transform animate-pulse" />
             <span className="text-xs font-bold text-amber-300">
@@ -360,13 +360,13 @@ export default function Header({
                   <span className="hidden sm:inline">หลังบ้าน (Admin)</span>
                 </Link>
               )}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200">
+              <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200 min-w-0 max-w-[42px] sm:max-w-[180px]">
                 <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 text-white flex items-center justify-center font-bold text-[10px]">
                   {currentUser.username[0]?.toUpperCase() || "U"}
                 </div>
-                <span className="font-medium hidden sm:inline">{currentUser.username}</span>
+                <span className="font-medium hidden sm:inline truncate">{currentUser.username}</span>
                 {settings?.role === "ADMIN" && (
-                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                  <span className="hidden sm:inline text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
                     Admin
                   </span>
                 )}

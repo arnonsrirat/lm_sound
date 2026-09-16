@@ -75,10 +75,10 @@ export default function AdminDashboard({
     onConfirm: () => void | Promise<void>;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const nextIsDark = localStorage.getItem("lmsound-theme") !== "light";
+    const nextIsDark = localStorage.getItem("lmsound-theme") === "dark";
     setIsDark(nextIsDark);
     document.documentElement.classList.toggle("dark", nextIsDark);
     document.documentElement.classList.toggle("light", !nextIsDark);
@@ -279,7 +279,7 @@ export default function AdminDashboard({
               <GoogleDriveConnectionPanel notify={notify} askConfirm={askConfirm} />
               <div className="glass-panel rounded-3xl p-5 md:p-6">
               <MediaFolderPicker
-                targetTitle="คลังรูปภาพทั้งหมด (Logos, Banners & General)"
+                targetTitle="คลังสื่อทั้งหมด รวมอัลบั้มเพลงผ่อนคลาย"
                 defaultFolder="logos"
               />
               </div>
