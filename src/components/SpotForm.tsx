@@ -54,6 +54,8 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
     audioUrl: initialData?.audioUrl || "",
     timeTag: (initialData?.timeTag as SpotInput["timeTag"]) || null,
     availabilityStatus: (initialData?.availabilityStatus as SpotInput["availabilityStatus"]) || "READY",
+    pendingFields: [],
+    amenities: [],
     latitude: initialData?.latitude ?? 7.80822,
     longitude: initialData?.longitude ?? 99.93869,
   });

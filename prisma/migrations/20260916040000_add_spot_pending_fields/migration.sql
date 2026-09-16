@@ -1,0 +1,1 @@
+ALTER TABLE "Spot" ADD COLUMN "pendingFields" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

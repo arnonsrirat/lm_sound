@@ -67,7 +67,11 @@ export async function createSpotAction(formData: FormData | SpotInput): Promise<
         imageUrls: formData.getAll("imageUrls"),
         audioUrl: formData.get("audioUrl"),
         timeTag: formData.get("timeTag") || null,
+        timeStart: formData.get("timeStart") ? Number(formData.get("timeStart")) : null,
+        timeEnd: formData.get("timeEnd") ? Number(formData.get("timeEnd")) : null,
         availabilityStatus: formData.get("availabilityStatus") || "READY",
+        pendingFields: formData.getAll("pendingFields"),
+        amenities: formData.getAll("amenities"),
         latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
         longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       };
@@ -77,7 +81,7 @@ export async function createSpotAction(formData: FormData | SpotInput): Promise<
 
     const validated = spotSchema.safeParse({
       ...rawData,
-      imageUrls: Array.isArray(rawData.imageUrls) && rawData.imageUrls.length > 0 ? rawData.imageUrls : [rawData.imageUrl],
+      imageUrls: Array.isArray(rawData.imageUrls) ? rawData.imageUrls.filter((value): value is string => typeof value === "string" && value.length > 0) : [],
     });
     if (!validated.success) {
       return {
@@ -260,7 +264,11 @@ export async function updateSpotAction(
         imageUrls: formData.getAll("imageUrls"),
         audioUrl: formData.get("audioUrl"),
         timeTag: formData.get("timeTag") || null,
+        timeStart: formData.get("timeStart") ? Number(formData.get("timeStart")) : null,
+        timeEnd: formData.get("timeEnd") ? Number(formData.get("timeEnd")) : null,
         availabilityStatus: formData.get("availabilityStatus") || "READY",
+        pendingFields: formData.getAll("pendingFields"),
+        amenities: formData.getAll("amenities"),
         latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
         longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       };
@@ -270,7 +278,7 @@ export async function updateSpotAction(
 
     const validated = spotSchema.safeParse({
       ...rawData,
-      imageUrls: Array.isArray(rawData.imageUrls) && rawData.imageUrls.length > 0 ? rawData.imageUrls : [rawData.imageUrl],
+      imageUrls: Array.isArray(rawData.imageUrls) ? rawData.imageUrls.filter((value): value is string => typeof value === "string" && value.length > 0) : [],
     });
     if (!validated.success) {
       return {

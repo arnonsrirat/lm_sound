@@ -9,6 +9,7 @@ import { deleteSpotAction } from "@/actions/spot";
 import { useAudio } from "@/context/AudioContext";
 import NoiseGauge from "@/components/NoiseGauge";
 import { notify } from "@/lib/notify";
+import { AmenityBadges } from "@/components/AmenityBadges";
 
 export interface SpotCardProps {
   spot: {
@@ -25,6 +26,7 @@ export interface SpotCardProps {
       id: string;
       username: string;
     } | null;
+    amenities?: string[];
   };
   currentUserId?: string | null;
   matchScore?: number;
@@ -125,7 +127,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
     };
 
   const isOwner = currentUserId && spot.authorId === currentUserId;
-  const amenities = getAmenities(spot.title, spot.description);
+  const amenities = spot.amenities ?? [];
 
   const handleTogglePlay = () => {
     if (isThisPlaying) {
@@ -166,6 +168,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
           ? "border-pink-500/80 ring-2 ring-pink-500/50 shadow-2xl living-card-active scale-[1.01]"
           : "border-purple-500/25 hover:border-purple-400/50"
       }`}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "360px 460px" }}
     >
       {/* Top Image & Floating Badges */}
       <div className="relative h-48 w-full overflow-hidden bg-purple-950/40">
@@ -176,6 +179,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
             isThisPlaying ? "scale-105 brightness-95" : "group-hover:scale-105"
           }`}
           loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/35 to-transparent" />
 
@@ -283,19 +287,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
           </p>
 
           {/* Spot Amenities Tags (ป้ายสิ่งอำนวยความสะดวกย่อ) */}
-          {amenities.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {amenities.map((item, idx) => (
-                <span
-                  key={idx}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/15 text-purple-200 border border-purple-400/20 backdrop-blur-sm"
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </span>
-              ))}
-            </div>
-          )}
+          <AmenityBadges amenities={amenities} compact />
         </div>
 
         {/* Footer info & Actions */}
