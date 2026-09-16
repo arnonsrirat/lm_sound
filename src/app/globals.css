@@ -298,6 +298,11 @@ body {
   background-attachment: fixed;
 }
 
+/* ซ่อนแถบเล่นเพลงขณะเปิดฟอร์ม modal ของแอดมิน เพื่อไม่ให้บังปุ่มและแผนที่บนมือถือ */
+body.lmsound-editor-open .lmsound-audio-player {
+  display: none !important;
+}
+
 /* พื้นหลังพาสเทลอ่อนฟุ้งๆ ของธีมสว่าง */
 html.light body {
   background-image:

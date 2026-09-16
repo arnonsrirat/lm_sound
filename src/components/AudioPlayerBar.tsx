@@ -194,7 +194,7 @@ export default function AudioPlayerBar() {
   return (
     <>
       <div
-        className={`fixed z-40 transition-all ${
+        className={`lmsound-audio-player fixed z-40 transition-all ${
           /* บนมือถือ: ลอยอยู่เหนือ BottomNav (bottom-[60px]) ขอบมน สไตล์ Floating Player */
           /* บน Desktop: เต็มจอชิดขอบล่างตาม sidebar inset */
           `bottom-[72px] md:bottom-0 left-2 right-2 ${desktopInset} rounded-2xl md:rounded-none overflow-hidden`
