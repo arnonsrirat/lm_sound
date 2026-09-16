@@ -68,7 +68,7 @@ const DEFAULT_RECOMMENDED: RecommendedSpot[] = [
 export default function FeaturedBanner({ spots, spot, bannerSettings }: FeaturedBannerProps) {
   const { isPlaying, activeTrack, playSpot, togglePlay } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
 
   // ติดตามธีมสว่าง/มืด เพื่อสลับภาพแบนเนอร์ที่แอดมินตั้งไว้แยกกัน
   useEffect(() => {

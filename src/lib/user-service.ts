@@ -8,6 +8,7 @@ export interface UserRecord {
   role: "USER" | "ADMIN";
   createdAt: Date;
   updatedAt: Date;
+  emailVerifiedAt?: Date | null;
 }
 
 // In-memory development store to ensure auth works seamlessly even before Postgres connection is active
@@ -79,6 +80,7 @@ export const userService = {
             role: user.role === "ADMIN" ? "ADMIN" : "USER",
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
+            emailVerifiedAt: user.emailVerifiedAt,
           };
         }
       } catch {
@@ -116,6 +118,7 @@ export const userService = {
             role: user.role === "ADMIN" ? "ADMIN" : "USER",
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
+            emailVerifiedAt: user.emailVerifiedAt,
           };
         }
       } catch {

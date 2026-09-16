@@ -18,7 +18,7 @@ export interface CampusMapSpot {
 }
 
 const CAMPUS_CENTER: LatLngExpression = [7.80822, 99.93869];
-const CAMPUS_BOUNDS = L.latLngBounds([7.795, 99.925], [7.822, 99.955]);
+const CAMPUS_BOUNDS = L.latLngBounds([7.74, 99.86], [7.88, 100.02]);
 
 // แคช Leaflet divIcon สำหรับแต่ละระดับเสียง 3 แบบ
 const pinIconsCache: Record<string, L.DivIcon> = {};
@@ -118,10 +118,10 @@ export default function CampusMapInner({
     <MapContainer
       center={selected?.latitude && selected?.longitude ? [selected.latitude, selected.longitude] : CAMPUS_CENTER}
       zoom={16}
-      minZoom={15}
+      minZoom={13}
       maxZoom={19}
       maxBounds={CAMPUS_BOUNDS}
-      maxBoundsViscosity={1}
+      maxBoundsViscosity={0.25}
       scrollWheelZoom={interactive}
       className="h-full w-full"
     >

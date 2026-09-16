@@ -17,12 +17,25 @@ model User {
   username  String   @unique
   password  String
   role      String   @default("USER") // "USER" | "ADMIN"
+  emailVerifiedAt DateTime?
   spots     Spot[]
   trackRatings TrackRating[]
   spotRatings SpotRating[]
   spotFavorites SpotFavorite[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  authTokens AuthToken[]
+}
+
+model AuthToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  purpose   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, purpose])
 }
 
 // การตั้งค่าเว็บไซต์ที่แอดมินปรับแต่งได้ โดยไม่ต้องแก้โค้ด

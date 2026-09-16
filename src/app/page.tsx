@@ -50,6 +50,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <div className="flex-1 flex max-w-[1680px] w-full mx-auto relative">
         {/* Left Sidebar ("nav bar ไว้ใส่หน้าต่างๆ" as drawn in wireframe) */}
         <Sidebar
+          logoLight={settings.logoLight}
           logoDark={settings.logoDark}
           role={session?.role}
           spots={spots}
@@ -76,7 +77,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             {/* เสียงยอดนิยม (Popular Sounds with Instant Filters and Cards Grid) */}
             <SpotFeed spots={spots} currentUserId={session?.userId} />
-            <RelaxationLibrary />
+            <div id="relaxation-library"><RelaxationLibrary /></div>
           </main>
 
 

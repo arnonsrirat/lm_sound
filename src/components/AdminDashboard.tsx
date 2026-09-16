@@ -277,6 +277,7 @@ export default function AdminDashboard({
           {tab === "media" && (
             <div className="space-y-4">
               <GoogleDriveConnectionPanel notify={notify} askConfirm={askConfirm} />
+              <GoogleDriveStorageUsage />
               <div className="glass-panel rounded-3xl p-5 md:p-6">
               <MediaFolderPicker
                 targetTitle="คลังสื่อทั้งหมด รวมอัลบั้มเพลงผ่อนคลาย"
@@ -323,6 +324,15 @@ export default function AdminDashboard({
       )}
     </div>
   );
+}
+
+function GoogleDriveStorageUsage() {
+  const [usage, setUsage] = useState<{ used: number; limit: number | null } | null>(null);
+  useEffect(() => { void fetch("/api/admin/google-drive/status", { cache: "no-store" }).then((response) => response.json()).then((data) => setUsage(data.data?.storage || null)).catch(() => undefined); }, []);
+  if (!usage) return null;
+  const format = (bytes: number) => `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+  const percent = usage.limit ? Math.min(100, (usage.used / usage.limit) * 100) : null;
+  return <div className="glass-panel rounded-3xl p-5"><div className="flex items-center justify-between gap-3"><div><h3 className="font-bold text-foreground">พื้นที่ Google Drive</h3><p className="mt-1 text-xs text-foreground/60">พื้นที่ที่ใช้โดยบัญชี Google Drive ที่เชื่อมต่ออยู่</p></div><span className="text-sm font-bold text-cyan-300">{format(usage.used)}{usage.limit ? ` / ${format(usage.limit)}` : ""}</span></div>{percent !== null && <><div className="mt-3 h-2 overflow-hidden rounded-full bg-purple-950/40"><div className={`h-full rounded-full ${percent > 85 ? "bg-rose-400" : "bg-cyan-400"}`} style={{ width: `${percent}%` }} /></div><p className="mt-1 text-right text-[11px] text-foreground/60">ใช้ไป {percent.toFixed(1)}%</p></>}</div>;
 }
 
 /* ========================================================================= */
@@ -1192,7 +1202,7 @@ function GoogleDriveConnectionPanel({
   notify: (ok: boolean, msg: string) => void;
   askConfirm: (title: string, description: string, onConfirm: () => void | Promise<void>, options?: { confirmLabel?: string; danger?: boolean }) => void;
 }) {
-  const [status, setStatus] = useState<{ configured: boolean; connected: boolean; accountEmail: string | null } | null>(null);
+  const [status, setStatus] = useState<{ configured: boolean; connected: boolean; accountEmail: string | null; storage?: { used: number; limit: number | null } | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadStatus = async () => {

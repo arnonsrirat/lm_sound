@@ -25,6 +25,7 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+    if (user.emailVerifiedAt === null) return NextResponse.json({ error: "กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ" }, { status: 403 });
 
     const isMatch = await comparePassword(password, user.passwordHash);
     if (!isMatch) {

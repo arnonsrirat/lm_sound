@@ -79,7 +79,9 @@ export async function saveGoogleDriveAuthorization(code: string) {
 export async function getGoogleDriveStatus() {
   const configured = isGoogleDriveConfigured();
   const connection = configured ? await prisma.googleDriveConnection.findFirst({ orderBy: { updatedAt: "desc" } }) : null;
-  return { configured, connected: Boolean(connection), accountEmail: connection?.accountEmail || null, updatedAt: connection?.updatedAt || null };
+  let storage: { used: number; limit: number | null } | null = null;
+  if (connection) { try { const { accessToken } = await getAccessToken(); const quota = await (await driveRequest(`${DRIVE_API}/about?fields=storageQuota`, accessToken)).json() as { storageQuota?: { usage?: string; limit?: string } }; storage = { used: Number(quota.storageQuota?.usage || 0), limit: quota.storageQuota?.limit ? Number(quota.storageQuota.limit) : null }; } catch { storage = null; } }
+  return { configured, connected: Boolean(connection), accountEmail: connection?.accountEmail || null, updatedAt: connection?.updatedAt || null, storage };
 }
 
 async function getAccessToken() {
