@@ -207,13 +207,624 @@ html.light {
 }
 
 /* ปรับ contrast ของคลาสเดิมที่เคยออกแบบมาสำหรับพื้นหลังมืด */
-html.light .text-white { color: #24133f; }
-html.light .text-purple-100 { color: #321653; }
-html.light .text-purple-200 { color: #4b2670; }
-html.light .text-purple-300 { color: #63388d; }
-html.light .text-purple-300\/70 { color: rgba(76, 43, 112, 0.82); }
+html.light .text-white { color: #201335; }
+html.light .text-purple-100 { color: #291547; }
+html.light .text-purple-200 { color: #3c2063; }
+html.light .text-purple-300 { color: #583387; }
+html.light .text-purple-300\/70,
+html.light .text-purple-300\/80 { color: rgba(88, 51, 135, 0.82); }
+html.light .text-purple-200\/80,
+html.light .text-purple-200\/70 { color: rgba(88, 51, 135, 0.85); }
 html.light .bg-purple-950\/30, html.light .bg-purple-950\/40 { background-color: rgba(109, 73, 156, 0.1); }
 html.light .border-purple-500\/20, html.light .border-purple-500\/25 { border-color: rgba(109, 73, 156, 0.28); }
+
+/* ========================================================
+   ธีมสว่าง: Featured Banner (#recommended) — สไตล์พาสเทลดรีมมี่
+   (ไม่กระทบธีมมืด 100% เพราะครอบด้วย html.light เท่านั้น)
+   ======================================================== */
+html.light #recommended > div {
+  background: linear-gradient(135deg, #edf3fe 0%, #f4edff 50%, #faedff 100%) !important;
+  border-color: rgba(220, 206, 252, 0.95) !important;
+  box-shadow: 0 14px 38px -6px rgba(167, 139, 250, 0.2), 0 4px 16px rgba(220, 206, 252, 0.25) !important;
+}
+
+/* ปรับ Overlay ดำของแบนเนอร์ให้เป็นแสงพาสเทลนุ่มนวล */
+html.light #recommended .absolute.inset-0 > div:first-of-type {
+  background: linear-gradient(90deg, rgba(237, 243, 254, 0.92) 0%, rgba(244, 237, 255, 0.82) 50%, rgba(250, 237, 255, 0.5) 100%) !important;
+}
+
+html.light #recommended .absolute.inset-0 > div:last-of-type {
+  background: linear-gradient(to top, rgba(237, 243, 254, 0.7) 0%, transparent 100%) !important;
+}
+
+html.light #recommended img {
+  opacity: 0.45 !important;
+}
+
+/* หัวข้อและข้อความในแบนเนอร์ */
+html.light #recommended h2 {
+  color: #1f1035 !important;
+}
+
+html.light #recommended .purple-pill {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(206, 192, 250, 0.9) !important;
+  color: #6d28d9 !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.1) !important;
+}
+
+/* ปุ่มทดลองฟังเสียงในแบนเนอร์ */
+html.light #recommended button.bg-gradient-to-r,
+html.light #recommended button.bg-gradient-to-tr,
+html.light #recommended button[type="button"].shadow-xl {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ปุ่มเลื่อนสไลด์ซ้าย-ขวา */
+html.light #recommended button.rounded-full.bg-purple-950\/60 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #6d28d9 !important;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2) !important;
+}
+
+/* จุดสลับสไลด์ด้านล่าง (Carousel Dots) */
+html.light #recommended .bg-purple-400 {
+  background-color: #8b5cf6 !important;
+}
+html.light #recommended .bg-purple-600\/50,
+html.light #recommended .bg-purple-600\/40 {
+  background-color: rgba(167, 139, 250, 0.35) !important;
+}
+
+/* ========================================================
+   ธีมสว่าง: แถบแผนที่วิทยาเขต (#campus-map)
+   (ไม่กระทบธีมมืด 100% เพราะครอบด้วย html.light เท่านั้น)
+   ======================================================== */
+html.light #campus-map button {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.97) 0%, rgba(246, 242, 255, 0.95) 100%) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  box-shadow: 0 8px 24px -4px rgba(167, 139, 250, 0.14), 0 2px 8px rgba(100, 80, 160, 0.05) !important;
+}
+
+html.light #campus-map button .w-9.h-9 {
+  background-color: rgba(243, 238, 255, 0.95) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #8b5cf6 !important;
+}
+
+html.light #campus-map span.text-white {
+  color: #201335 !important;
+}
+
+html.light #campus-map span.text-fuchsia-300 {
+  background-color: rgba(243, 235, 255, 0.95) !important;
+  border-color: rgba(216, 195, 252, 0.9) !important;
+  color: #7c3aed !important;
+}
+
+html.light #campus-map p.text-purple-300\/70 {
+  color: rgba(88, 51, 135, 0.85) !important;
+}
+
+html.light #campus-map div.rounded-xl.bg-purple-600\/30 {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.28) !important;
+}
+
+html.light #campus-map div.rounded-xl.bg-purple-600\/30 span {
+  color: #ffffff !important;
+}
+
+/* ========================================================
+   ธีมสว่าง: การ์ดจุดอ่านหนังสือ (Spot Cards & Panels)
+   (ไม่กระทบธีมมืด 100% เพราะครอบด้วย html.light เท่านั้น)
+   ======================================================== */
+html.light .glass-card {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(226, 218, 253, 0.9) !important;
+  box-shadow: 0 10px 28px -4px rgba(167, 139, 250, 0.12), 0 2px 8px rgba(100, 80, 160, 0.04) !important;
+}
+
+html.light .glass-card:hover {
+  border-color: rgba(167, 139, 250, 0.7) !important;
+  box-shadow: 0 16px 36px -6px rgba(167, 139, 250, 0.22), 0 4px 12px rgba(167, 139, 250, 0.08) !important;
+}
+
+/* หัวข้อและคำอธิบายในการ์ด */
+html.light .glass-card h3 {
+  color: #201335 !important;
+}
+
+html.light .glass-card p {
+  color: rgba(85, 52, 126, 0.85) !important;
+}
+
+/* ปุ่มหัวใจ Bookmark บนการ์ดในธีมสว่าง */
+html.light .glass-card button.bg-black\/40 {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #7c3aed !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.15) !important;
+}
+
+html.light .glass-card button.bg-black\/40:hover {
+  background-color: #ffffff !important;
+  color: #e11d48 !important;
+}
+
+/* ปุ่ม Play วงกลมบนการ์ดในธีมสว่าง */
+html.light .glass-card button.bg-purple-950\/85 {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35) !important;
+}
+
+html.light .glass-card button.bg-purple-950\/85:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #9370db 100%) !important;
+  transform: scale(1.08) !important;
+}
+
+/* เส้นขอบคั่นในการ์ด */
+html.light .glass-card .border-purple-500\/15 {
+  border-color: rgba(230, 220, 255, 0.85) !important;
+}
+
+/* ========================================================
+   ธีมสว่าง: แผงควบคุมและพาเนล (Panels & Sidebars)
+   ======================================================== */
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(226, 218, 253, 0.9) !important;
+  box-shadow: 0 12px 35px -6px rgba(167, 139, 250, 0.12), 0 2px 10px rgba(100, 80, 160, 0.04) !important;
+}
+
+/* พาเนล Sidebar ในธีมสว่าง ขอบมนลอยเด่น */
+html.light aside.fixed {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(226, 218, 253, 0.85) !important;
+  box-shadow: 0 16px 40px -8px rgba(167, 139, 250, 0.15) !important;
+  border-top-right-radius: 28px !important;
+  border-bottom-right-radius: 28px !important;
+}
+
+/* Sidebar Menu Items ในธีมสว่าง */
+html.light aside a {
+  color: #8b5cf6 !important;
+  border-radius: 18px !important;
+}
+
+html.light aside a:hover {
+  background-color: rgba(243, 238, 255, 0.9) !important;
+  color: #6d28d9 !important;
+}
+
+html.light aside a.bg-purple-600\/25 {
+  background: linear-gradient(135deg, #ede7fe 0%, #f4edff 100%) !important;
+  border-color: rgba(206, 192, 250, 0.95) !important;
+  color: #6d28d9 !important;
+  box-shadow: 0 2px 10px rgba(167, 139, 250, 0.15) !important;
+}
+
+html.light aside a.bg-purple-600\/25 span {
+  color: #6d28d9 !important;
+}
+
+html.light aside p.uppercase {
+  color: #7c3aed !important;
+}
+
+/* กล่องแผนที่ย่อ CampusMiniMap ใน Sidebar */
+html.light aside [role="button"].rounded-2xl {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 242, 255, 0.95) 100%) !important;
+  border-color: rgba(220, 206, 252, 0.95) !important;
+  box-shadow: 0 8px 24px -4px rgba(167, 139, 250, 0.15), 0 2px 8px rgba(100, 80, 160, 0.05) !important;
+}
+
+html.light aside [role="button"].rounded-2xl span.text-fuchsia-300 {
+  color: #7c3aed !important;
+}
+
+html.light aside [role="button"].rounded-2xl span.bg-purple-600\/30 {
+  background-color: rgba(243, 238, 255, 0.95) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #7c3aed !important;
+}
+
+/* แถบด้านล่างของแผนที่ย่อ (ม.ทักษิณ พัทลุง พร้อมจำนวนจุด) สีม่วงพาสเทลตามแบบ */
+html.light aside [role="button"].rounded-2xl div.mt-2 {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%) !important;
+  padding: 6px 12px !important;
+  border-radius: 14px !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25) !important;
+}
+
+html.light aside [role="button"].rounded-2xl div.mt-2 span {
+  color: #ffffff !important;
+}
+
+html.light aside [role="button"].rounded-2xl div.mt-2 svg {
+  color: #ffffff !important;
+}
+
+html.light aside [role="button"].rounded-2xl div.mt-2 span.bg-purple-500\/25 {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: #ffffff !important;
+}
+
+/* การ์ดด้านล่างสุดของ Sidebar (โลโก้ Spatial Soundscape แถบล่างสีม่วงพาสเทล) */
+html.light aside .m-3.rounded-2xl {
+  background: #ffffff !important;
+  border-color: rgba(220, 206, 252, 0.95) !important;
+  box-shadow: 0 10px 28px -4px rgba(167, 139, 250, 0.2) !important;
+}
+
+html.light aside .m-3.rounded-2xl > div.p-2\.5 {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%) !important;
+  padding: 10px 12px !important;
+}
+
+html.light aside .m-3.rounded-2xl p.text-purple-300 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+}
+
+html.light aside .m-3.rounded-2xl p.text-purple-300\/60 {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 10.5px !important;
+}
+
+/* แถบด้านบน Header ในธีมสว่าง (เชื่อมต่อกับวิวท้องฟ้าและทะเลสาบด้านหลัง) */
+html.light header {
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  background-image: url("/dreamy-lake-bg.png") !important;
+  background-position: center top !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  border-color: rgba(226, 218, 253, 0.75) !important;
+  box-shadow: 0 4px 20px rgba(167, 139, 250, 0.1) !important;
+}
+
+/* ปรับกรอบโลโก้ใน Header ให้กลมเนียนพอดีเป๊ะกับรูปทรงวงกลมของโลโก้น้องแมว */
+html.light header a .relative.w-9,
+html.light header a .relative.sm\:w-10,
+html.light header a div.relative.rounded-2xl {
+  border-radius: 9999px !important;
+  padding: 0 !important;
+  border: 2px solid rgba(216, 195, 252, 0.95) !important;
+  background: transparent !important;
+  box-shadow: 0 4px 14px rgba(167, 139, 250, 0.25) !important;
+}
+
+html.light header .logo-theme-img {
+  border-radius: 9999px !important;
+  object-fit: cover !important;
+  transform: scale(1.02) !important;
+}
+
+/* ช่องค้นหาใน Header */
+html.light header input {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(216, 195, 252, 0.95) !important;
+  color: #201335 !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.08) !important;
+}
+
+html.light header input::placeholder {
+  color: rgba(120, 85, 175, 0.75) !important;
+}
+
+html.light header input:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
+}
+
+/* ผลการค้นหาด่วน (Autocomplete Dropdown) */
+html.light header .bg-\[\#0e071e\]\/95 {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(220, 206, 252, 0.95) !important;
+  box-shadow: 0 14px 36px -6px rgba(167, 139, 250, 0.2) !important;
+}
+
+html.light header .bg-\[\#0e071e\]\/95 span,
+html.light header .bg-\[\#0e071e\]\/95 p {
+  color: #201335 !important;
+}
+
+/* ========================================================
+   ธีมสว่าง: แผงควบคุมเสียง NowPlayingSidebar (ฝั่งขวา)
+   (ไม่กระทบธีมมืด 100% เพราะครอบด้วย html.light เท่านั้น)
+   ======================================================== */
+html.light aside h3,
+html.light aside h4 {
+  color: #201335 !important;
+}
+
+/* กรอบภาพเพลงในแผงขวา */
+html.light aside .bg-\[\#120a26\] {
+  background-color: rgba(243, 238, 255, 0.95) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+}
+
+html.light aside .bg-\[\#120a26\] .absolute.inset-0.bg-gradient-to-t {
+  opacity: 0.15 !important;
+}
+
+/* Badge และปุ่ม Play กลางภาพ */
+html.light aside .bg-purple-950\/80,
+html.light aside .bg-purple-950\/70 {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(216, 195, 252, 0.9) !important;
+  color: #7c3aed !important;
+}
+
+/* กล่องระดับเสียงรวม (Master Volume) */
+html.light aside .bg-purple-950\/25 {
+  background: rgba(248, 245, 255, 0.95) !important;
+  border-color: rgba(226, 218, 253, 0.9) !important;
+}
+
+html.light aside .bg-purple-950\/25 span,
+html.light aside .bg-purple-950\/25 button {
+  color: #201335 !important;
+}
+
+/* สไลเดอร์ปรับระดับเสียงในธีมสว่าง */
+html.light aside input[type="range"] {
+  accent-color: #8b5cf6 !important;
+  background-color: rgba(220, 206, 252, 0.7) !important;
+}
+
+/* Focus Recipe 1-Click Chips */
+html.light aside .bg-purple-950\/40 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(220, 206, 252, 0.85) !important;
+  color: #4c2c77 !important;
+  box-shadow: 0 2px 6px rgba(167, 139, 250, 0.08) !important;
+}
+
+html.light aside .bg-purple-950\/40:hover {
+  background-color: #ffffff !important;
+  color: #201335 !important;
+  border-color: #a78bfa !important;
+}
+
+/* กล่องช่องสัญญาณผสมเสียง (Mixer Channels: Rain, White noise, Ambient, Waves) */
+html.light aside .bg-purple-950\/20 {
+  background: rgba(248, 245, 255, 0.95) !important;
+  border-color: rgba(226, 218, 253, 0.85) !important;
+}
+
+html.light aside .bg-purple-950\/20 span,
+html.light aside .bg-purple-950\/20 button {
+  color: #201335 !important;
+}
+
+/* รายการเพิ่งเปิดฟังล่าสุด (Recently Played History) */
+html.light aside button.bg-purple-950\/20 {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(226, 218, 253, 0.85) !important;
+  color: #201335 !important;
+}
+
+html.light aside button.bg-purple-950\/20:hover {
+  background: #ffffff !important;
+  border-color: #a78bfa !important;
+}
+
+html.light aside button.bg-purple-950\/20 p {
+  color: #201335 !important;
+}
+
+/* ========================================================
+   ธีมสว่าง: หน้าต่างแผนที่วิทยาเขตเต็มจอ (CampusMapModal)
+   (ไม่กระทบธีมมืด 100% เพราะครอบด้วย html.light เท่านั้น)
+   ======================================================== */
+/* ฉากหลัง Backdrop เบลอโปร่งแสงสบายตา */
+html.light .campus-map-backdrop {
+  background-color: rgba(15, 8, 30, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Loading สถานะโหลดแผนที่ในธีมสว่าง */
+html.light .campus-map-loading {
+  background-color: #f8f5ff !important;
+  color: #7c3aed !important;
+}
+
+/* ตัวกรอบ Modal ใหญ่ */
+html.light .campus-map-modal-dialog {
+  background-color: #ffffff !important;
+  border-color: rgba(220, 206, 252, 0.95) !important;
+  box-shadow: 0 25px 60px -15px rgba(139, 92, 246, 0.35) !important;
+}
+
+/* แถบหัว Modal ด้านบน */
+html.light .campus-map-modal-dialog .campus-map-header {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(226, 218, 253, 0.9) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-header-icon {
+  background: rgba(243, 235, 255, 0.95) !important;
+  border-color: rgba(216, 195, 252, 0.9) !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.15) !important;
+}
+
+html.light .campus-map-modal-dialog h2 {
+  color: #1f1035 !important;
+}
+
+html.light .campus-map-modal-dialog p {
+  color: #55347e !important;
+}
+
+/* Badge จำนวนจุดปักหมุด */
+html.light .campus-map-modal-dialog span.bg-purple-500\/20 {
+  background-color: rgba(243, 235, 255, 0.95) !important;
+  border-color: rgba(216, 195, 252, 0.9) !important;
+  color: #7c3aed !important;
+}
+
+/* ปุ่มปิด (X) บนหัว Modal */
+html.light .campus-map-modal-dialog button.bg-purple-950\/50 {
+  background-color: rgba(243, 238, 255, 0.95) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #7c3aed !important;
+}
+
+html.light .campus-map-modal-dialog button.bg-purple-950\/50:hover {
+  background-color: #ffffff !important;
+  color: #1f1035 !important;
+}
+
+/* แถบพิลเลือกจุดด่วนด้านบนแผนที่ */
+html.light .campus-map-modal-dialog .campus-map-pill-btn {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #3b2063 !important;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.15) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-pill-btn:hover {
+  background: #ffffff !important;
+  color: #7c3aed !important;
+  border-color: #a78bfa !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-pill-active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #c026d3 100%) !important;
+  color: #ffffff !important;
+  border-color: #f472b6 !important;
+  box-shadow: 0 4px 14px rgba(192, 38, 211, 0.35) !important;
+}
+
+/* กล่องรายการสถานที่ทางขวาบนแผนที่ */
+html.light .campus-map-modal-dialog .campus-map-side-list,
+html.light .campus-map-modal-dialog .campus-map-side-list-mobile {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(220, 206, 252, 0.9) !important;
+  box-shadow: 0 10px 30px rgba(167, 139, 250, 0.18) !important;
+}
+
+/* ปุ่มรายการในการ์ดด้านขวา */
+html.light .campus-map-modal-dialog .campus-map-side-list button,
+html.light .campus-map-modal-dialog .campus-map-side-list-mobile button {
+  background-color: rgba(248, 245, 255, 0.92) !important;
+  border-color: rgba(226, 218, 253, 0.85) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-side-list button.border-fuchsia-300 {
+  background: linear-gradient(135deg, #ede7fe 0%, #f4edff 100%) !important;
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.25) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-side-list strong,
+html.light .campus-map-modal-dialog .campus-map-side-list-mobile strong {
+  color: #1f1035 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-side-list span.text-purple-200\/75,
+html.light .campus-map-modal-dialog .campus-map-side-list-mobile span.text-purple-200\/75 {
+  color: #644988 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-side-list span.text-cyan-200\/75,
+html.light .campus-map-modal-dialog .campus-map-side-list-mobile span.text-cyan-200\/75 {
+  color: #7c3aed !important;
+  font-weight: 600 !important;
+}
+
+/* การ์ดโฮโลแกรมรายละเอียดจุดด้านล่างขวา */
+html.light .campus-map-modal-dialog .campus-map-hologram-card {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(220, 206, 252, 0.95) !important;
+  box-shadow: 0 16px 45px -8px rgba(139, 92, 246, 0.3) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-hologram-card h3 {
+  color: #1f1035 !important;
+  text-shadow: none !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-hologram-card .text-fuchsia-300 {
+  color: #7c3aed !important;
+  font-weight: 600 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-hologram-card p.campus-map-desc {
+  color: #4b2c70 !important;
+}
+
+/* ภาพ Preview ใน Hologram card */
+html.light .campus-map-modal-dialog .campus-map-hologram-card .bg-purple-950\/60 {
+  background-color: rgba(243, 235, 255, 0.7) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-hologram-card .campus-map-img-overlay {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.85) 0%, transparent 60%) !important;
+  opacity: 0.9 !important;
+}
+
+/* ปุ่มฟังเสียงบนภาพ */
+html.light .campus-map-modal-dialog .campus-map-hologram-card .campus-map-listen-btn {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #7c3aed !important;
+  border: 1px solid rgba(216, 195, 252, 0.9) !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2) !important;
+}
+
+/* ปุ่มดูข้อมูลเต็มด้านล่าง */
+html.light .campus-map-modal-dialog .campus-map-hologram-card .campus-map-detail-btn {
+  background-color: rgba(243, 238, 255, 0.95) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  color: #6d28d9 !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.12) !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-hologram-card .campus-map-detail-btn:hover {
+  background-color: #ffffff !important;
+  border-color: #8b5cf6 !important;
+  color: #1f1035 !important;
+}
+
+/* แถบคำอธิบายระดับเสียง Legend Bar ด้านล่างซ้าย */
+html.light .campus-map-modal-dialog .campus-map-legend-bar {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(220, 206, 252, 0.9) !important;
+  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.15) !important;
+  color: #1f1035 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-legend-bar span.text-purple-300 {
+  color: #6d28d9 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-legend-bar span.text-emerald-300 {
+  color: #047857 !important;
+  font-weight: 600 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-legend-bar span.text-amber-300 {
+  color: #b45309 !important;
+  font-weight: 600 !important;
+}
+
+html.light .campus-map-modal-dialog .campus-map-legend-bar span.text-rose-300 {
+  color: #be123c !important;
+  font-weight: 600 !important;
+}
 
 /* ============================================
    ธีมเทศกาล (แอดมินสลับได้จากหน้า /admin)
@@ -320,12 +931,23 @@ body.lmsound-editor-open .lmsound-audio-player {
   display: none !important;
 }
 
-/* พื้นหลังพาสเทลอ่อนฟุ้งๆ ของธีมสว่าง */
+/* พื้นหลังวิวทะเลสาบพาสเทลดรีมมี่ (Dreamy Lake Landscape) ของธีมสว่าง — ปรับความจาง 60% */
 html.light body {
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(196, 181, 253, 0.25), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(240, 171, 252, 0.18), transparent),
-    radial-gradient(ellipse 50% 30% at 10% 45%, rgba(147, 197, 253, 0.12), transparent);
+  background-color: #edf1fe;
+  position: relative;
+}
+
+html.light body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/dreamy-lake-bg.png");
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: -20;
 }
 
 html.festival-newyear body,

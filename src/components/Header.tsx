@@ -33,7 +33,7 @@ export default function Header({
   currentUser?: { userId: string; username: string } | null;
   settings?: HeaderSettings;
 }) {
-  const logoLight = settings?.logoLight || "/logo.png";
+  const logoLight = settings?.logoLight || "/logo-light.png";
   const logoDark = settings?.logoDark || "/logo.png";
   const siteName = settings?.siteName || "LM Sound";
   const siteTagline = settings?.siteTagline || "Spatial & Ambient Soundscape";
@@ -174,7 +174,7 @@ export default function Header({
         <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
           <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden shadow-lg shadow-purple-600/30 group-hover:scale-105 transition border border-purple-400/40 p-0.5 bg-gradient-to-tr from-purple-600 to-fuchsia-500">
             <img
-              src="/logo.png"
+              src={isDark ? logoDark : logoLight}
               alt={`${siteName} Logo`}
               data-logo-light={logoLight}
               data-logo-dark={logoDark}

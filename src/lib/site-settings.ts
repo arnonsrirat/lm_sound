@@ -28,7 +28,7 @@ export interface SiteSettings {
 }
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  logoLight: "/logo.png",
+  logoLight: "/logo-light.png",
   logoDark: "/logo.png",
   bannerLight: "/logo.png",
   bannerDark: "/logo.png",
@@ -56,6 +56,10 @@ function isFestivalTheme(v: string): v is FestivalTheme {
 /** ดึงค่าตั้งค่าทั้งหมด — ถ้า DB ใช้ไม่ได้ คืนค่าเริ่มต้น (เว็บไม่พัง) */
 export async function getSiteSettings(): Promise<SiteSettings> {
   const result: SiteSettings = { ...DEFAULT_SITE_SETTINGS };
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (!dbUrl || dbUrl.includes("ep-sample") || dbUrl.includes("dummy")) {
+    return result;
+  }
   try {
     const rows = await prisma.siteSetting.findMany();
     for (const row of rows) {
@@ -78,6 +82,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 export async function updateSiteSettings(
   values: Partial<SiteSettings>
 ): Promise<SiteSettings> {
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (!dbUrl || dbUrl.includes("ep-sample") || dbUrl.includes("dummy")) {
+    return getSiteSettings();
+  }
+
   const updates = Object.entries(values).filter(
     ([key]) => SETTING_KEYS.includes(key as keyof SiteSettings)
   );

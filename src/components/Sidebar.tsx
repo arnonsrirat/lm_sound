@@ -62,7 +62,7 @@ export default function Sidebar({
 
       <div className="m-3 rounded-2xl overflow-hidden border border-purple-500/30 bg-gradient-to-b from-purple-950/40 to-[#0d071a] text-xs">
         <img
-          src={isDark ? (logoDark || "/logo.png") : (logoLight || "/logo.png")}
+          src={isDark ? (logoDark || "/logo.png") : (logoLight || "/logo-light.png")}
           alt="LM Sound"
           className="h-16 w-full object-cover"
         />

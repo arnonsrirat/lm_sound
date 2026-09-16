@@ -15,7 +15,7 @@ import { getOptimizedImageUrl } from "@/lib/media-url";
 const CampusMapInner = dynamic(() => import("./CampusMapInner"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-[#0a0517] flex items-center justify-center text-purple-300">
+    <div className="campus-map-loading w-full h-full bg-[#0a0517] flex items-center justify-center text-purple-300">
       <div className="flex flex-col items-center gap-2">
         <div className="w-8 h-8 rounded-full border-2 border-fuchsia-400 border-t-transparent animate-spin" />
         <span className="text-xs font-semibold">กำลังโหลดแผนที่วิทยาเขต...</span>
@@ -128,18 +128,18 @@ export default function CampusMapModal({
   // เรนเดอร์ออกทาง React Portal ไปยัง document.body เพื่อแก้ปัญหา containing block ของ sidebar
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 md:p-8 animate-in fade-in duration-200"
+      className="campus-map-backdrop fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 md:p-8 animate-in fade-in duration-200"
       onClick={onClose}
     >
       {/* Centered Modal with SweetAlert Smooth Pop-in Bounce Animation */}
       <div
-        className="relative w-full max-w-5xl h-[90vh] sm:h-[86vh] flex flex-col rounded-3xl overflow-hidden border border-purple-500/40 bg-[#0c071a] shadow-2xl shadow-purple-950/90 animate-sweetalert"
+        className="campus-map-modal-dialog relative w-full max-w-5xl h-[90vh] sm:h-[86vh] flex flex-col rounded-3xl overflow-hidden border border-purple-500/40 bg-[#0c071a] shadow-2xl shadow-purple-950/90 animate-sweetalert"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-purple-500/20 bg-[#120a26]/95 backdrop-blur-xl z-20 shrink-0">
+        <div className="campus-map-header flex items-center justify-between px-5 py-3.5 border-b border-purple-500/20 bg-[#120a26]/95 backdrop-blur-xl z-20 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300 shadow-md shadow-purple-900/40">
+            <div className="campus-map-header-icon w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300 shadow-md shadow-purple-900/40">
               <Compass className="w-5 h-5 text-fuchsia-400 animate-pulse" />
             </div>
             <div>
@@ -188,7 +188,7 @@ export default function CampusMapModal({
           </div>
 
           {/* Quick Spot Pill Selector Bar (ด้านบนแผนที่) */}
-          <div className="absolute top-3 left-3 right-3 z-[1000] flex gap-2 overflow-x-auto pb-1 scrollbar-none pointer-events-auto">
+          <div className="campus-map-pills-bar absolute top-3 left-3 right-3 z-[1000] flex gap-2 overflow-x-auto pb-1 scrollbar-none pointer-events-auto">
             {enrichedSpots.map((spot) => {
               const isSelected = selectedSpot?.id === spot.id;
               // สีของจุดระบุระดับเสียงรบกวน 3 แบบ
@@ -204,9 +204,9 @@ export default function CampusMapModal({
                   key={spot.id}
                   onClick={() => setSelectedSpot(spot)}
                   type="button"
-                  className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-xl transition shadow-lg cursor-pointer border ${
+                  className={`campus-map-pill-btn shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-xl transition shadow-lg cursor-pointer border ${
                     isSelected
-                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white border-fuchsia-300 shadow-purple-500/50 scale-105"
+                      ? "campus-map-pill-active bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white border-fuchsia-300 shadow-purple-500/50 scale-105"
                       : "bg-[#140a2b]/90 text-purple-200 hover:bg-purple-900/70 border-purple-500/40 hover:text-white"
                   }`}
                 >
@@ -218,25 +218,75 @@ export default function CampusMapModal({
           </div>
 
           {/* แสดงสรุปสถานที่ทุกจุดทันที ไม่ต้องคลิกหมุดเพื่อดูข้อมูลเบื้องต้น */}
-          <div className="absolute top-14 right-3 z-[1000] hidden max-h-[calc(100%-8rem)] w-64 space-y-2 overflow-y-auto rounded-2xl bg-[#0f0724]/85 p-2 backdrop-blur-xl sm:block">
+          <div className="campus-map-side-list absolute top-14 right-3 z-[1000] hidden max-h-[calc(100%-8rem)] w-64 space-y-2 overflow-y-auto rounded-2xl bg-[#0f0724]/85 p-2 backdrop-blur-xl sm:block">
             {enrichedSpots.map((spot) => (
-              <button key={spot.id} type="button" onClick={() => setSelectedSpot(spot)} className={`flex w-full items-center gap-2 rounded-xl border p-2 text-left transition ${selectedSpot?.id === spot.id ? "border-fuchsia-300 bg-purple-600/50" : "border-purple-500/25 bg-purple-950/50 hover:bg-purple-800/50"}`}>
-                {spot.imageUrl ? <img loading="lazy" decoding="async" src={getOptimizedImageUrl(spot.imageUrl)} alt="" className="h-10 w-12 shrink-0 rounded-lg object-cover" /> : <span className="h-10 w-12 shrink-0 rounded-lg bg-purple-900/60" />}
-                <span className="min-w-0"><strong className="block truncate text-xs text-white">{spot.title}</strong><span className="block truncate text-[10px] text-purple-200/75">📍 {spot.location}</span><span className="block text-[10px] text-cyan-200/75">{spot.noiseLevel === "quiet" ? "เงียบสงบ" : spot.noiseLevel === "lively" ? "คึกคัก" : "ปานกลาง"}</span><AmenityBadges amenities={spot.amenities} compact /></span>
+              <button
+                key={spot.id}
+                type="button"
+                onClick={() => setSelectedSpot(spot)}
+                className={`flex w-full items-center gap-2 rounded-xl border p-2 text-left transition ${
+                  selectedSpot?.id === spot.id
+                    ? "border-fuchsia-300 bg-purple-600/50"
+                    : "border-purple-500/25 bg-purple-950/50 hover:bg-purple-800/50"
+                }`}
+              >
+                {spot.imageUrl ? (
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    src={getOptimizedImageUrl(spot.imageUrl)}
+                    alt={spot.title}
+                    className="h-10 w-12 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="h-10 w-12 shrink-0 rounded-lg bg-purple-900/60" />
+                )}
+                <span className="min-w-0">
+                  <strong className="block truncate text-xs text-white">{spot.title}</strong>
+                  <span className="block truncate text-[10px] text-purple-200/75">📍 {spot.location}</span>
+                  <span className="block text-[10px] text-cyan-200/75">
+                    {spot.noiseLevel === "quiet"
+                      ? "เงียบสงบ"
+                      : spot.noiseLevel === "lively"
+                      ? "คึกคัก"
+                      : "ปานกลาง"}
+                  </span>
+                  <AmenityBadges amenities={spot.amenities} compact />
+                </span>
               </button>
             ))}
           </div>
-          <div className="absolute top-14 left-3 right-3 z-[1000] flex gap-2 overflow-x-auto pb-1 sm:hidden">
+
+          <div className="campus-map-side-list-mobile absolute top-14 left-3 right-3 z-[1000] flex gap-2 overflow-x-auto pb-1 sm:hidden">
             {enrichedSpots.map((spot) => (
-              <button key={spot.id} type="button" onClick={() => setSelectedSpot(spot)} className="flex min-w-[190px] items-center gap-2 rounded-xl border border-purple-500/30 bg-[#0f0724]/90 p-2 text-left backdrop-blur-xl">
-                {spot.imageUrl ? <img loading="lazy" decoding="async" src={getOptimizedImageUrl(spot.imageUrl)} alt="" className="h-9 w-11 shrink-0 rounded-lg object-cover" /> : <span className="h-9 w-11 shrink-0 rounded-lg bg-purple-900/60" />}
-                <span className="min-w-0"><strong className="block truncate text-[11px] text-white">{spot.title}</strong><span className="block truncate text-[10px] text-purple-200/75">{spot.location}</span><AmenityBadges amenities={spot.amenities} compact /></span>
+              <button
+                key={spot.id}
+                type="button"
+                onClick={() => setSelectedSpot(spot)}
+                className="flex min-w-[190px] items-center gap-2 rounded-xl border border-purple-500/30 bg-[#0f0724]/90 p-2 text-left backdrop-blur-xl"
+              >
+                {spot.imageUrl ? (
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    src={getOptimizedImageUrl(spot.imageUrl)}
+                    alt={spot.title}
+                    className="h-9 w-11 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="h-9 w-11 shrink-0 rounded-lg bg-purple-900/60" />
+                )}
+                <span className="min-w-0">
+                  <strong className="block truncate text-[11px] text-white">{spot.title}</strong>
+                  <span className="block truncate text-[10px] text-purple-200/75">{spot.location}</span>
+                  <AmenityBadges amenities={spot.amenities} compact />
+                </span>
               </button>
             ))}
           </div>
 
           {/* 3 Noise-Level Map Legend (คำอธิบายสัญลักษณ์ 3 แบบ) */}
-          <div className="absolute bottom-3 left-3 z-[1000] hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-2xl bg-[#0f0724]/90 backdrop-blur-xl border border-purple-500/30 text-[11px] font-semibold text-white shadow-xl pointer-events-auto">
+          <div className="campus-map-legend-bar absolute bottom-3 left-3 z-[1000] hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-2xl bg-[#0f0724]/90 backdrop-blur-xl border border-purple-500/30 text-[11px] font-semibold text-white shadow-xl pointer-events-auto">
             <span className="text-purple-300 text-[10px] uppercase font-bold tracking-wider">
               ระดับเสียง:
             </span>
@@ -256,7 +306,7 @@ export default function CampusMapModal({
 
           {/* Hologram Floating Spot Card (การ์ดโฮโลแกรมแสดงรายละเอียดสำคัญ) */}
           {selectedSpot && (
-            <div className="absolute bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:bottom-5 z-[1000] sm:w-[370px] hologram-card rounded-3xl p-4 sm:p-5 animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto shadow-2xl">
+            <div className="campus-map-hologram-card absolute bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:bottom-5 z-[1000] sm:w-[370px] hologram-card rounded-3xl p-4 sm:p-5 animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto shadow-2xl">
               {/* Header inside Hologram Card */}
               <div className="flex items-start justify-between gap-3 mb-2.5">
                 <div className="min-w-0">
@@ -288,7 +338,7 @@ export default function CampusMapModal({
                     loading="lazy"
                     decoding="async"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c071a] via-transparent to-transparent opacity-80" />
+                  <div className="campus-map-img-overlay absolute inset-0 bg-gradient-to-t from-[#0c071a] via-transparent to-transparent opacity-80" />
                   
                   {/* Gauge Overlay */}
                   <div className="absolute top-2 left-2">
@@ -300,7 +350,7 @@ export default function CampusMapModal({
                     <button
                       onClick={() => handlePlaySpot(selectedSpot)}
                       type="button"
-                      className={`absolute bottom-2 right-2 px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition shadow-lg cursor-pointer ${
+                      className={`campus-map-listen-btn absolute bottom-2 right-2 px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition shadow-lg cursor-pointer ${
                         isCurrentSpotPlaying
                           ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white animate-pulse"
                           : "bg-purple-950/90 text-purple-200 hover:bg-purple-800/90 border border-purple-400/40"
@@ -324,7 +374,7 @@ export default function CampusMapModal({
 
               {/* Description preview */}
               <AmenityBadges amenities={selectedSpot.amenities} />
-              <p className="text-xs text-purple-200/80 line-clamp-2 mb-3.5 leading-relaxed">
+              <p className="campus-map-desc text-xs text-purple-200/80 line-clamp-2 mb-3.5 leading-relaxed">
                 {selectedSpot.description || "สถานที่อ่านหนังสือและพักผ่อนในวิทยาเขตพัทลุง"}
               </p>
 
@@ -333,7 +383,7 @@ export default function CampusMapModal({
                 <button
                   onClick={() => handleNavigateGoogleMaps(selectedSpot)}
                   type="button"
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-lg shadow-cyan-900/40 active:scale-95 cursor-pointer border border-cyan-400/40"
+                  className="campus-map-nav-btn w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold transition shadow-lg shadow-cyan-900/40 active:scale-95 cursor-pointer border border-cyan-400/40"
                 >
                   <Navigation className="w-3.5 h-3.5" />
                   <span>นำทาง (Maps)</span>
@@ -342,7 +392,7 @@ export default function CampusMapModal({
                 <Link
                   href={`/spots/${selectedSpot.id}`}
                   onClick={onClose}
-                  className="w-full flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 hover:text-white text-xs font-bold transition border border-purple-500/40 text-center"
+                  className="campus-map-detail-btn w-full flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 hover:text-white text-xs font-bold transition border border-purple-500/40 text-center"
                 >
                   <span>ดูข้อมูลเต็ม</span>
                   <ExternalLink className="w-3.5 h-3.5" />
