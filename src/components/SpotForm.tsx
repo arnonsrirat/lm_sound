@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSpotAction, updateSpotAction } from "@/actions/spot";
-import { noiseLevels, noiseLevelLabels, type NoiseLevel, type SpotInput } from "@/lib/validations/spot";
+import { noiseLevels, noiseLevelLabels, type NoiseLevel, type SpotInput, availabilityStatuses, timeTags } from "@/lib/validations/spot";
 import { Save, ArrowLeft, Image as ImageIcon, Music, MapPin, Volume2, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import MediaFolderPicker from "@/components/admin/MediaFolderPicker";
@@ -17,7 +17,10 @@ interface SpotFormProps {
     location: string;
     noiseLevel: string;
     imageUrl: string;
+    imageUrls?: string[];
     audioUrl: string;
+    timeTag?: string | null;
+    availabilityStatus?: string;
     latitude?: number | null;
     longitude?: number | null;
   };
@@ -47,7 +50,10 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
     location: initialData?.location || "",
     noiseLevel: (initialData?.noiseLevel as NoiseLevel) || "quiet",
     imageUrl: initialData?.imageUrl || "",
+    imageUrls: initialData?.imageUrls || (initialData?.imageUrl ? [initialData.imageUrl] : []),
     audioUrl: initialData?.audioUrl || "",
+    timeTag: (initialData?.timeTag as SpotInput["timeTag"]) || null,
+    availabilityStatus: (initialData?.availabilityStatus as SpotInput["availabilityStatus"]) || "READY",
     latitude: initialData?.latitude ?? 7.80822,
     longitude: initialData?.longitude ?? 99.93869,
   });
@@ -223,10 +229,26 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
                 onClick={() => setPickerType("image")}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-purple-950/30 border border-purple-500/25 text-left text-sm text-foreground hover:border-purple-400/60 transition cursor-pointer"
               >
-                {formData.imageUrl ? "เลือกภาพจากคลังแล้ว" : "เลือกภาพจากคลังภาพ"}
-              </button>
+              {formData.imageUrls?.length ? `เลือกภาพแล้ว ${formData.imageUrls.length} รูป` : "เลือกภาพจากคลังภาพ"}
+            </button>
             </div>
+            {formData.imageUrls && formData.imageUrls.length > 0 && <div className="mt-2 grid grid-cols-4 gap-2">{formData.imageUrls.map((url) => <img key={url} src={url} alt="ภาพสถานที่" className="h-16 w-full rounded-lg object-cover" />)}</div>}
             {errors.imageUrl && <p className="text-rose-400 text-xs mt-1">{errors.imageUrl[0]}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold text-purple-300 uppercase tracking-wider mb-1.5">ช่วงเวลาที่เหมาะสม</label>
+              <select value={formData.timeTag || ""} onChange={(e) => setFormData({ ...formData, timeTag: (e.target.value || null) as SpotInput["timeTag"] })} className="w-full rounded-xl bg-purple-950/30 border border-purple-500/25 px-4 py-2.5 text-sm text-foreground">
+                <option value="">ไม่ระบุ</option>{timeTags.map((tag) => <option key={tag} value={tag}>{tag === "morning" ? "เช้า" : tag === "afternoon" ? "กลางวัน" : tag === "evening" ? "เย็น" : tag === "night" ? "กลางคืน" : "ทั้งวัน"}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-purple-300 uppercase tracking-wider mb-1.5">สถานะข้อมูล</label>
+              <select value={formData.availabilityStatus} onChange={(e) => setFormData({ ...formData, availabilityStatus: e.target.value as SpotInput["availabilityStatus"] })} className="w-full rounded-xl bg-purple-950/30 border border-purple-500/25 px-4 py-2.5 text-sm text-foreground">
+                {availabilityStatuses.map((status) => <option key={status} value={status}>{status === "READY" ? "พร้อมใช้งาน" : status === "PENDING_UPDATE" ? "รออัปเดตข้อมูล" : "ยังไม่พร้อม"}</option>)}
+              </select>
+            </div>
           </div>
 
           {/* Audio URL & Preset Selection */}
@@ -292,11 +314,14 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
           defaultFolder={pickerType === "audio" ? "audio" : "general"}
           allowedFolder={pickerType === "audio" ? "audio" : "general"}
           selectedUrl={pickerType === "audio" ? formData.audioUrl : formData.imageUrl}
+          selectedUrls={formData.imageUrls || []}
+          multiSelect={pickerType === "image"}
           targetTitle={pickerType === "audio" ? "เลือกเสียงบรรยากาศจากคลังเสียง" : "เลือกภาพสถานที่จากคลังภาพ"}
           onSelect={(url) => {
-            setFormData({ ...formData, ...(pickerType === "audio" ? { audioUrl: url } : { imageUrl: url }) });
+            setFormData({ ...formData, audioUrl: pickerType === "audio" ? url : formData.audioUrl, imageUrl: pickerType === "image" ? url : formData.imageUrl, imageUrls: pickerType === "image" ? [url] : formData.imageUrls });
             setPickerType(null);
           }}
+          onSelectMany={(urls) => { if (pickerType === "image" && urls.length > 0) setFormData({ ...formData, imageUrl: urls[0], imageUrls: urls }); setPickerType(null); }}
           onClose={() => setPickerType(null)}
         />
       )}

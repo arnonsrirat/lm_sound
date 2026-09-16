@@ -5,7 +5,10 @@ export interface SpotItem {
   location: string;
   noiseLevel: string;
   imageUrl: string;
+  imageUrls?: string[];
   audioUrl: string;
+  timeTag?: string | null;
+  availabilityStatus?: string;
   latitude?: number | null;
   longitude?: number | null;
   authorId: string;

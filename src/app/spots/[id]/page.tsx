@@ -77,6 +77,12 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
               )}
             </div>
 
+            {(spot.imageUrls?.length ?? 0) > 1 && (
+              <div className="grid grid-cols-4 gap-2 bg-purple-950/20 p-3">
+                {(spot.imageUrls ?? []).map((url: string) => <img key={url} src={url} alt={`${spot.title} gallery`} className="h-20 w-full rounded-xl object-cover" />)}
+              </div>
+            )}
+
             {/* Content Details */}
             <div className="p-5 sm:p-8 md:p-10 space-y-6">
               <div>
@@ -102,6 +108,10 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
                       })}
                     </span>
                   </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                  {spot.timeTag && <span className="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-fuchsia-200">ช่วงเวลา: {spot.timeTag}</span>}
+                  {spot.availabilityStatus && spot.availabilityStatus !== "READY" && <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-amber-100">{spot.availabilityStatus === "PENDING_UPDATE" ? "รออัปเดตข้อมูล" : "ยังไม่พร้อม"}</span>}
                 </div>
               </div>
 

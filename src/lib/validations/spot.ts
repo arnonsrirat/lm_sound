@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const noiseLevels = ["quiet", "moderate", "lively"] as const;
 export type NoiseLevel = (typeof noiseLevels)[number];
+export const availabilityStatuses = ["READY", "PENDING_UPDATE", "NOT_READY"] as const;
+export type AvailabilityStatus = (typeof availabilityStatuses)[number];
+export const timeTags = ["morning", "afternoon", "evening", "night", "all_day"] as const;
+export type TimeTag = (typeof timeTags)[number];
 
 export const noiseLevelLabels: Record<NoiseLevel, { label: string; desc: string; badgeColor: string }> = {
   quiet: {
@@ -43,12 +47,15 @@ export const spotSchema = z.object({
     .url("รูปแบบ URL รูปภาพไม่ถูกต้อง")
     .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(jpg|jpeg|png|webp|avif)$/i, "พาธรูปภาพต้องเป็นไฟล์ภาพ"))
     .or(z.string().regex(/^\/api\/admin\/media\/[a-zA-Z0-9_-]+$/, "พาธรูปภาพจากคลังไม่ถูกต้อง")),
+  imageUrls: z.array(z.string().min(1)).max(20).default([]),
   audioUrl: z
     .string()
     .min(1, "กรุณาระบุ URL ของไฟล์เสียงบรรยากาศ")
     .url("รูปแบบ URL เสียงไม่ถูกต้อง")
     .or(z.string().regex(/^\/[a-zA-Z0-9_\-\/.]+\.(mp3|wav|ogg|m4a)$/i, "พาธเสียงต้องเป็นไฟล์เสียง"))
     .or(z.string().regex(/^\/api\/admin\/media\/[a-zA-Z0-9_-]+$/, "พาธเสียงจากคลังไม่ถูกต้อง")),
+  timeTag: z.enum(timeTags).nullable().optional(),
+  availabilityStatus: z.enum(availabilityStatuses).default("READY"),
   latitude: z.number().finite().min(7.78).max(7.84).optional(),
   longitude: z.number().finite().min(99.90).max(99.98).optional(),
 });

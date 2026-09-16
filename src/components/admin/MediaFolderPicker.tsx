@@ -21,7 +21,10 @@ import { moveMediaAction, type MediaItem, type MediaFolder } from "@/actions/med
 
 interface MediaFolderPickerProps {
   onSelect?: (url: string) => void;
+  onSelectMany?: (urls: string[]) => void;
   selectedUrl?: string;
+  selectedUrls?: string[];
+  multiSelect?: boolean;
   defaultFolder?: MediaFolder;
   isModal?: boolean;
   onClose?: () => void;
@@ -39,7 +42,10 @@ const FOLDERS: { id: MediaFolder; label: string; desc: string }[] = [
 
 export default function MediaFolderPicker({
   onSelect,
+  onSelectMany,
   selectedUrl,
+  selectedUrls = [],
+  multiSelect = false,
   defaultFolder = "logos",
   isModal = false,
   onClose,
@@ -66,7 +72,10 @@ export default function MediaFolderPicker({
   const [deleteFor, setDeleteFor] = useState<MediaItem | null>(null);
   const [driveReady, setDriveReady] = useState<boolean | null>(null);
   const [pendingUpload, setPendingUpload] = useState<File | null>(null);
+  const [pendingUploads, setPendingUploads] = useState<File[]>([]);
   const [uploadNote, setUploadNote] = useState("");
+  const [uploadTimeTag, setUploadTimeTag] = useState("");
+  const [gallerySelection, setGallerySelection] = useState<string[]>(selectedUrls);
   const [menuFor, setMenuFor] = useState<MediaItem | null>(null);
   const [previewFor, setPreviewFor] = useState<MediaItem | null>(null);
   const [noteFor, setNoteFor] = useState<MediaItem | null>(null);
@@ -113,12 +122,13 @@ export default function MediaFolderPicker({
       .catch(() => setDriveReady(false));
   }, []);
 
-  const uploadFile = async (file: File, note = "") => {
+  const uploadFile = async (file: File, note = "", timeTag = "") => {
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", currentFolder);
     formData.append("note", note);
+    formData.append("timeTag", timeTag);
 
     setIsUploading(true);
     setUploadStatus({ fileName: file.name, progress: 2, phase: "uploading" });
@@ -154,8 +164,10 @@ export default function MediaFolderPicker({
         window.setTimeout(() => setUploadStatus(null), 3500);
 
         // Auto select if modal
-        if (onSelect) {
+        if (onSelect && !multiSelect) {
           onSelect(uploadedItem.url);
+        } else if (multiSelect) {
+          setGallerySelection((previous) => previous.includes(uploadedItem.url) ? previous : [...previous, uploadedItem.url]);
         }
       } else {
         setUploadStatus({ fileName: file.name, progress: 100, phase: "error" });
@@ -171,12 +183,22 @@ export default function MediaFolderPicker({
     }
   };
 
+  const uploadFiles = async (files: File[], note = "", timeTag = "") => {
+    for (const file of files) await uploadFile(file, note, timeTag);
+  };
+
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
     event.target.value = "";
-    if (!file) return;
+    if (files.length === 0) return;
     setUploadNote("");
-    setPendingUpload(file);
+    setUploadTimeTag("");
+    setPendingUploads(files);
+    setPendingUpload(files[0]);
+  };
+
+  const toggleGallerySelection = (url: string) => {
+    setGallerySelection((previous) => previous.includes(url) ? previous.filter((item) => item !== url) : [...previous, url]);
   };
 
   const saveNote = async () => {
@@ -184,7 +206,7 @@ export default function MediaFolderPicker({
     const response = await fetch("/api/admin/media", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileUrl: noteFor.url, note: editingNote }),
+      body: JSON.stringify({ fileUrl: noteFor.url, note: editingNote, timeTag: noteFor.timeTag ?? null }),
     });
     const data = await response.json();
     if (data.success && data.data) {
@@ -278,7 +300,8 @@ export default function MediaFolderPicker({
             ref={fileInputRef}
             onChange={handleFileSelected}
             accept={currentFolder === "audio" ? "audio/mpeg,audio/wav,audio/ogg,audio/mp4" : "image/png,image/jpeg,image/webp,image/svg+xml,image/gif"}
-            className="hidden"
+             multiple
+             className="hidden"
           />}
           {canManage && <button
             type="button"
@@ -303,6 +326,11 @@ export default function MediaFolderPicker({
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
+          {multiSelect && onSelectMany && (
+            <button type="button" onClick={() => { onSelectMany(gallerySelection); onClose?.(); }} disabled={gallerySelection.length === 0} className="rounded-2xl bg-emerald-400 px-4 py-2.5 text-xs font-bold text-slate-950 disabled:opacity-50">
+              ยืนยัน {gallerySelection.length} รูป
+            </button>
+          )}
         </div>
       </div>
 
@@ -413,7 +441,7 @@ export default function MediaFolderPicker({
           <span>
             ไฟล์ในโฟลเดอร์ <strong>uploads/{currentFolder}/</strong> ({items.length} รายการ)
           </span>
-          <span className="text-[11px] text-purple-300/40">คลิกที่รูปเพื่อเลือกใช้งาน</span>
+            <span className="text-[11px] text-purple-300/40">{multiSelect ? "เลือกได้หลายรูป แล้วกดยืนยัน" : "คลิกที่รูปเพื่อเลือกใช้งาน"}</span>
         </div>
 
         {isLoading ? (
@@ -434,9 +462,13 @@ export default function MediaFolderPicker({
           </div>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 max-h-[520px] overflow-y-auto pr-1">
-            {items.map((item) => {
-              const isSelected = selectedUrl === item.url;
+            {items.map((item, index) => {
+              const isSelected = multiSelect ? gallerySelection.includes(item.url) : selectedUrl === item.url;
+              const albumDate = new Date(item.updatedAt).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" });
+              const previousDate = index > 0 ? new Date(items[index - 1].updatedAt).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" }) : null;
               return (
+                <React.Fragment key={item.url}>
+                {albumDate !== previousDate && <div className="col-span-full border-b border-purple-500/20 pb-2 pt-2 text-xs font-bold text-cyan-200">อัลบั้มวันที่ {albumDate}</div>}
                 <div
                   key={item.url}
                   draggable={canManage}
@@ -485,6 +517,8 @@ export default function MediaFolderPicker({
                       <p className="text-[10px] text-purple-300/50 mt-0.5">
                         {formatSize(item.size)}
                       </p>
+                      <p className="text-[10px] text-purple-300/50 mt-0.5">อัลบั้ม {new Date(item.updatedAt).toLocaleDateString("th-TH")}</p>
+                      {item.timeTag && <p className="mt-1 text-[10px] text-fuchsia-200/80">ช่วงเวลา: {item.timeTag}</p>}
                       {item.note && <p className="mt-1 line-clamp-1 text-[10px] text-cyan-200/75" title={item.note}>{item.note}</p>}
                     </div>
 
@@ -493,7 +527,7 @@ export default function MediaFolderPicker({
                       {onSelect && (
                         <button
                           type="button"
-                          onClick={() => onSelect(item.url)}
+                          onClick={() => multiSelect ? toggleGallerySelection(item.url) : onSelect(item.url)}
                           className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center justify-center gap-1 ${
                             isSelected
                               ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
@@ -501,7 +535,7 @@ export default function MediaFolderPicker({
                           }`}
                         >
                           <Sparkles className="w-3 h-3" />
-                          {isSelected ? "เลือกแล้ว" : "เลือกรูปนี้"}
+                            {isSelected ? "เลือกแล้ว" : multiSelect ? "เพิ่มรูปนี้" : "เลือกรูปนี้"}
                         </button>
                       )}
 
@@ -529,13 +563,14 @@ export default function MediaFolderPicker({
                     </div>
                   </div>
                 </div>
+                </React.Fragment>
               );
             })}
           </div>
         )}
       </div>
 
-      {pendingUpload && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 p-4"><div className="w-full max-w-md rounded-2xl border border-cyan-400/35 bg-[#160b2b] p-5"><h4 className="font-bold text-cyan-100">เพิ่มโน้ตให้ไฟล์ (ไม่บังคับ)</h4><p className="mt-1 truncate text-xs text-purple-200/70">{pendingUpload.name}</p><input autoFocus value={uploadNote} onChange={(event) => setUploadNote(event.target.value)} maxLength={160} placeholder="เช่น ภาพปกหน้าแรก / เสียงฝนสำหรับโซนเงียบ" className="mt-4 w-full rounded-xl border border-purple-500/30 bg-purple-950/40 px-3 py-2.5 text-sm text-purple-100 outline-none focus:border-cyan-300" /><div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => { const file = pendingUpload; setPendingUpload(null); void uploadFile(file); }} className="rounded-xl border border-purple-500/30 px-3 py-2 text-xs text-purple-200 hover:bg-purple-900/30">ข้ามโน้ต</button><button type="button" onClick={() => { const file = pendingUpload; const note = uploadNote; setPendingUpload(null); void uploadFile(file, note); }} className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-300">อัปโหลดไฟล์</button></div></div></div>}
+      {pendingUpload && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 p-4"><div className="w-full max-w-md rounded-2xl border border-cyan-400/35 bg-[#160b2b] p-5"><h4 className="font-bold text-cyan-100">เตรียมอัปโหลด {pendingUploads.length} ไฟล์</h4><p className="mt-1 truncate text-xs text-purple-200/70">{pendingUploads.map((file) => file.name).join(", ")}</p><input autoFocus value={uploadNote} onChange={(event) => setUploadNote(event.target.value)} maxLength={160} placeholder="โน้ต เช่น ภาพโซนอ่านหนังสือ" className="mt-4 w-full rounded-xl border border-purple-500/30 bg-purple-950/40 px-3 py-2.5 text-sm text-purple-100 outline-none focus:border-cyan-300" /><select value={uploadTimeTag} onChange={(event) => setUploadTimeTag(event.target.value)} className="mt-3 w-full rounded-xl border border-purple-500/30 bg-purple-950/40 px-3 py-2.5 text-sm text-purple-100 outline-none focus:border-cyan-300"><option value="">ไม่ระบุช่วงเวลา</option><option value="morning">เช้า</option><option value="afternoon">กลางวัน</option><option value="evening">เย็น</option><option value="night">กลางคืน</option><option value="all_day">ทั้งวัน</option></select><div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => { const files = pendingUploads; setPendingUpload(null); setPendingUploads([]); void uploadFiles(files, "", uploadTimeTag); }} className="rounded-xl border border-purple-500/30 px-3 py-2 text-xs text-purple-200 hover:bg-purple-900/30">ข้ามโน้ต</button><button type="button" onClick={() => { const files = pendingUploads; const note = uploadNote; const tag = uploadTimeTag; setPendingUpload(null); setPendingUploads([]); void uploadFiles(files, note, tag); }} className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-300">อัปโหลดไฟล์</button></div></div></div>}
 
       {menuFor && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 p-4" onClick={() => setMenuFor(null)}><div className="w-full max-w-xs rounded-2xl border border-purple-400/35 bg-[#160b2b] p-3 shadow-2xl" onClick={(event) => event.stopPropagation()}><p className="truncate px-3 py-2 text-xs font-semibold text-purple-100">{menuFor.name}</p><button type="button" onClick={() => { setMoveFor(menuFor); setMenuFor(null); }} className="w-full rounded-xl px-3 py-3 text-left text-sm text-purple-100 hover:bg-purple-700/25">ย้ายไปยังโฟลเดอร์</button><button type="button" onClick={() => { handleCopyUrl(menuFor.url); setMenuFor(null); }} className="w-full rounded-xl px-3 py-3 text-left text-sm text-purple-100 hover:bg-purple-700/25">คัดลอก URL</button><button type="button" onClick={() => { setEditingNote(menuFor.note || ""); setNoteFor(menuFor); setMenuFor(null); }} className="w-full rounded-xl px-3 py-3 text-left text-sm text-purple-100 hover:bg-purple-700/25">แก้ไขชื่อโน้ต</button><button type="button" onClick={() => setMenuFor(null)} className="w-full rounded-xl px-3 py-2 text-left text-xs text-purple-300 hover:bg-purple-900/30">ยกเลิก</button></div></div>}
 

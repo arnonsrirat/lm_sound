@@ -30,6 +30,7 @@ import {
 import type { SiteSettings, FestivalTheme } from "@/lib/site-settings";
 import { FESTIVAL_THEME_LABELS } from "@/lib/site-settings";
 import type { SpotItem } from "@/lib/fallbackSpots";
+import { availabilityStatuses, timeTags, type SpotInput, type AvailabilityStatus } from "@/lib/validations/spot";
 import {
   updateSiteSettingsAction,
   adminCreateSpotAction,
@@ -634,7 +635,10 @@ function AdminSpotForm({
     (spot?.noiseLevel as "quiet" | "moderate" | "lively") || "quiet"
   );
   const [imageUrl, setImageUrl] = useState(spot?.imageUrl || "");
+  const [imageUrls, setImageUrls] = useState(spot?.imageUrls?.length ? spot.imageUrls : (spot?.imageUrl ? [spot.imageUrl] : []));
   const [audioUrl, setAudioUrl] = useState(spot?.audioUrl || "");
+  const [timeTag, setTimeTag] = useState(spot?.timeTag || "");
+  const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>((spot?.availabilityStatus as AvailabilityStatus) || "READY");
   const [latitude, setLatitude] = useState(spot?.latitude ?? 7.80822);
   const [longitude, setLongitude] = useState(spot?.longitude ?? 99.93869);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -651,7 +655,10 @@ function AdminSpotForm({
         location,
         noiseLevel,
         imageUrl,
+        imageUrls,
         audioUrl,
+        timeTag: (timeTag || null) as SpotInput["timeTag"],
+        availabilityStatus,
         latitude,
         longitude,
       };
@@ -747,7 +754,7 @@ function AdminSpotForm({
                 className="text-[11px] text-fuchsia-300 hover:text-white flex items-center gap-1 cursor-pointer"
               >
                 <FolderOpen className="w-3.5 h-3.5" />
-                เลือกจากคลังภาพ
+               เลือกจากคลังภาพหลายรูป
               </button>
             </div>
             <input
@@ -760,6 +767,16 @@ function AdminSpotForm({
               className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
               placeholder="เลือกภาพจากคลังภาพ"
             />
+            <div className="mt-2 grid grid-cols-4 gap-2">{imageUrls.map((url) => <img key={url} src={url} alt="ภาพสถานที่" className="h-14 w-full rounded-lg object-cover" />)}</div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-xs font-semibold text-purple-300/80">ช่วงเวลา
+              <select value={timeTag} onChange={(e) => setTimeTag(e.target.value)} className="mt-1 w-full rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 py-2 text-sm"><option value="">ไม่ระบุ</option>{timeTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}</select>
+            </label>
+            <label className="text-xs font-semibold text-purple-300/80">สถานะข้อมูล
+              <select value={availabilityStatus} onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)} className="mt-1 w-full rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 py-2 text-sm">{availabilityStatuses.map((status) => <option key={status} value={status}>{status === "READY" ? "พร้อมใช้งาน" : status === "PENDING_UPDATE" ? "รออัปเดตข้อมูล" : "ยังไม่พร้อม"}</option>)}</select>
+            </label>
           </div>
 
           <div>
@@ -803,10 +820,13 @@ function AdminSpotForm({
           defaultFolder={pickerOpen === "audio" ? "audio" : "general"}
           allowedFolder={pickerOpen === "audio" ? "audio" : "general"}
           selectedUrl={pickerOpen === "audio" ? audioUrl : imageUrl}
+          selectedUrls={imageUrls}
+          multiSelect={pickerOpen === "image"}
           onSelect={(url) => {
-            if (pickerOpen === "audio") setAudioUrl(url); else setImageUrl(url);
+            if (pickerOpen === "audio") setAudioUrl(url); else { setImageUrl(url); setImageUrls([url]); }
             setPickerOpen(null);
           }}
+          onSelectMany={(urls) => { if (pickerOpen === "image" && urls.length > 0) { setImageUrl(urls[0]); setImageUrls(urls); } setPickerOpen(null); }}
           onClose={() => setPickerOpen(null)}
         />
       )}

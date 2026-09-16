@@ -1,0 +1,9 @@
+ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "timeTag" TEXT;
+
+ALTER TABLE "Spot" ADD COLUMN IF NOT EXISTS "imageUrls" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Spot" ADD COLUMN IF NOT EXISTS "timeTag" TEXT;
+ALTER TABLE "Spot" ADD COLUMN IF NOT EXISTS "availabilityStatus" TEXT NOT NULL DEFAULT 'READY';
+
+UPDATE "Spot"
+SET "imageUrls" = ARRAY["imageUrl"]
+WHERE cardinality("imageUrls") = 0 AND "imageUrl" <> '';

@@ -43,6 +43,7 @@ model MediaAsset {
   id              String   @id @default(cuid())
   name            String
   note            String?
+  timeTag         String?
   folder          String
   mimeType        String
   size            Int
@@ -62,7 +63,10 @@ model Spot {
   location    String
   noiseLevel  String   // e.g. "quiet" (เงียบสงบ), "moderate" (ปานกลาง), "lively" (คึกคัก)
   imageUrl    String
+  imageUrls   String[] @default([])
   audioUrl    String
+  timeTag     String?
+  availabilityStatus String @default("READY")
   latitude    Float?
   longitude   Float?
   authorId    String

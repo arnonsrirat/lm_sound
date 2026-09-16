@@ -109,7 +109,7 @@ async function getOrCreateFolder(accessToken: string, name: string, parentId?: s
   return created.id;
 }
 
-export async function uploadToGoogleDrive(file: File, folder: string, note: string | null = null) {
+export async function uploadToGoogleDrive(file: File, folder: string, note: string | null = null, timeTag: string | null = null) {
   const { accessToken, connection } = await getAccessToken();
   const rootFolderId = connection.rootFolderId || await getOrCreateFolder(accessToken, "LMSound Uploads");
   if (!connection.rootFolderId) await prisma.googleDriveConnection.update({ where: { id: connection.id }, data: { rootFolderId } });
@@ -123,7 +123,7 @@ export async function uploadToGoogleDrive(file: File, folder: string, note: stri
   const body = Buffer.concat([Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${file.type || "application/octet-stream"}\r\n\r\n`), bytes, Buffer.from(`\r\n--${boundary}--`)]);
   const uploaded = await (await driveRequest(`${DRIVE_UPLOAD_API}?uploadType=multipart&fields=id,name,mimeType,size,webViewLink`, accessToken, { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body })).json() as { id: string; name: string; mimeType: string; size?: string; webViewLink?: string };
   const url = `/api/admin/media/${uploaded.id}`;
-  const asset = await prisma.mediaAsset.create({ data: { name: uploaded.name, note, folder, mimeType: uploaded.mimeType || file.type || "application/octet-stream", size: Number(uploaded.size || file.size), driveFileId: uploaded.id, driveWebViewUrl: uploaded.webViewLink || null, url } });
+  const asset = await prisma.mediaAsset.create({ data: { name: uploaded.name, note, timeTag, folder, mimeType: uploaded.mimeType || file.type || "application/octet-stream", size: Number(uploaded.size || file.size), driveFileId: uploaded.id, driveWebViewUrl: uploaded.webViewLink || null, url } });
   return asset;
 }
 

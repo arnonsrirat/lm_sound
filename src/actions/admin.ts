@@ -79,7 +79,10 @@ export async function adminCreateSpotAction(
         location: formData.get("location"),
         noiseLevel: formData.get("noiseLevel"),
         imageUrl: formData.get("imageUrl"),
+        imageUrls: formData.getAll("imageUrls"),
         audioUrl: formData.get("audioUrl"),
+        timeTag: formData.get("timeTag") || null,
+        availabilityStatus: formData.get("availabilityStatus") || "READY",
         latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
         longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       };
@@ -87,7 +90,10 @@ export async function adminCreateSpotAction(
       rawData = formData;
     }
 
-    const validated = spotSchema.safeParse(rawData);
+    const validated = spotSchema.safeParse({
+      ...rawData,
+      imageUrls: Array.isArray(rawData.imageUrls) && rawData.imageUrls.length > 0 ? rawData.imageUrls : [rawData.imageUrl],
+    });
     if (!validated.success) {
       return {
         success: false,
@@ -143,7 +149,10 @@ export async function adminUpdateSpotAction(
         location: formData.get("location"),
         noiseLevel: formData.get("noiseLevel"),
         imageUrl: formData.get("imageUrl"),
+        imageUrls: formData.getAll("imageUrls"),
         audioUrl: formData.get("audioUrl"),
+        timeTag: formData.get("timeTag") || null,
+        availabilityStatus: formData.get("availabilityStatus") || "READY",
         latitude: formData.get("latitude") ? Number(formData.get("latitude")) : undefined,
         longitude: formData.get("longitude") ? Number(formData.get("longitude")) : undefined,
       };
@@ -152,7 +161,10 @@ export async function adminUpdateSpotAction(
     }
 
     const fallbackIndex = FALLBACK_SPOTS.findIndex((spot) => spot.id === spotId);
-    const validated = spotSchema.safeParse(rawData);
+    const validated = spotSchema.safeParse({
+      ...rawData,
+      imageUrls: Array.isArray(rawData.imageUrls) && rawData.imageUrls.length > 0 ? rawData.imageUrls : [rawData.imageUrl],
+    });
     if (!validated.success) {
       return {
         success: false,

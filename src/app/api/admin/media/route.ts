@@ -54,9 +54,9 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = await req.json() as { fileUrl?: string; note?: string | null };
+    const body = await req.json() as { fileUrl?: string; note?: string | null; timeTag?: string | null };
     if (!body.fileUrl) return NextResponse.json({ success: false, error: "กรุณาระบุไฟล์ที่ต้องการแก้ไข" }, { status: 400 });
-    const result = await updateMediaNoteAction(body.fileUrl, body.note ?? null);
+    const result = await updateMediaNoteAction(body.fileUrl, body.note ?? null, body.timeTag ?? null);
     return NextResponse.json(result, { status: result.statusCode || (result.success ? 200 : 400) });
   } catch {
     return NextResponse.json({ success: false, error: "บันทึกโน้ตไม่สำเร็จ" }, { status: 500 });
