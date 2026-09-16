@@ -45,6 +45,7 @@ import MediaFolderPicker from "@/components/admin/MediaFolderPicker";
 import CampusMap from "@/components/CampusMap";
 import type { MediaFolder } from "@/actions/media";
 import { AMENITY_OPTIONS } from "@/components/AmenityBadges";
+import { notify as showNotice } from "@/lib/notify";
 
 interface AdminDashboardProps {
   initialSettings: SiteSettings;
@@ -67,7 +68,6 @@ export default function AdminDashboard({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>(initialSettings);
   const [spots, setSpots] = useState<SpotItem[]>(initialSpots);
-  const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     description: string;
@@ -102,8 +102,7 @@ export default function AdminDashboard({
   } | null>(null);
 
   const notify = (ok: boolean, msg: string) => {
-    setToast({ ok, msg });
-    setTimeout(() => setToast(null), 3500);
+    showNotice(msg, ok ? "success" : "error");
   };
 
   const askConfirm = (
@@ -148,20 +147,6 @@ export default function AdminDashboard({
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row transition-colors">
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className={`fixed top-6 right-6 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-xl border text-sm font-semibold transition-all duration-300 animate-in fade-in slide-in-from-top-4 ${
-            toast.ok
-              ? "bg-emerald-500/20 border-emerald-400/50 text-emerald-200"
-              : "bg-rose-500/20 border-rose-400/50 text-rose-200"
-          }`}
-        >
-          {toast.ok ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-          {toast.msg}
-        </div>
-      )}
-
       {confirmDialog && (
         <AdminConfirmModal
           title={confirmDialog.title}
@@ -661,6 +646,7 @@ function AdminSpotForm({
   const [amenities, setAmenities] = useState<AmenityKey[]>((spot?.amenities || []) as AmenityKey[]);
   const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>((spot?.availabilityStatus as AvailabilityStatus) || "READY");
   const [pendingFields, setPendingFields] = useState<PendingFieldKey[]>((spot?.pendingFields || []) as PendingFieldKey[]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [latitude, setLatitude] = useState(spot?.latitude ?? 7.80822);
   const [longitude, setLongitude] = useState(spot?.longitude ?? 99.93869);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -670,6 +656,25 @@ function AdminSpotForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const nextErrors: Record<string, string[]> = {};
+    const addError = (field: string, message: string) => {
+      nextErrors[field] = [message];
+    };
+
+    if (title.trim().length < 2) addError("title", "กรุณากรอกชื่อสถานที่อย่างน้อย 2 ตัวอักษร");
+    if (location.trim().length < 2) addError("location", "กรุณาระบุตำแหน่งหรือโซนอย่างน้อย 2 ตัวอักษร");
+    if (!pendingFields.includes("description") && description.trim().length < 10) {
+      addError("description", "กรุณากรอกรายละเอียดอย่างน้อย 10 ตัวอักษร หรือเลือก 'รออัปเดต'");
+    }
+    if (!pendingFields.includes("images") && !imageUrl) addError("imageUrl", "กรุณาเลือกรูปภาพ หรือเลือก 'รออัปเดต'");
+    if (!pendingFields.includes("audio") && !audioUrl) addError("audioUrl", "กรุณาเลือกเสียง หรือเลือก 'รออัปเดต'");
+
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      notify(false, "กรุณาตรวจสอบช่องที่ไฮไลท์ก่อนบันทึก");
+      return;
+    }
+
     startTransition(async () => {
       const payload = {
         title,
@@ -689,20 +694,26 @@ function AdminSpotForm({
         longitude,
       };
 
-      if (isEdit && spot) {
-        const res = await adminUpdateSpotAction(spot.id, payload);
-        if (res.success && res.data) {
-          onSaved(res.data as SpotItem, false);
+      try {
+        if (isEdit && spot) {
+          const res = await adminUpdateSpotAction(spot.id, payload);
+          if (res.success && res.data) {
+            onSaved(res.data as SpotItem, false);
+          } else {
+            setFieldErrors(res.fieldErrors || {});
+            notify(false, res.error || "แก้ไขไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+          }
         } else {
-          notify(false, res.error || "แก้ไขไม่สำเร็จ");
+          const res = await adminCreateSpotAction(payload);
+          if (res.success && res.data) {
+            onSaved(res.data as SpotItem, true);
+          } else {
+            setFieldErrors(res.fieldErrors || {});
+            notify(false, res.error || "สร้างไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+          }
         }
-      } else {
-        const res = await adminCreateSpotAction(payload);
-        if (res.success && res.data) {
-          onSaved(res.data as SpotItem, true);
-        } else {
-          notify(false, res.error || "สร้างไม่สำเร็จ");
-        }
+      } catch (error) {
+        notify(false, error instanceof Error ? `บันทึกไม่สำเร็จ: ${error.message}` : "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่");
       }
     });
   };
@@ -713,16 +724,23 @@ function AdminSpotForm({
         <h3 id="admin-spot-form-title" className="font-bold text-lg mb-4 text-purple-100">
           {isEdit ? "แก้ไขสถานที่" : "เพิ่มสถานที่ใหม่"}
         </h3>
+        {Object.keys(fieldErrors).length > 0 && (
+          <div className="mb-4 rounded-2xl border border-rose-400/35 bg-rose-500/10 p-3 text-xs text-rose-100" role="alert">
+            <p className="font-bold">กรุณาตรวจสอบข้อมูลที่ไฮไลท์</p>
+            <p className="mt-1 text-rose-100/80">{Object.values(fieldErrors).flat().join(" • ")}</p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-purple-300/80">ชื่อสถานที่</label>
             <input
               required
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
+              onChange={(e) => { setTitle(e.target.value); setFieldErrors((current) => { const next = { ...current }; delete next.title; return next; }); }}
+              className={`w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border text-sm ${fieldErrors.title ? "border-rose-400 ring-2 ring-rose-400/20" : "border-purple-500/25"}`}
               placeholder="เช่น Library Corner, Cafe Noir"
             />
+            {fieldErrors.title && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.title[0]}</p>}
           </div>
 
           <div>
@@ -730,9 +748,10 @@ function AdminSpotForm({
             <textarea
               rows={3}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
+              onChange={(e) => { setDescription(e.target.value); setFieldErrors((current) => { const next = { ...current }; delete next.description; return next; }); }}
+              className={`w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border text-sm ${fieldErrors.description ? "border-rose-400 ring-2 ring-rose-400/20" : "border-purple-500/25"}`}
             />
+            {fieldErrors.description && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.description[0]}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -740,9 +759,10 @@ function AdminSpotForm({
               <label className="text-xs font-semibold text-purple-300/80">ที่ตั้ง / โซน</label>
               <input
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
+                onChange={(e) => { setLocation(e.target.value); setFieldErrors((current) => { const next = { ...current }; delete next.location; return next; }); }}
+                className={`w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border text-sm ${fieldErrors.location ? "border-rose-400 ring-2 ring-rose-400/20" : "border-purple-500/25"}`}
               />
+              {fieldErrors.location && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.location[0]}</p>}
             </div>
             <div>
               <label className="text-xs font-semibold text-purple-300/80">ระดับเสียง</label>
@@ -788,10 +808,11 @@ function AdminSpotForm({
               disabled
               onClick={() => setPickerOpen("image")}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
+              className={`w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border text-sm ${fieldErrors.imageUrl ? "border-rose-400 ring-2 ring-rose-400/20" : "border-purple-500/25"}`}
               placeholder="เลือกภาพจากคลังภาพ"
             />
             <div className="mt-2 grid grid-cols-4 gap-2">{imageUrls.map((url) => <img key={url} src={url} alt="ภาพสถานที่" className="h-14 w-full rounded-lg object-cover" />)}</div>
+            {fieldErrors.imageUrl && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.imageUrl[0]}</p>}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -840,9 +861,10 @@ function AdminSpotForm({
               disabled
               onClick={() => setPickerOpen("audio")}
               onChange={(e) => setAudioUrl(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
+              className={`w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border text-sm ${fieldErrors.audioUrl ? "border-rose-400 ring-2 ring-rose-400/20" : "border-purple-500/25"}`}
               placeholder="เลือกเสียงจากคลังเสียง"
             />
+            {fieldErrors.audioUrl && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.audioUrl[0]}</p>}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -875,10 +897,17 @@ function AdminSpotForm({
           selectedUrls={imageUrls}
           multiSelect={pickerOpen === "image"}
           onSelect={(url) => {
-            if (pickerOpen === "audio") setAudioUrl(url); else { setImageUrl(url); setImageUrls([url]); }
+            if (pickerOpen === "audio") {
+              setAudioUrl(url);
+              setFieldErrors((current) => { const next = { ...current }; delete next.audioUrl; return next; });
+            } else {
+              setImageUrl(url);
+              setImageUrls([url]);
+              setFieldErrors((current) => { const next = { ...current }; delete next.imageUrl; return next; });
+            }
             setPickerOpen(null);
           }}
-          onSelectMany={(urls) => { if (pickerOpen === "image" && urls.length > 0) { setImageUrl(urls[0]); setImageUrls(urls); } setPickerOpen(null); }}
+          onSelectMany={(urls) => { if (pickerOpen === "image" && urls.length > 0) { setImageUrl(urls[0]); setImageUrls(urls); setFieldErrors((current) => { const next = { ...current }; delete next.imageUrl; return next; }); } setPickerOpen(null); }}
           onClose={() => setPickerOpen(null)}
         />
       )}

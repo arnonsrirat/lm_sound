@@ -66,7 +66,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* เสียงแนะนำ (Recommended Sounds Banner with . . . . dot indicators) */}
             <FeaturedBanner
               spot={featuredSpot}
-              spots={spots}
+              spots={timeRecommendedSpots.length > 0 ? timeRecommendedSpots : spots}
+              useSpotImage={timeRecommendedSpots.length > 0}
               bannerSettings={{
                 bannerLight: settings.bannerLight,
                 bannerDark: settings.bannerDark,

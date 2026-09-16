@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Upload,
   Folder,
@@ -16,6 +16,7 @@ import {
   FileImage,
   Sparkles,
   MoreVertical,
+  ChevronDown,
 } from "lucide-react";
 import { moveMediaAction, type MediaItem, type MediaFolder } from "@/actions/media";
 
@@ -41,6 +42,17 @@ const FOLDERS: { id: MediaFolder; label: string; desc: string }[] = [
   { id: "relaxation", label: "อัลบั้มเพลงผ่อนคลาย (Relaxation)", desc: "เพลงที่เลือกแสดงให้ผู้ใช้ฟังและให้คะแนน" },
 ];
 
+type UploadBatchStatus = {
+  total: number;
+  completed: number;
+  failed: number;
+  active: number;
+  progress: number;
+  currentFile: string;
+  phase: "uploading" | "processing" | "success" | "error";
+  message: string;
+};
+
 export default function MediaFolderPicker({
   onSelect,
   onSelectMany,
@@ -58,11 +70,9 @@ export default function MediaFolderPicker({
   const [items, setItems] = useState<MediaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<{
-    fileName: string;
-    progress: number;
-    phase: "uploading" | "processing" | "success" | "error";
-  } | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadBatchStatus | null>(null);
+  const [retryUploads, setRetryUploads] = useState<File[]>([]);
+  const [lastUploadMeta, setLastUploadMeta] = useState({ note: "", timeTag: "" });
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -81,6 +91,8 @@ export default function MediaFolderPicker({
   const [previewFor, setPreviewFor] = useState<MediaItem | null>(null);
   const [noteFor, setNoteFor] = useState<MediaItem | null>(null);
   const [editingNote, setEditingNote] = useState("");
+  // null = ค่าเริ่มต้นเปิดเฉพาะกลุ่มวันที่ล่าสุด ส่วน Set ใช้เก็บกลุ่มที่ผู้ใช้กางเอง
+  const [expandedAlbumDates, setExpandedAlbumDates] = useState<Set<string> | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -123,9 +135,14 @@ export default function MediaFolderPicker({
       .catch(() => setDriveReady(false));
   }, []);
 
-  const uploadFile = async (file: File, note = "", timeTag = "") => {
-    let lastError = "อัปโหลดไม่สำเร็จ";
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+  const uploadFile = async (
+    file: File,
+    note = "",
+    timeTag = "",
+    onProgress?: (progress: number, phase: "uploading" | "processing") => void,
+  ) => {
+    // retry ถูกควบคุมโดยคิวด้านนอก เพื่อไม่ให้ไฟล์เดียวถูกยิงซ้ำซ้อนหลายชั้นบนมือถือ
+    for (let attempt = 0; attempt < 1; attempt += 1) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", currentFolder);
@@ -141,7 +158,7 @@ export default function MediaFolderPicker({
           request.upload.onprogress = (event) => {
             if (!event.lengthComputable) return;
             const progress = Math.max(2, Math.min(100, Math.round((event.loaded / event.total) * 100)));
-            setUploadStatus({ fileName: file.name, progress, phase: progress === 100 ? "processing" : "uploading" });
+            onProgress?.(progress, progress === 100 ? "processing" : "uploading");
           };
           request.onerror = () => reject(new Error("NETWORK_ERROR"));
           request.ontimeout = () => reject(new Error("UPLOAD_TIMEOUT"));
@@ -160,31 +177,80 @@ export default function MediaFolderPicker({
         if (multiSelect) setGallerySelection((previous) => previous.includes(uploadedItem.url) ? previous : [...previous, uploadedItem.url]);
         return true;
       } catch (error) {
-        lastError = error instanceof Error ? error.message : lastError;
-        if (attempt === 0) await new Promise((resolve) => window.setTimeout(resolve, 700));
+        void error;
+        // ให้ uploadFiles เป็นผู้หน่วงเวลาและลองใหม่ เพื่อรักษาจำนวน request ให้คุมได้
       }
     }
-    setUploadStatus({ fileName: file.name, progress: 100, phase: "error" });
-    notify(`${file.name}: ${lastError === "UPLOAD_TIMEOUT" ? "หมดเวลารอเซิร์ฟเวอร์" : "อัปโหลดไม่สำเร็จ"}`, true);
     return false;
   };
 
   const uploadFiles = async (files: File[], note = "", timeTag = "") => {
+    if (files.length === 0) return;
     setIsUploading(true);
+    setRetryUploads([]);
+    setLastUploadMeta({ note, timeTag });
+    const progressByFile = new Array(files.length).fill(0);
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+    const concurrency = Math.min(isMobile ? 2 : 3, files.length);
     let cursor = 0;
     let succeeded = 0;
+    let failed = 0;
+    const messageFor = (completed: number, done = false, hasErrors = false) => {
+      if (done) return hasErrors ? "เกือบเสร็จแล้ว เหลือบางไฟล์ให้ลองใหม่ได้" : "เสร็จแล้ว! ไฟล์ทั้งหมดพร้อมใช้งาน";
+      if (completed === 0) return "กำลังเริ่มจัดคิวไฟล์ ไม่ต้องกดซ้ำครับ";
+      if (completed / files.length < 0.3) return "เริ่มไปได้ดี กำลังทยอยส่งไฟล์ชุดแรก...";
+      if (completed / files.length < 0.75) return "ไปได้ดีครับ ระบบกำลังอัปโหลดต่อให้อัตโนมัติ...";
+      if (completed < files.length) return "ใกล้เสร็จแล้ว กำลังตรวจสอบไฟล์ที่เหลือ...";
+      return "กำลังตรวจสอบไฟล์ชุดสุดท้าย...";
+    };
+    const updateProgress = (index: number, fileName: string, progress: number, phase: UploadBatchStatus["phase"]) => {
+      progressByFile[index] = progress;
+      const overallProgress = Math.min(100, Math.round(progressByFile.reduce((sum, value) => sum + value, 0) / files.length));
+      setUploadStatus((previous) => previous ? { ...previous, progress: overallProgress, currentFile: fileName, phase, message: previous.message } : previous);
+    };
     const worker = async () => {
-      while (cursor < files.length) {
-        const file = files[cursor++];
-        setUploadStatus({ fileName: file.name, progress: 2, phase: "uploading" });
-        if (await uploadFile(file, note, timeTag)) succeeded += 1;
+      while (true) {
+        const index = cursor++;
+        if (index >= files.length) return;
+        const file = files[index];
+        setUploadStatus((previous) => previous ? { ...previous, active: previous.active + 1, currentFile: file.name } : previous);
+        let uploaded = false;
+        let lastProgressUpdate = 0;
+        for (let attempt = 0; attempt < 3 && !uploaded; attempt += 1) {
+          uploaded = await uploadFile(file, note, timeTag, (progress, phase) => {
+            const now = Date.now();
+            if (progress !== 100 && progress < progressByFile[index] + 4 && now - lastProgressUpdate < 120) return;
+            lastProgressUpdate = now;
+            updateProgress(index, file.name, progress, phase);
+          });
+          if (!uploaded && attempt < 2) await new Promise((resolve) => window.setTimeout(resolve, 500 * (attempt + 1)));
+        }
+        if (uploaded) {
+          succeeded += 1;
+          progressByFile[index] = 100;
+        } else {
+          failed += 1;
+          setRetryUploads((previous) => [...previous, file]);
+        }
+        setUploadStatus((previous) => previous ? {
+          ...previous,
+          completed: previous.completed + 1,
+          failed: previous.failed + (uploaded ? 0 : 1),
+          active: Math.max(0, previous.active - 1),
+          progress: Math.min(100, Math.round(progressByFile.reduce((sum, value) => sum + value, 0) / files.length)),
+          currentFile: file.name,
+          message: messageFor(previous.completed + 1),
+        } : previous);
       }
     };
     try {
-      // จำกัด 2 ไฟล์พร้อมกัน ช่วยให้มือถือไม่แย่งแบนด์วิดท์/หน่วยความจำจนค้าง
-      await Promise.all(Array.from({ length: Math.min(2, files.length) }, () => worker()));
-      if (succeeded > 0) notify(`อัปโหลดสำเร็จ ${succeeded}/${files.length} ไฟล์`);
-      setUploadStatus(null);
+      setUploadStatus({ total: files.length, completed: 0, failed: 0, active: 0, progress: 0, currentFile: files[0].name, phase: "uploading", message: messageFor(0) });
+      await Promise.all(Array.from({ length: concurrency }, () => worker()));
+      const hasErrors = failed > 0;
+      setUploadStatus((previous) => previous ? { ...previous, completed: files.length, failed, active: 0, progress: 100, phase: hasErrors ? "error" : "success", message: messageFor(files.length, true, hasErrors) } : previous);
+      if (succeeded > 0) notify(`อัปโหลดสำเร็จ ${succeeded}/${files.length} ไฟล์${hasErrors ? " — ไฟล์ที่พลาดจะลองใหม่ได้" : ""}`);
+      if (failed > 0) notify(`มี ${failed} ไฟล์อัปโหลดไม่สำเร็จ กดลองใหม่จากแถบสถานะได้`, true);
+      await loadFiles(currentFolder);
     } finally {
       setIsUploading(false);
     }
@@ -276,6 +342,27 @@ export default function MediaFolderPicker({
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
+  const albumGroups = useMemo(() => {
+    const groups: Array<{ key: string; label: string; items: MediaItem[] }> = [];
+    for (const item of items) {
+      const date = new Date(item.updatedAt);
+      const label = date.toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" });
+      const existing = groups.find((group) => group.key === label);
+      if (existing) existing.items.push(item);
+      else groups.push({ key: label, label, items: [item] });
+    }
+    return groups;
+  }, [items]);
+
+  const toggleAlbumDate = (key: string) => {
+    setExpandedAlbumDates((current) => {
+      const next = current ? new Set(current) : new Set(albumGroups.slice(0, 1).map((group) => group.key));
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   const content = (
     <div className="space-y-6">
       {/* Header Info */}
@@ -341,7 +428,7 @@ export default function MediaFolderPicker({
         <div
           role="status"
           aria-live="polite"
-          className={`pointer-events-none fixed right-4 top-4 z-[1300] w-[min(24rem,calc(100vw-2rem))] rounded-2xl border p-4 shadow-2xl backdrop-blur-xl transition-all ${
+          className={`pointer-events-none fixed right-4 top-4 z-[1300] w-[min(26rem,calc(100vw-2rem))] rounded-2xl border p-4 shadow-2xl backdrop-blur-xl transition-all ${
             uploadStatus.phase === "success"
               ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
               : uploadStatus.phase === "error"
@@ -352,25 +439,35 @@ export default function MediaFolderPicker({
           <div className="flex items-center justify-between gap-3 text-xs font-semibold">
             <div className="flex min-w-0 items-center gap-2">
               {uploadStatus.phase === "success" ? <Check className="h-4 w-4 shrink-0" /> : uploadStatus.phase === "error" ? <X className="h-4 w-4 shrink-0" /> : <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
-              <span className="truncate">
-                {uploadStatus.phase === "success"
-                  ? "อัปโหลดเรียบร้อย"
-                  : uploadStatus.phase === "error"
-                    ? "อัปโหลดไม่สำเร็จ"
-                    : uploadStatus.phase === "processing"
-                      ? "กำลังบันทึกไฟล์ลง Google Drive..."
-                      : "กำลังอัปโหลดไฟล์..."}
-                {" "}{uploadStatus.fileName}
-              </span>
+              <span className="truncate">{uploadStatus.message}</span>
             </div>
-            <span className="shrink-0 tabular-nums">{uploadStatus.progress}%</span>
+            <span className="shrink-0 tabular-nums">{uploadStatus.completed}/{uploadStatus.total}</span>
           </div>
+          <div className="mt-1 truncate text-[11px] text-purple-100/70">กำลังทำงาน: {uploadStatus.currentFile}</div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/25">
             <div
               className={`h-full rounded-full transition-all duration-300 ${uploadStatus.phase === "error" ? "bg-rose-400" : uploadStatus.phase === "success" ? "bg-emerald-400" : "bg-cyan-400"}`}
               style={{ width: `${uploadStatus.progress}%` }}
             />
           </div>
+          <div className="mt-2 flex items-center justify-between text-[11px] text-purple-100/70">
+            <span>{uploadStatus.progress}% · ทำต่อได้ตามปกติ</span>
+            <span>{uploadStatus.active > 0 ? `กำลังส่ง ${uploadStatus.active} ไฟล์` : "ตรวจสอบคิวแล้ว"}</span>
+          </div>
+          {uploadStatus.phase === "error" && retryUploads.length > 0 && (
+            <button
+              type="button"
+              className="pointer-events-auto mt-3 w-full rounded-xl border border-rose-300/40 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-100 hover:bg-rose-400/20"
+              onClick={() => {
+                const files = retryUploads;
+                setRetryUploads([]);
+                setUploadStatus(null);
+                void uploadFiles(files, lastUploadMeta.note, lastUploadMeta.timeTag);
+              }}
+            >
+              ลองใหม่เฉพาะ {retryUploads.length} ไฟล์ที่ไม่สำเร็จ
+            </button>
+          )}
         </div>
       )}
 
@@ -464,14 +561,24 @@ export default function MediaFolderPicker({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 max-h-[520px] overflow-y-auto pr-1">
-            {items.map((item, index) => {
-              const isSelected = multiSelect ? gallerySelection.includes(item.url) : selectedUrl === item.url;
-              const albumDate = new Date(item.updatedAt).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" });
-              const previousDate = index > 0 ? new Date(items[index - 1].updatedAt).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" }) : null;
+          <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
+            {albumGroups.map((group, groupIndex) => {
+              const isExpanded = expandedAlbumDates === null ? groupIndex === 0 : expandedAlbumDates.has(group.key);
               return (
-                <React.Fragment key={item.url}>
-                {albumDate !== previousDate && <div className="col-span-full border-b border-purple-500/20 pb-2 pt-2 text-xs font-bold text-cyan-200">อัลบั้มวันที่ {albumDate}</div>}
+                <section key={group.key} className="overflow-hidden rounded-2xl border border-purple-500/15 bg-purple-950/10">
+                  <button
+                    type="button"
+                    onClick={() => toggleAlbumDate(group.key)}
+                    className="flex w-full items-center justify-between gap-3 border-b border-purple-500/15 px-3 py-2.5 text-left transition hover:bg-purple-900/25"
+                    aria-expanded={isExpanded}
+                  >
+                    <span className="text-xs font-bold text-cyan-200">อัลบั้มวันที่ {group.label} <span className="font-normal text-purple-300/60">({group.items.length} รายการ)</span></span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-cyan-300 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
+                  {isExpanded && <div className="grid grid-cols-3 gap-2.5 p-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+            {group.items.map((item) => {
+              const isSelected = multiSelect ? gallerySelection.includes(item.url) : selectedUrl === item.url;
+              return (
                 <div
                   key={item.url}
                   draggable={canManage}
@@ -569,7 +676,10 @@ export default function MediaFolderPicker({
                     </div>
                   </div>
                 </div>
-                </React.Fragment>
+              );
+            })}
+                  </div>}
+                </section>
               );
             })}
           </div>
