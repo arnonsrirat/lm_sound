@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, PlusCircle, User, Map, Headphones } from "lucide-react";
 
 export default function BottomNav({ role }: { role?: "USER" | "ADMIN" }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const items = [
+    { label: "แผนที่", href: "/", icon: Map, action: "map" },
+    { label: "เพลงผ่อนคลาย", href: "/relaxation", icon: Headphones },
     { label: "Home", href: "/", icon: Home, isPrimary: true },
-    { label: "แผนที่", href: "/#campus-map", icon: Map },
-    { label: "เพลงผ่อนคลาย", href: "/#relaxation-library", icon: Headphones },
     { label: "เพิ่มจุด", href: "/spots/new", icon: PlusCircle },
     { label: "เข้าสู่ระบบ", href: "/login", icon: User },
   ];
@@ -36,6 +37,26 @@ export default function BottomNav({ role }: { role?: "USER" | "ADMIN" }) {
                   {item.label}
                 </span>
               </Link>
+            );
+          }
+
+          if (item.action === "map") {
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  if (pathname === "/") {
+                    window.dispatchEvent(new CustomEvent("lmsound:open-campus-map"));
+                  } else {
+                    router.push("/?openMap=1");
+                  }
+                }}
+                className="flex flex-col items-center py-1 px-1.5 sm:px-3 rounded-xl transition text-purple-300/70 hover:text-white"
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-[10px] mt-0.5">{item.label}</span>
+              </button>
             );
           }
 

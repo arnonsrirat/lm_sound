@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Compass, Navigation, MapPin } from "lucide-react";
 import CampusMapModal from "./CampusMapModal";
 import type { CampusMapSpot } from "./CampusMapInner";
 
 export default function MobileCampusMapBar({ spots = [], isLoggedIn = false }: { spots: CampusMapSpot[]; isLoggedIn?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const openMap = () => setIsOpen(true);
+    window.addEventListener("lmsound:open-campus-map", openMap);
+    if (searchParams.get("openMap") === "1") setIsOpen(true);
+    return () => window.removeEventListener("lmsound:open-campus-map", openMap);
+  }, [searchParams]);
 
   return (
     <>
