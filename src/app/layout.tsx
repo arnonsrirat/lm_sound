@@ -5,6 +5,8 @@ import { AudioProvider } from "@/context/AudioContext";
 import AudioPlayerBar from "@/components/AudioPlayerBar";
 import AmbientAura from "@/components/AmbientAura";
 import { getSiteSettings } from "@/lib/site-settings";
+import ToastViewport from "@/components/ToastViewport";
+import InstallAppPrompt from "@/components/InstallAppPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,6 +52,8 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-purple-500/30 selection:text-purple-200 transition-colors relative">
         <AudioProvider>
           <AmbientAura />
+          <ToastViewport />
+          <InstallAppPrompt />
           <div className="flex-1 flex flex-col relative z-0">{children}</div>
           <AudioPlayerBar />
         </AudioProvider>

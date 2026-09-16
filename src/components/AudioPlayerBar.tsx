@@ -189,6 +189,8 @@ export default function AudioPlayerBar() {
   const isAdminRoute = pathname.startsWith("/admin");
   const desktopInset = isAdminRoute ? "md:left-64 lg:left-72" : "md:left-60 lg:left-64";
 
+  if (pathname === "/login" || pathname === "/register") return null;
+
   return (
     <>
       <div

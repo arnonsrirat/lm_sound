@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -201,7 +202,7 @@ export default function LoginPage() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    alert("หากลืมรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ต");
+                    router.push("/forgot-password");
                   }}
                   className="text-xs text-fuchsia-400 hover:text-fuchsia-300 transition-colors"
                 >
@@ -279,9 +280,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() =>
-                alert("ระบบ Google Login เตรียมเปิดให้บริการเร็วๆ นี้")
-              }
+              onClick={() => { window.location.href = "/api/auth/google"; }}
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-purple-500/20 bg-purple-950/30 hover:bg-purple-900/30 text-xs text-purple-200 font-medium transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -308,7 +307,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() =>
-                alert("ระบบ GitHub Login เตรียมเปิดให้บริการเร็วๆ นี้")
+                notify("GitHub Login กำลังเตรียมเชื่อมต่อ", "info")
               }
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-purple-500/20 bg-purple-950/30 hover:bg-purple-900/30 text-xs text-purple-200 font-medium transition-colors cursor-pointer"
             >

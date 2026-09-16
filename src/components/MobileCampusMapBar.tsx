@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Compass, Navigation, MapPin, PlusCircle } from "lucide-react";
+import { Compass, Navigation, MapPin } from "lucide-react";
 import CampusMapModal from "./CampusMapModal";
 import type { CampusMapSpot } from "./CampusMapInner";
 
@@ -42,10 +41,6 @@ export default function MobileCampusMapBar({ spots = [], isLoggedIn = false }: {
             <span>เปิดแผนที่</span>
           </div>
         </button>
-        <Link href={isLoggedIn ? "/spots/new" : "/login?next=/spots/new"} className="flex items-center justify-center gap-2 rounded-2xl border border-fuchsia-400/35 bg-fuchsia-500/10 px-4 py-3 text-xs font-bold text-fuchsia-200 hover:bg-fuchsia-500/20 sm:min-w-[190px]">
-          <PlusCircle className="h-4 w-4" />
-          {isLoggedIn ? "เสนอจุดใหม่ (รออนุมัติ)" : "เข้าสู่ระบบเพื่อเพิ่มจุด"}
-        </Link>
         <p className="sr-only">{isLoggedIn ? "ผู้ใช้กรอกได้เฉพาะชื่อโซนและตำแหน่ง ข้อมูลส่วนอื่นรอแอดมินตรวจสอบ" : "ต้องเข้าสู่ระบบก่อนเพิ่มจุด"}</p>
       </div>
 

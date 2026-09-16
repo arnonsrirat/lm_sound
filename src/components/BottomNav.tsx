@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, PlusCircle, User, Map } from "lucide-react";
+import { Home, PlusCircle, User, Map, Headphones } from "lucide-react";
 
 export default function BottomNav({ role }: { role?: "USER" | "ADMIN" }) {
   const pathname = usePathname();
 
   const items = [
-    { label: "Home", href: "/", icon: Home },
+    { label: "Home", href: "/", icon: Home, isPrimary: true },
     { label: "แผนที่", href: "/#campus-map", icon: Map },
-    { label: "ยอดนิยม", href: "/#popular", icon: Compass },
-    { label: "เพิ่มจุด", href: "/spots/new", icon: PlusCircle, isPrimary: true },
+    { label: "เพลงผ่อนคลาย", href: "/#relaxation-library", icon: Headphones },
+    { label: "เพิ่มจุด", href: "/spots/new", icon: PlusCircle },
     { label: "เข้าสู่ระบบ", href: "/login", icon: User },
   ];
 
@@ -26,7 +26,7 @@ export default function BottomNav({ role }: { role?: "USER" | "ADMIN" }) {
             return (
               <Link
                 key={item.href}
-                href={role ? item.href : "/login?next=/spots/new&reason=auth-required"}
+                href={item.href}
                 className="flex flex-col items-center -mt-6 group"
               >
                 <div className="w-11 h-11 rounded-full purple-gradient-btn text-white flex items-center justify-center shadow-lg shadow-purple-600/50 group-hover:scale-105 active:scale-95 transition border border-purple-300/50">
@@ -42,7 +42,7 @@ export default function BottomNav({ role }: { role?: "USER" | "ADMIN" }) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.label === "เพิ่มจุด" && !role ? "/login?next=/spots/new&reason=auth-required" : item.href}
               className={`flex flex-col items-center py-1 px-1.5 sm:px-3 rounded-xl transition ${
                 isActive
                   ? "text-fuchsia-400 font-bold bg-purple-500/15"

@@ -76,10 +76,10 @@ export default function CampusMapModal({
       const found = enrichedSpots.find((s) => s.id === initialSpotId);
       if (found) setSelectedSpot(found);
     } else {
-      // เปิดแผนที่โล่งเต็มตาตามคำขอ ไม่แสดงการ์ดมุมขวาล่างจนกว่าผู้ใช้จะกดเลือก
-      setSelectedSpot(null);
+      // เปิดแผนที่พร้อมแสดงข้อมูลจุดแรกทันที ผู้ใช้ยังคลิกหมุดอื่นเพื่อดูรายละเอียดเพิ่มได้
+      if (isOpen) setSelectedSpot(enrichedSpots[0] ?? null);
     }
-  }, [initialSpotId, isOpen]);
+  }, [initialSpotId, isOpen, enrichedSpots]);
 
   // ปิดด้วยปุ่ม Escape และ Lock scroll เมื่อ Modal เปิด
   useEffect(() => {

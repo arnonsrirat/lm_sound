@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Play, Pause, MapPin, Trash2, Edit3, User, Heart, Sparkles } from "lucide-react";
 import { noiseLevelLabels, type NoiseLevel } from "@/lib/validations/spot";
 import { deleteSpotAction } from "@/actions/spot";
 import { useAudio } from "@/context/AudioContext";
 import NoiseGauge from "@/components/NoiseGauge";
+import { notify } from "@/lib/notify";
 
 export interface SpotCardProps {
   spot: {
@@ -62,6 +64,7 @@ function getAmenities(title: string, description: string): Array<{ label: string
 
 export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }: SpotCardProps) {
   const { isPlaying, activeTrack, playSpot, togglePlay } = useAudio();
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFavorite, setIsFavorite] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -98,6 +101,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!currentUserId) { notify("กรุณาเข้าสู่ระบบก่อนกดถูกใจสถานที่", "error"); router.push(`/login?next=/spots/${spot.id}`); return; }
     try {
       const raw = localStorage.getItem("lmsound_favorites");
       let favs: string[] = raw ? JSON.parse(raw) : [];
@@ -110,6 +114,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
       }
       localStorage.setItem("lmsound_favorites", JSON.stringify(favs));
       window.dispatchEvent(new Event("lmsound_favorites_updated"));
+      notify(favs.includes(spot.id) ? "เพิ่มสถานที่ในรายการโปรดแล้ว" : "นำสถานที่ออกจากรายการโปรดแล้ว", "success");
     } catch {}
   };
 
@@ -144,10 +149,10 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
     try {
       const res = await deleteSpotAction(spot.id);
       if (!res.success) {
-        alert(res.error || "เกิดข้อผิดพลาดในการลบ");
+        notify(res.error || "เกิดข้อผิดพลาดในการลบ", "error");
       }
     } catch {
-      alert("ไม่สามารถลบได้");
+      notify("ไม่สามารถลบได้", "error");
     } finally {
       setIsDeleting(false);
     }
