@@ -265,19 +265,18 @@ export default function Header({
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span
-                          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${
-                            spot.noiseLevel === "quiet"
+                          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${spot.noiseLevel === "quiet"
                               ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                               : spot.noiseLevel === "lively"
-                              ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                              : "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                          }`}
+                                ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                                : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                            }`}
                         >
                           {spot.noiseLevel === "quiet"
                             ? "เงียบ"
                             : spot.noiseLevel === "lively"
-                            ? "คึกคัก"
-                            : "ปานกลาง"}
+                              ? "คึกคัก"
+                              : "ปานกลาง"}
                         </span>
                         {spot.audioUrl && (
                           <button

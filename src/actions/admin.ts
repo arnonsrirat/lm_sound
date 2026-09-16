@@ -14,6 +14,7 @@ const settingsSchema = z.object({
   logoDark: z.string().min(1, "กรุณาระบุโลโก้ธีมมืด"),
   bannerLight: z.string().min(1, "กรุณาระบุแบนเนอร์ธีมสว่าง"),
   bannerDark: z.string().min(1, "กรุณาระบุแบนเนอร์ธีมมืด"),
+  bgLight: z.string().optional().default("/dreamy-lake-bg.png"),
   siteName: z.string().min(1, "กรุณาระบุชื่อเว็บไซต์").max(60, "ชื่อเว็บไซต์ต้องไม่เกิน 60 ตัวอักษร"),
   siteTagline: z.string().max(120, "สโลแกนต้องไม่เกิน 120 ตัวอักษร"),
   festivalTheme: z.enum(["default", "songkran", "loykratong", "newyear", "christmas"], {
@@ -25,6 +26,12 @@ const settingsSchema = z.object({
   festivalEndTime: z.string().optional(),
   bannerTitle: z.string().max(150, "หัวข้อแบนเนอร์ต้องไม่เกิน 150 ตัวอักษร"),
   bannerSubtitle: z.string().max(300, "ข้อความแบนเนอร์ต้องไม่เกิน 300 ตัวอักษร"),
+  // สีธีม (ควบคุมโดยแอดมินจากแท็บธีม → inject เป็น CSS Variables บน <html>)
+  primaryColor: z.string().optional().default("#8b5cf6"),
+  accentColor: z.string().optional().default("#0284c7"),
+  surfaceColor: z.string().optional().default("#ffffff"),
+  backgroundColor: z.string().optional().default("#fbf9ff"),
+  foregroundColor: z.string().optional().default("#1f1035"),
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;

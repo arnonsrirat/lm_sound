@@ -55,6 +55,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <Sidebar
           logoLight={settings.logoLight}
           logoDark={settings.logoDark}
+          bannerLight={settings.bannerLight}
+          bannerDark={settings.bannerDark}
           role={session?.role}
           spots={spots}
         />

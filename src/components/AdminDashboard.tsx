@@ -27,8 +27,9 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import type { SiteSettings, FestivalTheme } from "@/lib/site-settings";
-import { FESTIVAL_THEME_LABELS } from "@/lib/site-settings";
+import type { SiteSettings, FestivalTheme } from "@/lib/site-settings-constants";
+import { FESTIVAL_THEME_LABELS } from "@/lib/site-settings-constants";
+import { useRouter } from "next/navigation";
 import type { SpotItem } from "@/lib/fallbackSpots";
 import { getOptimizedImageUrl } from "@/lib/media-url";
 import { availabilityStatuses, timeTags, type SpotInput, type AvailabilityStatus, type PendingFieldKey, type AmenityKey } from "@/lib/validations/spot";
@@ -66,6 +67,7 @@ export default function AdminDashboard({
   currentUser,
   initialTab = "spots",
 }: AdminDashboardProps) {
+  const router = useRouter();
   const [tab, setTab] = useState<AdminTab>(initialTab);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>(initialSettings);
@@ -98,7 +100,7 @@ export default function AdminDashboard({
   // Picker Modal State for selecting image into a specific settings field
   const [pickerModal, setPickerModal] = useState<{
     isOpen: boolean;
-    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark";
+    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark" | "bgLight";
     title: string;
     folder: MediaFolder;
   } | null>(null);
@@ -123,6 +125,7 @@ export default function AdminDashboard({
         logoDark: settings.logoDark,
         bannerLight: settings.bannerLight,
         bannerDark: settings.bannerDark,
+        bgLight: settings.bgLight || "/dreamy-lake-bg.png",
         siteName: settings.siteName,
         siteTagline: settings.siteTagline,
         festivalTheme: settings.festivalTheme,
@@ -132,9 +135,16 @@ export default function AdminDashboard({
         festivalEndTime: settings.festivalEndTime,
         bannerTitle: settings.bannerTitle,
         bannerSubtitle: settings.bannerSubtitle,
+        // สีธีม — ส่งไปบันทึก DB เพื่อ inject เป็น CSS variables ใน layout.tsx
+        primaryColor: settings.primaryColor || "#8b5cf6",
+        accentColor: settings.accentColor || "#0284c7",
+        surfaceColor: settings.surfaceColor || "#ffffff",
+        backgroundColor: settings.backgroundColor || "#fbf9ff",
+        foregroundColor: settings.foregroundColor || "#1f1035",
       });
       if (res.success) {
         notify(true, "บันทึกการตั้งค่าเรียบร้อยแล้ว");
+        router.refresh();
       } else {
         notify(false, res.error || "บันทึกไม่สำเร็จ");
       }
@@ -350,7 +360,7 @@ function LogosBannersTab({
   settings: SiteSettings;
   setSettings: React.Dispatch<React.SetStateAction<SiteSettings>>;
   onOpenPicker: (
-    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark",
+    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark" | "bgLight",
     title: string,
     folder: MediaFolder
   ) => void;
@@ -358,7 +368,7 @@ function LogosBannersTab({
   isPending: boolean;
 }) {
   const cards: {
-    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark";
+    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark" | "bgLight";
     title: string;
     subtitle: string;
     folder: MediaFolder;
@@ -389,6 +399,13 @@ function LogosBannersTab({
       field: "bannerDark",
       title: "🌙 แบนเนอร์หน้าแรก (ธีมมืด)",
       subtitle: "ภาพส่วนหัวแนะนำในหน้าแรก (Dark Mode)",
+      folder: "banners",
+      aspect: "banner",
+    },
+    {
+      field: "bgLight",
+      title: "☀️ ภาพพื้นหลังเว็บไซต์ (ธีมสว่าง)",
+      subtitle: "ภาพวิวพื้นหลังของเว็บไซต์ในโหมดสว่าง (ค่าเริ่มต้น: ทะเลสาบดรีมมี่)",
       folder: "banners",
       aspect: "banner",
     },
@@ -945,8 +962,15 @@ function ThemesTab({
   onSave: () => void;
   isPending: boolean;
 }) {
-  const [mode, setMode] = useState<"light" | "dark">("dark");
-  const [lightPalette, setLightPalette] = useState({ primary: "#7c3aed", accent: "#0284c7", surface: "#ffffff", background: "#f1f5f9", text: "#111827" });
+  const [mode, setMode] = useState<"light" | "dark">("light");
+  // Initialize จากค่า settings ใน DB (primaryColor/accentColor/surfaceColor/backgroundColor/foregroundColor)
+  const [lightPalette, setLightPalette] = useState({
+    primary: settings.primaryColor || "#8b5cf6",
+    accent: settings.accentColor || "#0284c7",
+    surface: settings.surfaceColor || "#ffffff",
+    background: settings.backgroundColor || "#fbf9ff",
+    text: settings.foregroundColor || "#1f1035",
+  });
   const [darkPalette, setDarkPalette] = useState({ primary: "#a855f7", accent: "#22d3ee", surface: "#160b2b", background: "#080510", text: "#f5f3ff" });
   const palette = mode === "light" ? lightPalette : darkPalette;
   const [presetName, setPresetName] = useState("");
@@ -955,15 +979,131 @@ function ThemesTab({
   const applyPalette = (next: typeof palette) => {
     if (mode === "light") setLightPalette(next); else setDarkPalette(next);
     const root = document.documentElement;
-    root.style.setProperty("--theme-primary", next.primary); root.style.setProperty("--theme-accent", next.accent); root.style.setProperty("--theme-surface", next.surface); root.style.setProperty("--theme-background", next.background); root.style.setProperty("--theme-foreground", next.text);
+    root.style.setProperty("--theme-primary", next.primary);
+    root.style.setProperty("--theme-accent", next.accent);
+    root.style.setProperty("--theme-surface", next.surface);
+    root.style.setProperty("--theme-background", next.background);
+    root.style.setProperty("--theme-foreground", next.text);
+
+    // Sync สีกลับไปที่ settings state เมื่อปรับแต่งธีมสว่าง เพื่อให้ onSave → บันทึกลง JSON/DB ได้จริง
+    if (mode === "light") {
+      setSettings((prev) => ({
+        ...prev,
+        primaryColor: next.primary,
+        accentColor: next.accent,
+        surfaceColor: next.surface,
+        backgroundColor: next.background,
+        foregroundColor: next.text,
+      }));
+    }
   };
   const calculateTheme = () => { const opposite = mode === "light" ? { primary: palette.primary, accent: palette.accent, surface: "#160b2b", background: "#080510", text: "#f5f3ff" } : { primary: palette.primary, accent: palette.accent, surface: "#ffffff", background: "#f1f5f9", text: "#111827" }; if (mode === "light") setDarkPalette(opposite); else setLightPalette(opposite); };
+  const FESTIVAL_CLASSES = ["festival-songkran", "festival-loykratong", "festival-newyear", "festival-christmas"];
+
+  /** Apply ธีมเทศกาลบน <html> ทันที (Preview real-time) */
+  const applyFestivalTheme = (theme: FestivalTheme) => {
+    const root = document.documentElement;
+    // ลบ festival class เดิมทั้งหมดออกก่อน
+    FESTIVAL_CLASSES.forEach((cls) => root.classList.remove(cls));
+    // ถ้าไม่ใช่ default ให้ใส่ class ใหม่
+    if (theme !== "default") {
+      root.classList.add(`festival-${theme}`);
+    }
+    // sync settings state เพื่อให้ onSave ส่งขึ้น DB ด้วย
+    setSettings((prev) => ({ ...prev, festivalTheme: theme }));
+  };
+
   const savePreset = () => { if (!presetName.trim()) return; const next = [...presets.filter((item) => item.name !== presetName.trim()), { name: presetName.trim(), palette }]; setPresets(next); localStorage.setItem("lmsound-theme-presets", JSON.stringify(next)); setPresetName(""); };
   if (true) return (
     <div className="glass-panel rounded-3xl p-5 md:p-6 space-y-5">
       <div className="flex gap-2"><button type="button" onClick={() => setMode("light")} className={`px-4 py-2 rounded-xl text-xs cursor-pointer ${mode === "light" ? "purple-gradient-btn" : "bg-purple-950/40"}`}>ธีมสว่าง (Light)</button><button type="button" onClick={() => setMode("dark")} className={`px-4 py-2 rounded-xl text-xs cursor-pointer ${mode === "dark" ? "purple-gradient-btn" : "bg-purple-950/40"}`}>ธีมมืด (Dark)</button></div>
       <div><h2 className="font-bold text-lg text-purple-100 flex items-center gap-2"><Palette className="w-5 h-5 text-fuchsia-400" />ปรับแต่งธีมทุกส่วน</h2><p className="text-xs text-purple-300/60 mt-1">กำหนดสีหลัก พื้นหลัง พื้นผิว ตัวอักษร และสีเสริมของเว็บไซต์</p></div>
-      <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/5 p-4"><p className="text-sm font-bold text-fuchsia-100">กำหนดช่วงเวลาเทศกาล</p><p className="mt-1 text-[11px] text-purple-200/60">เมื่ออยู่นอกช่วงนี้ ระบบจะใช้ธีมค่าเริ่มต้นโดยอัตโนมัติ</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-xs text-purple-200">ธีมเทศกาล<select value={settings.festivalTheme} onChange={(event) => setSettings((prev) => ({ ...prev, festivalTheme: event.target.value as FestivalTheme }))} className="mt-1 w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2"><option value="default">ค่าเริ่มต้น</option>{(Object.keys(FESTIVAL_THEME_LABELS) as FestivalTheme[]).filter((theme) => theme !== "default").map((theme) => <option key={theme} value={theme}>{FESTIVAL_THEME_LABELS[theme]}</option>)}</select></label><label className="text-xs text-purple-200">เวลาเริ่ม - สิ้นสุด<div className="mt-1 flex gap-2"><input type="time" value={settings.festivalStartTime} onChange={(event) => setSettings((prev) => ({ ...prev, festivalStartTime: event.target.value }))} className="w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2" /><input type="time" value={settings.festivalEndTime} onChange={(event) => setSettings((prev) => ({ ...prev, festivalEndTime: event.target.value }))} className="w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2" /></div></label><label className="text-xs text-purple-200">วันที่เริ่ม<input type="date" value={settings.festivalStartDate} onChange={(event) => setSettings((prev) => ({ ...prev, festivalStartDate: event.target.value }))} className="mt-1 w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2" /></label><label className="text-xs text-purple-200">วันที่สิ้นสุด<input type="date" value={settings.festivalEndDate} onChange={(event) => setSettings((prev) => ({ ...prev, festivalEndDate: event.target.value }))} className="mt-1 w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2" /></label></div></div>
+
+      {/* ===== ส่วนเทศกาล ===== */}
+      <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/5 p-4 space-y-4">
+        <div>
+          <p className="text-sm font-bold text-fuchsia-100">🎉 กำหนดช่วงเวลาเทศกาล</p>
+          <p className="mt-0.5 text-[11px] text-purple-200/60">เมื่ออยู่นอกช่วงนี้ ระบบจะใช้ธีมค่าเริ่มต้นโดยอัตโนมัติ</p>
+        </div>
+
+        {/* Festival Theme Selector + Preview */}
+        <div className="space-y-2">
+          <label className="text-xs text-purple-200 block">ธีมเทศกาล</label>
+          <div className="flex gap-2">
+            <select
+              value={settings.festivalTheme}
+              onChange={(e) => applyFestivalTheme(e.target.value as FestivalTheme)}
+              className="flex-1 rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2 text-sm"
+            >
+              <option value="default">ค่าเริ่มต้น (พาสเทลม่วง)</option>
+              {(Object.keys(FESTIVAL_THEME_LABELS) as FestivalTheme[])
+                .filter((t) => t !== "default")
+                .map((t) => (
+                  <option key={t} value={t}>{FESTIVAL_THEME_LABELS[t]}</option>
+                ))}
+            </select>
+            {/* Preview badge — แสดงธีมที่ active อยู่ */}
+            {settings.festivalTheme !== "default" && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-fuchsia-400/40 bg-fuchsia-500/15 text-[11px] font-bold text-fuchsia-300 whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-fuchsia-400 animate-pulse" />
+                Preview ON
+              </div>
+            )}
+          </div>
+          {settings.festivalTheme !== "default" && (
+            <p className="text-[11px] text-fuchsia-300/80">
+              ✅ ธีม &quot;{FESTIVAL_THEME_LABELS[settings.festivalTheme]}&quot; กำลัง Preview อยู่ — กด &quot;บันทึกการตั้งค่า&quot; เพื่อบันทึกลงระบบ หรือเลือก &quot;ค่าเริ่มต้น&quot; เพื่อยกเลิก
+            </p>
+          )}
+        </div>
+
+        {/* Date & Time Inputs */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs text-purple-200">
+            เวลาเริ่ม - สิ้นสุด
+            <div className="mt-1 flex gap-2">
+              <input
+                type="time"
+                value={settings.festivalStartTime}
+                onChange={(e) => setSettings((prev) => ({ ...prev, festivalStartTime: e.target.value }))}
+                className="w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2"
+              />
+              <input
+                type="time"
+                value={settings.festivalEndTime}
+                onChange={(e) => setSettings((prev) => ({ ...prev, festivalEndTime: e.target.value }))}
+                className="w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2"
+              />
+            </div>
+          </label>
+          <label className="text-xs text-purple-200">
+            วันที่เริ่ม
+            <input
+              type="date"
+              value={settings.festivalStartDate}
+              onChange={(e) => setSettings((prev) => ({ ...prev, festivalStartDate: e.target.value }))}
+              className="mt-1 w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2"
+            />
+          </label>
+          <label className="text-xs text-purple-200">
+            วันที่สิ้นสุด
+            <input
+              type="date"
+              value={settings.festivalEndDate}
+              onChange={(e) => setSettings((prev) => ({ ...prev, festivalEndDate: e.target.value }))}
+              className="mt-1 w-full rounded-xl border border-purple-500/25 bg-purple-950/40 px-3 py-2"
+            />
+          </label>
+
+          {/* Quick Test: ไม่ตั้งวันเวลา = เปิดตลอด */}
+          <div className="flex items-end pb-1">
+            <p className="text-[10px] text-purple-300/50 leading-5">
+              💡 หากไม่ตั้งวันที่ ธีมเทศกาลจะแสดงตลอดเวลา
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">{Object.entries({ primary: "สีหลัก", accent: "สีเน้น", surface: "พื้นผิวการ์ด", background: "พื้นหลัง", text: "ตัวอักษร" }).map(([key, label]) => <label key={key} className="text-xs text-purple-200"><span className="block mb-1">{label}</span><input type="color" value={palette[key as keyof typeof palette]} onChange={(event) => applyPalette({ ...palette, [key]: event.target.value })} className="h-11 w-full rounded-xl bg-transparent cursor-pointer" /></label>)}</div>
       <div className="flex flex-wrap gap-2"><button type="button" onClick={calculateTheme} className="px-4 py-2 rounded-xl purple-gradient-btn text-xs font-semibold cursor-pointer">คำนวณชุดสี Light / Dark</button><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="ชื่อ preset" className="rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 text-xs" /><button type="button" onClick={savePreset} className="px-4 py-2 rounded-xl border border-purple-500/30 text-xs cursor-pointer">บันทึก Preset</button><button type="button" onClick={onSave} disabled={isPending} className="px-4 py-2 rounded-xl purple-gradient-btn text-xs font-semibold cursor-pointer">บันทึกการตั้งค่า</button></div>
       {presets.length > 0 && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{presets.map((preset) => <button key={preset.name} type="button" onClick={() => applyPalette(preset.palette)} className="flex items-center gap-3 rounded-xl border border-purple-500/25 p-3 text-left cursor-pointer"><span className="flex gap-1">{Object.values(preset.palette).map((color) => <i key={color} className="h-5 w-5 rounded-full border border-white/20" style={{ backgroundColor: color }} />)}</span><span className="text-xs text-purple-100">{preset.name}</span></button>)}</div>}

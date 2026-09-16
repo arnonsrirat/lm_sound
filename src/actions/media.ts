@@ -112,8 +112,55 @@ export async function getMediaFilesAction(
     // 2. รวมไฟล์จาก In-Memory Fallback (ถ้ามี)
     for (const memItem of memoryUploadsStore) {
       if (foldersToScan.includes(memItem.folder as MediaFolder)) {
-            if (!items.some((i) => i.name === memItem.name)) {
+        if (!items.some((i) => i.name === memItem.name)) {
           items.push(memItem);
+        }
+      }
+    }
+
+    // 3. รวมไฟล์ระบบพื้นฐานจาก public (ถ้ายังไม่มีในรายการ)
+    const BUILTIN_MEDIA: MediaItem[] = [
+      {
+        name: "logo-light.png",
+        url: "/logo-light.png",
+        folder: "logos",
+        size: 282828,
+        updatedAt: new Date(0).toISOString(),
+      },
+      {
+        name: "logo.png",
+        url: "/logo.png",
+        folder: "logos",
+        size: 283502,
+        updatedAt: new Date(0).toISOString(),
+      },
+      {
+        name: "logo-light-theme.png",
+        url: "/logo-light-theme.png",
+        folder: "banners",
+        size: 838487,
+        updatedAt: new Date(0).toISOString(),
+      },
+      {
+        name: "logo.png (Dark Banner)",
+        url: "/logo.png",
+        folder: "banners",
+        size: 283502,
+        updatedAt: new Date(0).toISOString(),
+      },
+      {
+        name: "dreamy-lake-bg.png",
+        url: "/dreamy-lake-bg.png",
+        folder: "banners",
+        size: 882601,
+        updatedAt: new Date(0).toISOString(),
+      },
+    ];
+
+    for (const bItem of BUILTIN_MEDIA) {
+      if (foldersToScan.includes(bItem.folder as MediaFolder)) {
+        if (!items.some((i) => i.url === bItem.url && i.folder === bItem.folder)) {
+          items.push(bItem);
         }
       }
     }

@@ -1,0 +1,65 @@
+สรุปรายละเอียดการแก้ไขและปรับปรุงทั้งหมด ตั้งแต่หลังการ Merge เข้าสู่ Branch main (72f40c0) จนถึงปัจจุบัน โดยแบ่งตามหมวดหมู่การทำงานดังนี้ครับ:
+
+1. ระบบจัดเก็บการตั้งค่าเว็บไซต์ (Persistence Layer & Client Boundary)
+สร้างไฟล์จัดเก็บสำรอง data/site-settings.json:
+เพิ่มระบบอ่าน/เขียนข้อมูลการตั้งค่าเว็บแบบ Local JSON Fallback ทำให้การตั้งค่าทั้งหมด (โลโก้, แบนเนอร์, สีธีม, ข้อความ) บันทึกได้จริงและไม่สูญหาย แม้ระบบยังไม่ได้ต่อฐานข้อมูล PostgreSQL หรือมีการรีสตาร์ทเซิร์ฟเวอร์
+แยก src/lib/site-settings-constants.ts:
+แยก Interface, Types และค่าคงที่เริ่มต้น (DEFAULT_SITE_SETTINGS, FESTIVAL_THEME_LABELS) ออกจากโมดูล Node.js (node:fs/promises)
+ผลลัพธ์: แก้ไขปัญหา Turbopack Panic / HTTP 500 Error ในหน้า Admin เมื่อ Client Component เรียกใช้ตัวแปรของธีม
+2. การจัดการโลโก้และแบนเนอร์ (Logos & Banners Consistency)
+เพิ่มไฟล์แบนเนอร์ใหม่:
+เพิ่มไฟล์ public/logo-light-theme.png เข้าสู่โปรเจกต์
+แยกบทบาทของรูปภาพในธีมสว่างอย่างชัดเจน:
+logoLight (/logo-light.png): แสดงเฉพาะบน Navbar / Header มุมซ้ายบนตามเดิม
+bannerLight (/logo-light-theme.png): แสดงบนการ์ดด้านล่างของ Sidebar และภาพประกอบ FeaturedBanner
+อัปเดต Components:
+ปรับปรุง 
+
+Sidebar.tsx
+, 
+
+Header.tsx
+ และ 
+
+page.tsx
+ ให้ส่งและรับ Props รูปภาพแยกกันอย่างถูกต้อง
+3. คลังสื่อและตัวเลือกรูปภาพในระบบ (Media Picker Assets)
+อัปเดต 
+
+src/actions/media.ts
+:
+เพิ่มไฟล์ระบบพื้นฐาน (/logo.png, /logo-light.png, /logo-light-theme.png, /dreamy-lake-bg.png) เข้าสู่รายการเลือกรูปใน Media Folder Picker
+แอดมินสามารถเปิดโฟลเดอร์ในระบบแล้วกดเลือกรูปภาพสำหรับโลโก้และแบนเนอร์ได้ทันทีโดยไม่ต้องอัปโหลดซ้ำ
+4. ระบบปรับแต่งธีม สีสัน และธีมเทศกาล (Theme Engine & CSS Variables)
+อัปเดต 
+
+src/components/AdminDashboard.tsx
+:
+แท็บ "ธีมเทศกาล & สีสัน" รองรับการ Preview ธีมเทศกาลสดบนหน้าเว็บ พร้อมแสดงสถานะ Preview ON
+ปรับฟังก์ชัน applyPalette ให้เชื่อมโยงค่าสี (Primary, Accent, Surface, Background, Text) กับ CSS Variables ของระบบ
+เพิ่ม router.refresh() หลังบันทึกการตั้งค่า เพื่อสั่งให้ Next.js อัปเดตหน้าบ้านทันที
+อัปเดต 
+
+src/app/globals.css
+:
+เพิ่มบล็อก @theme สำหรับ Tailwind CSS v4 เพื่อผูกค่า --background, --foreground, --card-bg, --sidebar-bg
+ปกป้องธีมมืด (Dark Mode): ล็อคค่าสีของธีมมืดใน :root และ html.dark ให้เป็นโทนสีม่วงดำ Cyberpunk ดั้งเดิม 100% ไม่ถูกค่าสีของธีมสว่างมาทับ
+ปรับจูนธีมสว่าง (html.light): ให้การ์ด พาเนล และปุ่มดึงสีจากตัวแปรที่แอดมินตั้งไว้มาแสดงผลอย่างถูกต้อง
+5. ปรับปรุง UI ฝั่ง Admin Sidebar โหมดสว่าง (Admin UI Light Mode)
+อัปเดต 
+
+src/components/admin/AdminSidebar.tsx
+:
+ปรับสไตล์แถบเมนูด้านซ้ายในธีมสว่าง ให้พื้นหลังเป็นสีขาว/พาสเทลสว่าง ขอบนุ่ม
+ปรับไอคอนและข้อความให้อ่านง่าย คมชัด และไฮไลท์แท็บที่เปิดอยู่ด้วยสีไล่เฉดอย่างสวยงาม
+6. การเตรียมความพร้อมสำหรับการ Deploy (Docker & Compose)
+อัปเดต 
+
+Dockerfile
+:
+เพิ่มการ Copy โฟลเดอร์ data/ เข้า Runner Stage และกำหนดสิทธิ์การเขียนให้ User nextjs
+อัปเดต 
+
+docker-compose.yml
+:
+เพิ่ม Volume lmsound_data:/app/data เพื่อให้ข้อมูลรูปภาพและธีมที่แอดมินตั้งค่าไว้คงอยู่ถาวร แม้มีการ Rebuild Container ใหม่

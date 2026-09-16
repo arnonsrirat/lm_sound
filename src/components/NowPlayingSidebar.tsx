@@ -79,7 +79,7 @@ export default function NowPlayingSidebar() {
     return (
       <button
         onClick={() => setIsNowPlayingOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full purple-gradient-btn shadow-2xl hover:scale-105 transition-all text-xs font-semibold cursor-pointer border border-purple-400/40"
+        className="fixed bottom-6 right-6 z-[60] flex items-center gap-2.5 px-4 py-3 rounded-full purple-gradient-btn shadow-2xl hover:scale-105 transition-all text-xs font-semibold cursor-pointer border border-purple-400/40"
         title="เปิดแผงควบคุมเสียง (เวลา sound เล่น)"
       >
         <Headphones className="w-4 h-4 animate-bounce" />

@@ -1,58 +1,19 @@
+import "server-only";
 import { prisma } from "@/lib/prisma";
+import fs from "node:fs/promises";
+import path from "node:path";
+import {
+  type FestivalTheme,
+  type SiteSettings,
+  DEFAULT_SITE_SETTINGS,
+  FESTIVAL_THEME_LABELS,
+} from "./site-settings-constants";
 
-/**
- * การตั้งค่าเว็บไซต์ทั้งหมดเก็บในตาราง SiteSetting แบบ key-value
- * แอดมินแก้ได้เองจากหน้า /admin โดยไม่ต้องแก้โค้ด
- *
- * โลโก้และแบนเนอร์แยกกันระหว่างธีมสว่าง (light) และธีมมืด (dark)
- * และมี "ธีมเทศกาล" (festivalTheme) ที่สามารถสลับชุดสีทั้งเว็บได้
- */
-
-export type FestivalTheme = "default" | "songkran" | "loykratong" | "newyear" | "christmas";
-
-export interface SiteSettings {
-  // โลโก้ — แยกตามธีมสว่าง/มืด
-  logoLight: string;
-  logoDark: string;
-  // แบนเนอร์ — แยกตามธีมสว่าง/มืด (ใช้เป็นภาพพื้นหลังของ FeaturedBanner)
-  bannerLight: string;
-  bannerDark: string;
-  // ชื่อเว็บ + สโลแกน
-  siteName: string;
-  siteTagline: string;
-  // ธีมเทศกาล
-  festivalTheme: FestivalTheme;
-  festivalStartDate: string;
-  festivalEndDate: string;
-  festivalStartTime: string;
-  festivalEndTime: string;
-  // ข้อความหัวแบนเนอร์
-  bannerTitle: string;
-  bannerSubtitle: string;
-}
-
-export const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  logoLight: "/logo-light.png",
-  logoDark: "/logo.png",
-  bannerLight: "/logo.png",
-  bannerDark: "/logo.png",
-  siteName: "LM Sound",
-  siteTagline: "Spatial & Ambient Soundscape",
-  festivalTheme: "default",
-  festivalStartDate: "",
-  festivalEndDate: "",
-  festivalStartTime: "00:00",
-  festivalEndTime: "23:59",
-  bannerTitle: "เสียงแนะนำ (Recommended Soundscape)",
-  bannerSubtitle: "ค้นพบมุมอ่านหนังสือที่ใช่ พร้อมเสียงบรรยากาศจริงก่อนเดินทาง",
-};
-
-export const FESTIVAL_THEME_LABELS: Record<FestivalTheme, string> = {
-  default: "ค่าเริ่มต้น (พาสเทลม่วง)",
-  songkran: "สงกรานต์ (ฟ้าสดชื่น)",
-  loykratong: "ลอยกระทง (ม่วงน้ำเงิน)",
-  newyear: "ปีใหม่ (ทอง-ม่วง)",
-  christmas: "คริสต์มาส (แดง-ม่วง)",
+export {
+  type FestivalTheme,
+  type SiteSettings,
+  DEFAULT_SITE_SETTINGS,
+  FESTIVAL_THEME_LABELS,
 };
 
 const SETTING_KEYS = Object.keys(DEFAULT_SITE_SETTINGS) as (keyof SiteSettings)[];
@@ -61,28 +22,57 @@ function isFestivalTheme(v: string): v is FestivalTheme {
   return ["default", "songkran", "loykratong", "newyear", "christmas"].includes(v);
 }
 
-/** ดึงค่าตั้งค่าทั้งหมด — ถ้า DB ใช้ไม่ได้ คืนค่าเริ่มต้น (เว็บไม่พัง) */
-export async function getSiteSettings(): Promise<SiteSettings> {
-  const result: SiteSettings = { ...DEFAULT_SITE_SETTINGS };
-  const dbUrl = process.env.DATABASE_URL || "";
-  if (!dbUrl || dbUrl.includes("ep-sample") || dbUrl.includes("dummy")) {
-    return result;
-  }
+const LOCAL_SETTINGS_FILE = path.join(process.cwd(), "data", "site-settings.json");
+
+async function readLocalSettings(): Promise<Partial<SiteSettings>> {
   try {
-    const rows = await prisma.siteSetting.findMany();
-    for (const row of rows) {
-      if (SETTING_KEYS.includes(row.key as keyof SiteSettings)) {
-        const key = row.key as keyof SiteSettings;
-        if (key === "festivalTheme" && isFestivalTheme(row.value)) {
-          result.festivalTheme = row.value;
-        } else if (key !== "festivalTheme") {
-          (result[key] as string) = row.value;
+    const raw = await fs.readFile(LOCAL_SETTINGS_FILE, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+async function writeLocalSettings(data: Partial<SiteSettings>): Promise<void> {
+  try {
+    const dir = path.dirname(LOCAL_SETTINGS_FILE);
+    await fs.mkdir(dir, { recursive: true });
+    const existing = await readLocalSettings();
+    const merged = { ...existing, ...data };
+    await fs.writeFile(LOCAL_SETTINGS_FILE, JSON.stringify(merged, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("Could not save site settings to local fallback file:", err);
+  }
+}
+
+/** ดึงค่าตั้งค่าทั้งหมด — ถ้า DB ใช้ไม่ได้ ใช้อ่านจาก local JSON fallback หรือค่าเริ่มต้น (เว็บไม่พัง) */
+export async function getSiteSettings(): Promise<SiteSettings> {
+  let result: SiteSettings = { ...DEFAULT_SITE_SETTINGS };
+  
+  // 1. อ่านจาก local fallback file ก่อน
+  const localSettings = await readLocalSettings();
+  result = { ...result, ...localSettings };
+
+  // 2. ถ้ามี DB ให้อ่านจาก DB
+  const dbUrl = process.env.DATABASE_URL || "";
+  if (dbUrl && !dbUrl.includes("ep-sample") && !dbUrl.includes("dummy")) {
+    try {
+      const rows = await prisma.siteSetting.findMany();
+      for (const row of rows) {
+        if (SETTING_KEYS.includes(row.key as keyof SiteSettings)) {
+          const key = row.key as keyof SiteSettings;
+          if (key === "festivalTheme" && isFestivalTheme(row.value)) {
+            result.festivalTheme = row.value;
+          } else if (key !== "festivalTheme") {
+            (result[key] as string) = row.value;
+          }
         }
       }
+    } catch {
+      // DB ไม่พร้อม — ใช้ค่าที่มี
     }
-  } catch {
-    // DB ไม่พร้อม — ใช้ค่าเริ่มต้น
   }
+
   return result;
 }
 
@@ -90,6 +80,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 export async function updateSiteSettings(
   values: Partial<SiteSettings>
 ): Promise<SiteSettings> {
+  // บันทึกลง local file fallback เสมอ
+  await writeLocalSettings(values);
+
   const dbUrl = process.env.DATABASE_URL || "";
   if (!dbUrl || dbUrl.includes("ep-sample") || dbUrl.includes("dummy")) {
     return getSiteSettings();

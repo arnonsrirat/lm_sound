@@ -123,7 +123,7 @@ export default function SoundMixerModal() {
   const isCustomMode = activePresetId === "custom";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
       {/* Click outside to close */}
       <div
         className="fixed inset-0"

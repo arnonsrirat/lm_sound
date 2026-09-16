@@ -37,10 +37,11 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 
-# Set correct permissions for prerender cache and runtime uploads
-RUN mkdir -p .next ./public/uploads/logos ./public/uploads/banners ./public/uploads/general ./public/uploads/audio \
-    && chown -R nextjs:nodejs .next ./public
+# Set correct permissions for prerender cache, runtime data, and runtime uploads
+RUN mkdir -p .next ./data ./public/uploads/logos ./public/uploads/banners ./public/uploads/general ./public/uploads/audio \
+    && chown -R nextjs:nodejs .next ./data ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing

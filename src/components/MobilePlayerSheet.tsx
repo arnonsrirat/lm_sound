@@ -113,7 +113,7 @@ export default function MobilePlayerSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[200] md:hidden flex flex-col justify-end bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       {/* Backdrop overlay */}
       <div className="fixed inset-0" onClick={onClose} />
 

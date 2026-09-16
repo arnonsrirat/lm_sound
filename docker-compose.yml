@@ -15,8 +15,10 @@ services:
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     volumes:
       - lmsound_uploads:/app/public/uploads
+      - lmsound_data:/app/data
     env_file:
       - .env
 
 volumes:
   lmsound_uploads:
+  lmsound_data:

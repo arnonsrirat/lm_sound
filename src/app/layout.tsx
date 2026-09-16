@@ -58,6 +58,14 @@ export default async function RootLayout({
     <html
       lang="th"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased light ${festivalClass}`}
+      style={{
+        ["--theme-bg-light" as string]: `url(${settings.bgLight || "/dreamy-lake-bg.png"})`,
+        ["--theme-primary" as string]: settings.primaryColor || "#8b5cf6",
+        ["--theme-accent" as string]: settings.accentColor || "#0284c7",
+        ["--theme-surface" as string]: settings.surfaceColor || "#ffffff",
+        ["--theme-background" as string]: settings.backgroundColor || "#fbf9ff",
+        ["--theme-foreground" as string]: settings.foregroundColor || "#1f1035",
+      }}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-purple-500/30 selection:text-purple-200 transition-colors relative">
         <AudioProvider>

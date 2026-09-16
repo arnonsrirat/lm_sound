@@ -1,0 +1,20 @@
+{
+  "logoLight": "/logo-light.png",
+  "logoDark": "/logo.png",
+  "bannerLight": "/logo-light-theme.png",
+  "bannerDark": "/logo.png",
+  "bgLight": "/dreamy-lake-bg.png",
+  "siteName": "LM Sound",
+  "siteTagline": "Spatial & Ambient Soundscape",
+  "festivalTheme": "default",
+  "festivalStartDate": "",
+  "festivalEndDate": "",
+  "festivalStartTime": "00:00",
+  "festivalEndTime": "23:59",
+  "bannerTitle": "เสียงแนะนำ (Recommended Soundscape)",
+  "bannerSubtitle": "ค้นพบมุมอ่านหนังสือที่ใช่ พร้อมเสียงบรรยากาศจริงก่อนเดินทาง",
+  "primaryColor": "#8b5cf6",
+  "accentColor": "#0284c7",
+  "surfaceColor": "#ffffff",
+  "foregroundColor": "#1f1035"
+}
