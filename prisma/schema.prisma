@@ -17,6 +17,7 @@ model User {
   username  String   @unique
   password  String
   role      String   @default("USER") // "USER" | "ADMIN"
+  emailVerifiedAt DateTime?
   spots     Spot[]
   trackRatings TrackRating[]
   spotRatings SpotRating[]

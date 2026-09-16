@@ -85,6 +85,7 @@ export default function RegisterPage() {
         return;
       }
 
+      if (data.requiresVerification) { router.push(`/verify-email?email=${encodeURIComponent(data.email)}`); return; }
       setSuccessMessage("สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบ...");
       setTimeout(() => {
         router.push("/");

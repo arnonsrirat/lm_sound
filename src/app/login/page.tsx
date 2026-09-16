@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { loginSchema } from "@/lib/validation";
 import {
   Volume2,
@@ -19,9 +19,9 @@ import { notify } from "@/lib/notify";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next")?.startsWith("/") ? searchParams.get("next")! : "/";
-  const authRequired = searchParams.get("reason") === "auth-required";
+  const [nextPath, setNextPath] = useState("/");
+  const [authRequired, setAuthRequired] = useState(false);
+  useEffect(() => { const params = new URLSearchParams(window.location.search); const next = params.get("next"); setNextPath(next?.startsWith("/") ? next : "/"); setAuthRequired(params.get("reason") === "auth-required"); }, []);
 
   const [formData, setFormData] = useState({
     emailOrUsername: "",
