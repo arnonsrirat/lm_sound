@@ -642,6 +642,10 @@ function AdminSpotForm({
   mapSpots: SpotItem[];
 }) {
   const isEdit = !!spot;
+  useEffect(() => {
+    document.body.classList.add("lmsound-editor-open");
+    return () => document.body.classList.remove("lmsound-editor-open");
+  }, []);
   const [title, setTitle] = useState(spot?.title || "");
   const [description, setDescription] = useState(spot?.description || "");
   const [location, setLocation] = useState(spot?.location || "");
@@ -704,9 +708,9 @@ function AdminSpotForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="admin-spot-form-title">
       <div className="glass-panel rounded-3xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-purple-500/30">
-        <h3 className="font-bold text-lg mb-4 text-purple-100">
+        <h3 id="admin-spot-form-title" className="font-bold text-lg mb-4 text-purple-100">
           {isEdit ? "แก้ไขสถานที่" : "เพิ่มสถานที่ใหม่"}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
