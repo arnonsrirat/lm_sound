@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Flame,
@@ -36,6 +37,11 @@ const THAI_DAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."]
 export default function StudyStatsModal({ isOpen, onClose }: StudyStatsModalProps) {
   const { studyStats, resetStudyStats } = useAudio();
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Close on Escape key press
   useEffect(() => {
@@ -138,9 +144,10 @@ export default function StudyStatsModal({ isOpen, onClose }: StudyStatsModalProp
   const unlockedCount = achievements.filter((a) => a.isUnlocked).length;
   const totalHours = (studyStats.totalMinutes / 60).toFixed(1);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isMounted) return null;
 
-  return (
+  return createPortal(
+    (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={onClose} />
@@ -402,5 +409,7 @@ export default function StudyStatsModal({ isOpen, onClose }: StudyStatsModalProp
         </div>
       </div>
     </div>
+    ),
+    document.body,
   );
 }
