@@ -8,7 +8,11 @@ export interface SpotItem {
   imageUrls?: string[];
   audioUrl: string;
   timeTag?: string | null;
+  timeStart?: number | null;
+  timeEnd?: number | null;
   availabilityStatus?: string;
+  pendingFields?: string[];
+  amenities?: string[];
   latitude?: number | null;
   longitude?: number | null;
   authorId: string;

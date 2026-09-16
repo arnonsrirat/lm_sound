@@ -9,6 +9,7 @@ import SpotFeed from "@/components/SpotFeed";
 import NowPlayingSidebar from "@/components/NowPlayingSidebar";
 import MobileCampusMapBar from "@/components/MobileCampusMapBar";
 import RelaxationLibrary from "@/components/RelaxationLibrary";
+import { isSpotAvailableAtHour } from "@/lib/validations/spot";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   // Fetch spots from database or instant fallback
   const spots = await getSpots({ search, noiseLevel });
-  const featuredSpot = spots.length > 0 ? spots[0] : null;
+  const currentHour = new Date().getHours();
+  const timeRecommendedSpots = spots.filter((spot) => isSpotAvailableAtHour(spot.timeStart, spot.timeEnd, currentHour));
+  const featuredSpot = (timeRecommendedSpots.length > 0 ? timeRecommendedSpots : spots)[0] ?? null;
 
   // การตั้งค่าเว็บไซต์จาก DB (แอดมินปรับแต่งได้)
   const settings = await getSiteSettings();
@@ -67,7 +70,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               bannerSettings={{
                 bannerLight: settings.bannerLight,
                 bannerDark: settings.bannerDark,
-                bannerTitle: settings.bannerTitle,
+                bannerTitle: timeRecommendedSpots.length > 0 ? "สถานที่หลบมุมแนะนำเวลานี้" : settings.bannerTitle,
                 bannerSubtitle: settings.bannerSubtitle,
               }}
             />

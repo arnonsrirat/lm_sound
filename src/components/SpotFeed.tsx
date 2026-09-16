@@ -6,7 +6,6 @@ import SpotCard from "./SpotCard";
 import {
   Filter,
   AlertCircle,
-  Sparkles,
   Dices,
   Heart,
   Target,
@@ -15,7 +14,7 @@ import {
   Headphones,
   RotateCcw,
 } from "lucide-react";
-import { useAudio, AMBIENCE_PRESETS } from "@/context/AudioContext";
+import { useAudio } from "@/context/AudioContext";
 
 interface SpotFeedProps {
   spots: Array<{
@@ -128,7 +127,7 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  const { applyAmbiencePreset, activePresetId, playSpot } = useAudio();
+  const { playSpot } = useAudio();
 
   const activeNoise = searchParams.get("noiseLevel") || "all";
   const searchQuery = searchParams.get("search") || "";
@@ -277,66 +276,6 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
 
   return (
     <section id="popular" className="space-y-6 scroll-mt-20">
-      {/* 1-Click Focus Recipe Banner (โหมดสูตรเสียงสมาธิ 1-คลิก) */}
-      <div className="rounded-2xl p-3 sm:p-4 border border-purple-500/30 bg-gradient-to-r from-[#170a36]/80 via-[#100624]/90 to-[#190938]/80 backdrop-blur-xl shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2.5">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-fuchsia-500/20 text-fuchsia-400">
-              <Sparkles className="w-4 h-4 animate-pulse" />
-            </span>
-            <div>
-              <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">
-                Focus Recipe — สูตรเสียงสมาธิสำเร็จรูป (Web Audio Mixer)
-              </span>
-              <span className="text-[10px] text-purple-300/70 sm:hidden block">
-                เลือกโหมดสมาธิที่ใช่ได้ในคลิกเดียว
-              </span>
-            </div>
-          </div>
-          <span className="text-[11px] text-purple-300/70 hidden sm:inline">
-            คลิกเดียว ระบบ Sound Mixer จะปรับระดับเสียงแอมเบียนต์ให้ทันที
-          </span>
-        </div>
-
-        {/* Preset Buttons Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {AMBIENCE_PRESETS.map((preset) => {
-            const isActive = activePresetId === preset.id;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => applyAmbiencePreset(preset.id)}
-                title={`${preset.name} (${preset.thaiName}) - ${preset.description}`}
-                className={`p-2.5 rounded-xl border text-left transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-pink-400 shadow-md shadow-pink-500/30 scale-[1.02]"
-                    : "bg-[#1f1142]/60 hover:bg-[#2c185c]/80 text-purple-200 border-purple-500/25 hover:border-fuchsia-400/40"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-base">{preset.emoji}</span>
-                  {isActive ? (
-                    <span className="flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-white opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
-                    </span>
-                  ) : (
-                    <span className="text-[9px] text-purple-400 font-mono px-1 rounded bg-purple-950/70 border border-purple-500/20">
-                      {preset.tag}
-                    </span>
-                  )}
-                </div>
-                <div className="font-bold text-xs truncate text-white">{preset.name}</div>
-                <div className="text-[10px] text-purple-300/80 truncate mt-0.5">
-                  {preset.thaiName}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Feed Controls Header: 'เสียงยอดนิยม' & Filters & Lucky Spot Button */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-purple-500/20">
         <div className="flex items-center gap-3">

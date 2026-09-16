@@ -117,8 +117,8 @@ export async function uploadToGoogleDrive(file: File, folder: string, note: stri
   if (!connection.rootFolderId) await prisma.googleDriveConnection.update({ where: { id: connection.id }, data: { rootFolderId } });
   const folderId = await getOrCreateFolder(accessToken, folder, rootFolderId);
   const extension = file.name.includes(".") ? `.${file.name.split(".").pop()?.toLowerCase()}` : "";
-  const sequence = (await prisma.mediaAsset.count({ where: { folder } })) + 1;
-  const generatedName = `lmsound_${folder}_${String(sequence).padStart(4, "0")}${extension}`;
+  // ใช้ timestamp + random suffix แทนการนับจำนวนไฟล์ เพื่อไม่ให้ชื่อชนกันเมื่อมือถืออัปโหลดหลายไฟล์พร้อมกัน
+  const generatedName = `lmsound_${folder}_${Date.now()}_${crypto.randomUUID().slice(0, 8)}${extension}`;
   const boundary = `lmsound-${crypto.randomUUID()}`;
   const metadata = JSON.stringify({ name: generatedName, parents: [folderId] });
   const bytes = Buffer.from(await file.arrayBuffer());

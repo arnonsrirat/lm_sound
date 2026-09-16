@@ -4,6 +4,7 @@ import { useAudio } from "@/context/AudioContext";
 import { Play, Pause, Navigation, Volume2 } from "lucide-react";
 import NoiseGauge from "./NoiseGauge";
 import InteractiveWaveform from "./InteractiveWaveform";
+import { AmenityBadges } from "./AmenityBadges";
 
 interface SpotDetailInteractiveProps {
   spot: {
@@ -16,6 +17,7 @@ interface SpotDetailInteractiveProps {
     audioUrl: string;
     latitude?: number | null;
     longitude?: number | null;
+    amenities?: string[];
   };
 }
 
@@ -74,6 +76,7 @@ export default function SpotDetailInteractive({ spot }: SpotDetailInteractivePro
 
   return (
     <div className="space-y-5">
+      <AmenityBadges amenities={spot.amenities} />
       {/* Audio Engine Bar & Play Action with Living Sound State */}
       <div
         className={`p-4 sm:p-5 rounded-2xl border backdrop-blur-xl transition-all duration-300 flex flex-col gap-4 ${

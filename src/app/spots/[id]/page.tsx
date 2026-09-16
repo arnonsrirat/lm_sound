@@ -130,6 +130,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
                   audioUrl: spot.audioUrl,
                   latitude: spot.latitude,
                   longitude: spot.longitude,
+                  amenities: spot.amenities ?? [],
                 }}
               />
               <SpotEngagement spotId={spot.id} averageRating={spot.averageRating} ratingCount={spot.ratingCount} />

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import type { LatLngExpression } from "leaflet";
+import { AmenityBadges } from "@/components/AmenityBadges";
 
 export interface CampusMapSpot {
   id: string;
@@ -15,6 +16,7 @@ export interface CampusMapSpot {
   imageUrl?: string;
   description?: string;
   audioUrl?: string;
+  amenities?: string[];
 }
 
 const CAMPUS_CENTER: LatLngExpression = [7.80822, 99.93869];
@@ -65,7 +67,9 @@ function getPinIconByNoiseLevel(noiseLevel?: string): L.DivIcon {
 
 function PinDropper({ onPick }: { onPick?: (latitude: number, longitude: number) => void }) {
   useMapEvents({
-    click(event) {
+    dblclick(event) {
+      // ใช้ดับเบิลคลิกเพื่อยืนยันตำแหน่ง ป้องกันการแตะ/คลิกครั้งเดียวระหว่างลากแผนที่แล้วปักหมุดโดยไม่ตั้งใจ
+      event.originalEvent.preventDefault();
       onPick?.(event.latlng.lat, event.latlng.lng);
     },
   });
@@ -123,6 +127,7 @@ export default function CampusMapInner({
       maxBounds={CAMPUS_BOUNDS}
       maxBoundsViscosity={0.25}
       scrollWheelZoom={interactive}
+      doubleClickZoom={!interactive}
       className="h-full w-full"
     >
       <TileLayer
@@ -146,6 +151,8 @@ export default function CampusMapInner({
                     src={spot.imageUrl}
                     alt={spot.title}
                     className="mb-1.5 h-20 w-full rounded-lg object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 )}
                 <strong className="block text-sm font-bold text-purple-950 leading-snug">
@@ -154,6 +161,7 @@ export default function CampusMapInner({
                 <span className="block text-xs text-purple-700/80 mt-0.5">
                   📍 {spot.location}
                 </span>
+                <div className="mt-2"><AmenityBadges amenities={spot.amenities} compact /></div>
                 <button
                   type="button"
                   onClick={() => onMarkerClick?.(spot)}

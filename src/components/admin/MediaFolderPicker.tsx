@@ -124,68 +124,70 @@ export default function MediaFolderPicker({
   }, []);
 
   const uploadFile = async (file: File, note = "", timeTag = "") => {
+    let lastError = "อัปโหลดไม่สำเร็จ";
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", currentFolder);
+      formData.append("note", note);
+      formData.append("timeTag", timeTag);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", currentFolder);
-    formData.append("note", note);
-    formData.append("timeTag", timeTag);
-
-    setIsUploading(true);
-    setUploadStatus({ fileName: file.name, progress: 2, phase: "uploading" });
-    try {
-      const data = await new Promise<{
-        success?: boolean;
-        data?: MediaItem;
-        error?: string;
-      }>((resolve, reject) => {
-        const request = new XMLHttpRequest();
-        request.open("POST", "/api/admin/media");
-        request.responseType = "json";
-        request.upload.onprogress = (event) => {
-          if (!event.lengthComputable) return;
-          const progress = Math.max(2, Math.min(100, Math.round((event.loaded / event.total) * 100)));
-          setUploadStatus({ fileName: file.name, progress, phase: progress === 100 ? "processing" : "uploading" });
-        };
-        request.onerror = () => reject(new Error("NETWORK_ERROR"));
-        request.onload = () => {
-          const response = request.response || (() => {
-            try { return JSON.parse(request.responseText); } catch { return null; }
-          })();
-          if (request.status >= 200 && request.status < 300 && response) resolve(response);
-          else reject(new Error(response?.error || "UPLOAD_FAILED"));
-        };
-        request.send(formData);
-      });
-      const uploadedItem = data.data;
-      if (data.success && uploadedItem) {
-        notify(`อัปโหลดรูป "${file.name}" เรียบร้อยแล้ว`);
+      try {
+        const data = await new Promise<{ success?: boolean; data?: MediaItem; error?: string }>((resolve, reject) => {
+          const request = new XMLHttpRequest();
+          request.open("POST", "/api/admin/media");
+          request.responseType = "json";
+          request.timeout = 120000;
+          request.upload.onprogress = (event) => {
+            if (!event.lengthComputable) return;
+            const progress = Math.max(2, Math.min(100, Math.round((event.loaded / event.total) * 100)));
+            setUploadStatus({ fileName: file.name, progress, phase: progress === 100 ? "processing" : "uploading" });
+          };
+          request.onerror = () => reject(new Error("NETWORK_ERROR"));
+          request.ontimeout = () => reject(new Error("UPLOAD_TIMEOUT"));
+          request.onabort = () => reject(new Error("UPLOAD_ABORTED"));
+          request.onload = () => {
+            const response = request.response || (() => { try { return JSON.parse(request.responseText); } catch { return null; } })();
+            if (request.status >= 200 && request.status < 300 && response) resolve(response);
+            else reject(new Error(response?.error || "UPLOAD_FAILED"));
+          };
+          request.send(formData);
+        });
+        const uploadedItem = data.data;
+        if (!data.success || !uploadedItem) throw new Error(data.error || "อัปโหลดไม่สำเร็จ");
         setItems((prev) => [uploadedItem, ...prev]);
-        setUploadStatus({ fileName: file.name, progress: 100, phase: "success" });
-        window.setTimeout(() => setUploadStatus(null), 3500);
-
-        // Auto select if modal
-        if (onSelect && !multiSelect) {
-          onSelect(uploadedItem.url);
-        } else if (multiSelect) {
-          setGallerySelection((previous) => previous.includes(uploadedItem.url) ? previous : [...previous, uploadedItem.url]);
-        }
-      } else {
-        setUploadStatus({ fileName: file.name, progress: 100, phase: "error" });
-        window.setTimeout(() => setUploadStatus(null), 5000);
-        notify(data.error || "อัปโหลดไม่สำเร็จ", true);
+        if (onSelect && !multiSelect) onSelect(uploadedItem.url);
+        if (multiSelect) setGallerySelection((previous) => previous.includes(uploadedItem.url) ? previous : [...previous, uploadedItem.url]);
+        return true;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : lastError;
+        if (attempt === 0) await new Promise((resolve) => window.setTimeout(resolve, 700));
       }
-    } catch {
-      setUploadStatus({ fileName: file.name, progress: 100, phase: "error" });
-      window.setTimeout(() => setUploadStatus(null), 5000);
-      notify("เกิดข้อผิดพลาดในการอัปโหลด", true);
-    } finally {
-      setIsUploading(false);
     }
+    setUploadStatus({ fileName: file.name, progress: 100, phase: "error" });
+    notify(`${file.name}: ${lastError === "UPLOAD_TIMEOUT" ? "หมดเวลารอเซิร์ฟเวอร์" : "อัปโหลดไม่สำเร็จ"}`, true);
+    return false;
   };
 
   const uploadFiles = async (files: File[], note = "", timeTag = "") => {
-    for (const file of files) await uploadFile(file, note, timeTag);
+    setIsUploading(true);
+    let cursor = 0;
+    let succeeded = 0;
+    const worker = async () => {
+      while (cursor < files.length) {
+        const file = files[cursor++];
+        setUploadStatus({ fileName: file.name, progress: 2, phase: "uploading" });
+        if (await uploadFile(file, note, timeTag)) succeeded += 1;
+      }
+    };
+    try {
+      // จำกัด 2 ไฟล์พร้อมกัน ช่วยให้มือถือไม่แย่งแบนด์วิดท์/หน่วยความจำจนค้าง
+      await Promise.all(Array.from({ length: Math.min(2, files.length) }, () => worker()));
+      if (succeeded > 0) notify(`อัปโหลดสำเร็จ ${succeeded}/${files.length} ไฟล์`);
+      setUploadStatus(null);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -494,6 +496,8 @@ export default function MediaFolderPicker({
                         src={item.url}
                         alt={item.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        decoding="async"
                       />
                     )}
 

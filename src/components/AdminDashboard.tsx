@@ -30,7 +30,7 @@ import {
 import type { SiteSettings, FestivalTheme } from "@/lib/site-settings";
 import { FESTIVAL_THEME_LABELS } from "@/lib/site-settings";
 import type { SpotItem } from "@/lib/fallbackSpots";
-import { availabilityStatuses, timeTags, type SpotInput, type AvailabilityStatus } from "@/lib/validations/spot";
+import { availabilityStatuses, timeTags, type SpotInput, type AvailabilityStatus, type PendingFieldKey, type AmenityKey } from "@/lib/validations/spot";
 import {
   updateSiteSettingsAction,
   adminCreateSpotAction,
@@ -44,6 +44,7 @@ import AdminSidebar, { type AdminTab } from "@/components/admin/AdminSidebar";
 import MediaFolderPicker from "@/components/admin/MediaFolderPicker";
 import CampusMap from "@/components/CampusMap";
 import type { MediaFolder } from "@/actions/media";
+import { AMENITY_OPTIONS } from "@/components/AmenityBadges";
 
 interface AdminDashboardProps {
   initialSettings: SiteSettings;
@@ -566,6 +567,7 @@ function SpotsTab({
             notify(true, isNew ? "เพิ่มสถานที่เรียบร้อย" : "อัปเดตสถานที่เรียบร้อย");
           }}
           notify={notify}
+          mapSpots={spots}
         />
       )}
 
@@ -631,11 +633,13 @@ function AdminSpotForm({
   onClose,
   onSaved,
   notify,
+  mapSpots,
 }: {
   spot: SpotItem | null;
   onClose: () => void;
   onSaved: (spot: SpotItem, isNew: boolean) => void;
   notify: (ok: boolean, msg: string) => void;
+  mapSpots: SpotItem[];
 }) {
   const isEdit = !!spot;
   const [title, setTitle] = useState(spot?.title || "");
@@ -648,7 +652,11 @@ function AdminSpotForm({
   const [imageUrls, setImageUrls] = useState(spot?.imageUrls?.length ? spot.imageUrls : (spot?.imageUrl ? [spot.imageUrl] : []));
   const [audioUrl, setAudioUrl] = useState(spot?.audioUrl || "");
   const [timeTag, setTimeTag] = useState(spot?.timeTag || "");
+  const [timeStart, setTimeStart] = useState<number | null>(spot?.timeStart ?? null);
+  const [timeEnd, setTimeEnd] = useState<number | null>(spot?.timeEnd ?? null);
+  const [amenities, setAmenities] = useState<AmenityKey[]>((spot?.amenities || []) as AmenityKey[]);
   const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>((spot?.availabilityStatus as AvailabilityStatus) || "READY");
+  const [pendingFields, setPendingFields] = useState<PendingFieldKey[]>((spot?.pendingFields || []) as PendingFieldKey[]);
   const [latitude, setLatitude] = useState(spot?.latitude ?? 7.80822);
   const [longitude, setLongitude] = useState(spot?.longitude ?? 99.93869);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -668,7 +676,11 @@ function AdminSpotForm({
         imageUrls,
         audioUrl,
         timeTag: (timeTag || null) as SpotInput["timeTag"],
+        timeStart,
+        timeEnd,
+        amenities,
         availabilityStatus,
+        pendingFields,
         latitude,
         longitude,
       };
@@ -712,7 +724,6 @@ function AdminSpotForm({
           <div>
             <label className="text-xs font-semibold text-purple-300/80">รายละเอียด</label>
             <textarea
-              required
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -724,7 +735,6 @@ function AdminSpotForm({
             <div>
               <label className="text-xs font-semibold text-purple-300/80">ที่ตั้ง / โซน</label>
               <input
-                required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
@@ -752,7 +762,8 @@ function AdminSpotForm({
               <label className="text-xs font-semibold text-purple-300/80">พิกัดบนแผนที่มหาวิทยาลัย</label>
               <span className="text-[10px] text-cyan-300">{latitude.toFixed(5)}, {longitude.toFixed(5)}</span>
             </div>
-            <CampusMap spots={[]} selected={{ latitude, longitude }} interactive onPick={(lat, lng) => { setLatitude(lat); setLongitude(lng); }} />
+            <p className="text-[11px] text-cyan-300/80">ดับเบิลคลิกเพื่อยืนยันตำแหน่งหมุด (คลิกครั้งเดียวใช้เลื่อนแผนที่) · หมุดที่มีอยู่จะแสดงบนแผนที่</p>
+            <CampusMap spots={mapSpots} selected={{ latitude, longitude }} interactive onPick={(lat, lng) => { setLatitude(lat); setLongitude(lng); }} />
           </div>
 
           <div>
@@ -768,7 +779,6 @@ function AdminSpotForm({
               </button>
             </div>
             <input
-              required
               value={imageUrl}
               readOnly
               disabled
@@ -783,16 +793,44 @@ function AdminSpotForm({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-purple-300/80">ช่วงเวลา
               <select value={timeTag} onChange={(e) => setTimeTag(e.target.value)} className="mt-1 w-full rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 py-2 text-sm"><option value="">ไม่ระบุ</option>{timeTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}</select>
+              <span className="mt-2 block text-[10px] text-purple-300/60">กำหนดช่วงเวลาแนะนำ (ข้ามเที่ยงคืนได้)</span>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <select aria-label="เวลาเริ่มต้น" value={timeStart ?? ""} onChange={(e) => setTimeStart(e.target.value === "" ? null : Number(e.target.value))} className="rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 py-2 text-sm"><option value="">เริ่มเวลา</option>{Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, "0")}:00</option>)}</select>
+                <select aria-label="เวลาสิ้นสุด" value={timeEnd ?? ""} onChange={(e) => setTimeEnd(e.target.value === "" ? null : Number(e.target.value))} className="rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 py-2 text-sm"><option value="">ถึงเวลา</option>{Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, "0")}:00</option>)}</select>
+              </div>
             </label>
             <label className="text-xs font-semibold text-purple-300/80">สถานะข้อมูล
               <select value={availabilityStatus} onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)} className="mt-1 w-full rounded-xl bg-purple-950/40 border border-purple-500/25 px-3 py-2 text-sm">{availabilityStatuses.map((status) => <option key={status} value={status}>{status === "READY" ? "พร้อมใช้งาน" : status === "PENDING_UPDATE" ? "รออัปเดตข้อมูล" : "ยังไม่พร้อม"}</option>)}</select>
             </label>
           </div>
 
+          <fieldset className="rounded-2xl border border-amber-400/25 bg-amber-500/5 p-3">
+            <legend className="px-1 text-xs font-semibold text-amber-200">ส่วนที่รออัปเดตภายหลัง</legend>
+            <p className="mb-2 text-[11px] text-amber-100/70">ติ๊กข้อมูลที่ยังไม่มีได้ ระบบจะบันทึกสถานที่ก่อน แล้วค่อยกลับมาเติมภายหลัง</p>
+            <div className="grid grid-cols-2 gap-2 text-xs text-purple-100 sm:grid-cols-3">
+              {([['description', 'รายละเอียด'], ['noiseLevel', 'ระดับเสียง'], ['images', 'รูปภาพ'], ['audio', 'เสียงบรรยากาศ'], ['timeTag', 'ช่วงเวลา'], ['location', 'ตำแหน่งข้อความ']] as const).map(([key, label]) => (
+                <label key={key} className="flex items-center gap-2 rounded-xl border border-purple-500/20 bg-purple-950/25 px-2.5 py-2">
+                  <input type="checkbox" checked={pendingFields.includes(key)} onChange={(event) => setPendingFields((current) => event.target.checked ? [...new Set([...current, key])] : current.filter((item) => item !== key))} />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="rounded-2xl border border-cyan-300/25 bg-cyan-400/5 p-3">
+            <legend className="px-1 text-xs font-semibold text-cyan-100">สิ่งอำนวยความสะดวกบริเวณนี้</legend>
+            <p className="mb-2 text-[11px] text-cyan-100/65">เลือกได้หลายรายการ ไอคอนที่เลือกจะแสดงแบบไฮไลท์บนการ์ดสถานที่</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {AMENITY_OPTIONS.map(({ key, label, Icon }) => {
+                const selected = amenities.includes(key);
+                return <button key={key} type="button" onClick={() => setAmenities((current) => selected ? current.filter((item) => item !== key) : [...current, key])} className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs transition ${selected ? "border-cyan-200 bg-cyan-400/25 text-cyan-50 shadow-[0_0_14px_rgba(34,211,238,0.2)]" : "border-purple-500/20 bg-purple-950/25 text-purple-200 hover:border-cyan-300/50"}`}><Icon className="h-4 w-4 shrink-0" /><span>{label}</span></button>;
+              })}
+            </div>
+          </fieldset>
+
           <div>
             <div className="flex items-center justify-between"><label className="text-xs font-semibold text-purple-300/80">เสียงบรรยากาศจากคลัง</label><button type="button" onClick={() => setPickerOpen("audio")} className="text-[11px] text-fuchsia-300 cursor-pointer">เลือกจากคลังเสียง</button></div>
             <input
-              required
               value={audioUrl}
               readOnly
               disabled
