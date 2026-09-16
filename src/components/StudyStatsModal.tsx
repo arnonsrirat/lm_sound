@@ -141,12 +141,12 @@ export default function StudyStatsModal({ isOpen, onClose }: StudyStatsModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={onClose} />
 
       {/* Modal Card */}
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel border border-orange-500/30 rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-200 text-white space-y-6">
+      <div className="relative z-10 my-auto w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain glass-panel border border-orange-500/30 rounded-3xl shadow-2xl p-4 sm:p-6 animate-in zoom-in-95 duration-200 text-white space-y-6" onClick={(event) => event.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-orange-500/20">
           <div className="flex items-center gap-3">
@@ -165,7 +165,7 @@ export default function StudyStatsModal({ isOpen, onClose }: StudyStatsModalProp
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="sticky top-0 z-20 shrink-0 p-2 rounded-xl bg-[#170c2c]/90 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             title="ปิดหน้าต่าง (Esc)"
           >
             <X className="w-5 h-5" />

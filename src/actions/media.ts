@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { requireAuth, requireAdmin, ForbiddenError, UnauthorizedError } from "@/lib/auth";
 import { deleteGoogleDriveFile, moveGoogleDriveFile, uploadToGoogleDrive } from "@/lib/google-drive";
+import { deleteR2Object, moveR2Object, getR2PublicUrl } from "@/lib/r2/upload";
 import { prisma } from "@/lib/prisma";
 
 export interface MediaItem {
@@ -71,7 +72,7 @@ export async function getMediaFilesAction(
       orderBy: { createdAt: "desc" },
     });
     for (const asset of storedAssets) {
-      items.push({ id: asset.id, name: asset.name, note: asset.note, timeTag: asset.timeTag, isPublished: asset.isPublished, playCount: asset.playCount, averageRating: asset.averageRating, ratingCount: asset.ratingCount, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
+      items.push({ id: asset.id, name: asset.originalName || asset.name, note: asset.note, timeTag: asset.timeTag, isPublished: asset.isPublished, playCount: asset.playCount, averageRating: asset.averageRating, ratingCount: asset.ratingCount, url: asset.url, folder: asset.folder, size: asset.size, updatedAt: asset.updatedAt.toISOString() });
     }
 
     // 1. อ่านไฟล์จากดิสก์ (ถ้าโฟลเดอร์เข้าถึงได้)
@@ -222,7 +223,8 @@ export async function deleteMediaAction(
 
     const asset = await prisma.mediaAsset.findFirst({ where: { url: fileUrl } });
     if (asset) {
-      await deleteGoogleDriveFile(asset.driveFileId);
+      if (asset.storageProvider === "r2" && asset.fileKey) await deleteR2Object(asset.fileKey);
+      else if (asset.driveFileId) await deleteGoogleDriveFile(asset.driveFileId);
       await prisma.mediaAsset.delete({ where: { id: asset.id } });
       return { success: true, statusCode: 200 };
     }
@@ -282,7 +284,14 @@ export async function moveMediaAction(fileUrl: string, targetFolder: MediaFolder
     const asset = await prisma.mediaAsset.findFirst({ where: { url: fileUrl } });
     if (asset) {
       if (asset.folder === targetFolder) return { success: false, error: "ไฟล์อยู่ในโฟลเดอร์นี้แล้ว", statusCode: 400 };
-      await moveGoogleDriveFile(asset.driveFileId, targetFolder);
+      if (asset.storageProvider === "r2" && asset.fileKey) {
+        const extension = path.extname(asset.fileKey);
+        const targetKey = `users/${asset.fileKey.split("/")[1]}/${targetFolder}/${asset.id}${extension}`;
+        await moveR2Object(asset.fileKey, targetKey);
+        const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { folder: targetFolder, fileKey: targetKey, url: getR2PublicUrl(targetKey) } });
+        return { success: true, data: { name: updated.name, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
+      }
+      if (asset.driveFileId) await moveGoogleDriveFile(asset.driveFileId, targetFolder);
       const updated = await prisma.mediaAsset.update({ where: { id: asset.id }, data: { folder: targetFolder } });
       return { success: true, data: { id: updated.id, name: updated.name, note: updated.note, timeTag: updated.timeTag, url: updated.url, folder: updated.folder, size: updated.size, updatedAt: updated.updatedAt.toISOString() }, statusCode: 200 };
     }

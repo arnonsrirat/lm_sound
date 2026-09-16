@@ -19,6 +19,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { moveMediaAction, type MediaItem, type MediaFolder } from "@/actions/media";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 interface MediaFolderPickerProps {
   onSelect?: (url: string) => void;
@@ -129,59 +130,75 @@ export default function MediaFolderPicker({
   }, [currentFolder, loadFiles]);
 
   useEffect(() => {
-    void fetch("/api/admin/google-drive/status", { cache: "no-store" })
+    void fetch("/api/uploads/status", { cache: "no-store" })
       .then((response) => response.json())
-      .then((data) => setDriveReady(Boolean(data.success && data.data?.configured && data.data?.connected)))
+      .then((data) => setDriveReady(Boolean(data.success && data.data?.configured)))
       .catch(() => setDriveReady(false));
   }, []);
 
-  const uploadFile = async (
-    file: File,
-    note = "",
-    timeTag = "",
-    onProgress?: (progress: number, phase: "uploading" | "processing") => void,
-  ) => {
-    // retry ถูกควบคุมโดยคิวด้านนอก เพื่อไม่ให้ไฟล์เดียวถูกยิงซ้ำซ้อนหลายชั้นบนมือถือ
-    for (let attempt = 0; attempt < 1; attempt += 1) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", currentFolder);
-      formData.append("note", note);
-      formData.append("timeTag", timeTag);
+  const prepareImageForUpload = async (file: File) => {
+    if (!file.type.startsWith("image/") || ["image/svg+xml", "image/gif"].includes(file.type) || file.size < 350 * 1024 || typeof createImageBitmap === "undefined") return file;
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
+      if (!blob || blob.size >= file.size * 0.92) return file;
+      return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp", lastModified: file.lastModified });
+    } catch {
+      return file;
+    }
+  };
 
-      try {
-        const data = await new Promise<{ success?: boolean; data?: MediaItem; error?: string }>((resolve, reject) => {
-          const request = new XMLHttpRequest();
-          request.open("POST", "/api/admin/media");
-          request.responseType = "json";
-          request.timeout = 120000;
-          request.upload.onprogress = (event) => {
-            if (!event.lengthComputable) return;
-            const progress = Math.max(2, Math.min(100, Math.round((event.loaded / event.total) * 100)));
-            onProgress?.(progress, progress === 100 ? "processing" : "uploading");
-          };
-          request.onerror = () => reject(new Error("NETWORK_ERROR"));
-          request.ontimeout = () => reject(new Error("UPLOAD_TIMEOUT"));
-          request.onabort = () => reject(new Error("UPLOAD_ABORTED"));
-          request.onload = () => {
-            const response = request.response || (() => { try { return JSON.parse(request.responseText); } catch { return null; } })();
-            if (request.status >= 200 && request.status < 300 && response) resolve(response);
-            else reject(new Error(response?.error || "UPLOAD_FAILED"));
-          };
-          request.send(formData);
-        });
-        const uploadedItem = data.data;
-        if (!data.success || !uploadedItem) throw new Error(data.error || "อัปโหลดไม่สำเร็จ");
-        setItems((prev) => [uploadedItem, ...prev]);
+  const putToR2 = (uploadUrl: string, file: File, onProgress: (loaded: number) => void) => new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", uploadUrl);
+    request.timeout = 120000;
+    request.setRequestHeader("Content-Type", file.type);
+    request.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(event.loaded); };
+    request.onerror = () => reject(new Error("NETWORK_ERROR"));
+    request.ontimeout = () => reject(new Error("UPLOAD_TIMEOUT"));
+    request.onabort = () => reject(new Error("UPLOAD_ABORTED"));
+    request.onload = () => request.status >= 200 && request.status < 300 ? resolve() : reject(new Error(`R2_UPLOAD_${request.status}`));
+    request.send(file);
+  });
+
+  const uploadFile = async (file: File, note = "", timeTag = "", onProgress?: (progress: number, phase: "uploading" | "processing") => void) => {
+    try {
+      const preparedFile = await prepareImageForUpload(file);
+      const startResponse = await fetch("/api/uploads/presign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, folder: currentFolder, contentType: preparedFile.type, size: preparedFile.size }) });
+      const startData = await startResponse.json() as { success?: boolean; data?: { uploadUrl: string; fileKey: string; uploadToken: string }; error?: string };
+      if (!startResponse.ok || !startData.success || !startData.data) throw new Error(startData.error || "เริ่มอัปโหลดไม่สำเร็จ");
+      let lastError: unknown;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          await putToR2(startData.data.uploadUrl, preparedFile, (loaded) => onProgress?.(Math.max(2, Math.min(99, Math.round((loaded / preparedFile.size) * 100))), "uploading"));
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (attempt < 2) await new Promise((resolve) => window.setTimeout(resolve, 600 * (attempt + 1)));
+        }
+      }
+      if (lastError) throw lastError;
+      const completeResponse = await fetch("/api/uploads/complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileKey: startData.data.fileKey, originalName: file.name, contentType: preparedFile.type, size: preparedFile.size, folder: currentFolder, note, timeTag, uploadToken: startData.data.uploadToken }) });
+      const completeData = await completeResponse.json() as { success?: boolean; data?: MediaItem; error?: string };
+      if (!completeResponse.ok || !completeData.success || !completeData.data) throw new Error(completeData.error || "ยืนยันไฟล์ไม่สำเร็จ");
+      onProgress?.(100, "processing");
+      const uploadedItem = completeData.data;
+      if (uploadedItem) {
+        setItems((previous) => [uploadedItem, ...previous.filter((item) => item.url !== uploadedItem.url)]);
         if (onSelect && !multiSelect) onSelect(uploadedItem.url);
         if (multiSelect) setGallerySelection((previous) => previous.includes(uploadedItem.url) ? previous : [...previous, uploadedItem.url]);
-        return true;
-      } catch (error) {
-        void error;
-        // ให้ uploadFiles เป็นผู้หน่วงเวลาและลองใหม่ เพื่อรักษาจำนวน request ให้คุมได้
       }
+      return true;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   const uploadFiles = async (files: File[], note = "", timeTag = "") => {
@@ -368,8 +385,7 @@ export default function MediaFolderPicker({
       {/* Header Info */}
       {driveReady === false && (
         <div className="rounded-2xl border border-amber-400/35 bg-amber-500/10 p-3 text-xs text-amber-100 flex items-center justify-between gap-3">
-          <span>ยังไม่ได้เชื่อมต่อ Google Drive — กรุณาเชื่อมต่อก่อนอัปโหลดหรือจัดการไฟล์</span>
-          {!isModal && <a href="/api/admin/google-drive/connect" className="shrink-0 font-bold text-amber-200 underline">เชื่อมต่อ</a>}
+          <span>ยังไม่ได้ตั้งค่า Cloudflare R2 — กรุณาเพิ่มค่า R2 ใน production environment ก่อนอัปโหลด</span>
         </div>
       )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -396,7 +412,7 @@ export default function MediaFolderPicker({
           {canManage && <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || driveReady !== true}
+            disabled={isUploading || driveReady === false}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold purple-gradient-btn shadow-lg shadow-purple-900/30 cursor-pointer disabled:opacity-60"
           >
             {isUploading ? (
@@ -600,11 +616,12 @@ export default function MediaFolderPicker({
                       <Music className="w-10 h-10 text-purple-300" />
                     ) : (
                       <img
-                        src={item.url}
+                        src={getOptimizedImageUrl(item.url)}
                         alt={item.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                         decoding="async"
+                        fetchPriority="low"
                       />
                     )}
 

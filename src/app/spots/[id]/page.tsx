@@ -5,6 +5,7 @@ import { getSpotById } from "@/actions/spot";
 import { getSession } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 import { notFound } from "next/navigation";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 import { MapPin, User, ArrowLeft, Edit3, Calendar, Compass } from "lucide-react";
 import Link from "next/link";
 import SpotDetailInteractive from "@/components/SpotDetailInteractive";
@@ -61,7 +62,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
             {/* Hero Image */}
             <div className="relative h-64 sm:h-80 md:h-96 w-full bg-purple-950/40">
               <img
-                src={spot.imageUrl}
+                src={getOptimizedImageUrl(spot.imageUrl)}
                 alt={spot.title}
                 className="w-full h-full object-cover"
               />
@@ -82,7 +83,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
 
             {(spot.imageUrls?.length ?? 0) > 1 && (
               <div className="grid grid-cols-4 gap-2 bg-purple-950/20 p-3">
-                {(spot.imageUrls ?? []).map((url: string) => <img key={url} src={url} alt={`${spot.title} gallery`} className="h-20 w-full rounded-xl object-cover" />)}
+                {(spot.imageUrls ?? []).map((url: string) => <img key={url} src={getOptimizedImageUrl(url)} alt={`${spot.title} gallery`} loading="lazy" decoding="async" className="h-20 w-full rounded-xl object-cover" />)}
               </div>
             )}
 

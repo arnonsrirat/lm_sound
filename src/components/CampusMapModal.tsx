@@ -9,6 +9,7 @@ import { useAudio } from "@/context/AudioContext";
 import NoiseGauge from "@/components/NoiseGauge";
 import type { CampusMapSpot } from "./CampusMapInner";
 import { AmenityBadges } from "@/components/AmenityBadges";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 // โหลด Dynamic เพื่อหลีกเลี่ยง Leaflet SSR Error
 const CampusMapInner = dynamic(() => import("./CampusMapInner"), {
@@ -220,7 +221,7 @@ export default function CampusMapModal({
           <div className="absolute top-14 right-3 z-[1000] hidden max-h-[calc(100%-8rem)] w-64 space-y-2 overflow-y-auto rounded-2xl bg-[#0f0724]/85 p-2 backdrop-blur-xl sm:block">
             {enrichedSpots.map((spot) => (
               <button key={spot.id} type="button" onClick={() => setSelectedSpot(spot)} className={`flex w-full items-center gap-2 rounded-xl border p-2 text-left transition ${selectedSpot?.id === spot.id ? "border-fuchsia-300 bg-purple-600/50" : "border-purple-500/25 bg-purple-950/50 hover:bg-purple-800/50"}`}>
-                {spot.imageUrl ? <img loading="lazy" decoding="async" src={spot.imageUrl} alt="" className="h-10 w-12 shrink-0 rounded-lg object-cover" /> : <span className="h-10 w-12 shrink-0 rounded-lg bg-purple-900/60" />}
+                {spot.imageUrl ? <img loading="lazy" decoding="async" src={getOptimizedImageUrl(spot.imageUrl)} alt="" className="h-10 w-12 shrink-0 rounded-lg object-cover" /> : <span className="h-10 w-12 shrink-0 rounded-lg bg-purple-900/60" />}
                 <span className="min-w-0"><strong className="block truncate text-xs text-white">{spot.title}</strong><span className="block truncate text-[10px] text-purple-200/75">📍 {spot.location}</span><span className="block text-[10px] text-cyan-200/75">{spot.noiseLevel === "quiet" ? "เงียบสงบ" : spot.noiseLevel === "lively" ? "คึกคัก" : "ปานกลาง"}</span><AmenityBadges amenities={spot.amenities} compact /></span>
               </button>
             ))}
@@ -228,7 +229,7 @@ export default function CampusMapModal({
           <div className="absolute top-14 left-3 right-3 z-[1000] flex gap-2 overflow-x-auto pb-1 sm:hidden">
             {enrichedSpots.map((spot) => (
               <button key={spot.id} type="button" onClick={() => setSelectedSpot(spot)} className="flex min-w-[190px] items-center gap-2 rounded-xl border border-purple-500/30 bg-[#0f0724]/90 p-2 text-left backdrop-blur-xl">
-                {spot.imageUrl ? <img loading="lazy" decoding="async" src={spot.imageUrl} alt="" className="h-9 w-11 shrink-0 rounded-lg object-cover" /> : <span className="h-9 w-11 shrink-0 rounded-lg bg-purple-900/60" />}
+                {spot.imageUrl ? <img loading="lazy" decoding="async" src={getOptimizedImageUrl(spot.imageUrl)} alt="" className="h-9 w-11 shrink-0 rounded-lg object-cover" /> : <span className="h-9 w-11 shrink-0 rounded-lg bg-purple-900/60" />}
                 <span className="min-w-0"><strong className="block truncate text-[11px] text-white">{spot.title}</strong><span className="block truncate text-[10px] text-purple-200/75">{spot.location}</span><AmenityBadges amenities={spot.amenities} compact /></span>
               </button>
             ))}
@@ -281,9 +282,11 @@ export default function CampusMapModal({
               {selectedSpot.imageUrl && (
                 <div className="relative h-32 sm:h-36 w-full rounded-2xl overflow-hidden mb-3 border border-purple-400/30 bg-purple-950/60 shadow-inner">
                   <img
-                    src={selectedSpot.imageUrl}
+                    src={getOptimizedImageUrl(selectedSpot.imageUrl)}
                     alt={selectedSpot.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0c071a] via-transparent to-transparent opacity-80" />
                   

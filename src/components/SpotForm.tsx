@@ -8,6 +8,7 @@ import { Save, ArrowLeft, Image as ImageIcon, Music, MapPin, Volume2, Sparkles, 
 import Link from "next/link";
 import MediaFolderPicker from "@/components/admin/MediaFolderPicker";
 import CampusMap from "@/components/CampusMap";
+import { getOptimizedImageUrl } from "@/lib/media-url";
 
 interface SpotFormProps {
   initialData?: {
@@ -234,7 +235,7 @@ export default function SpotForm({ initialData, isEdit = false }: SpotFormProps)
               {formData.imageUrls?.length ? `เลือกภาพแล้ว ${formData.imageUrls.length} รูป` : "เลือกภาพจากคลังภาพ"}
             </button>
             </div>
-            {formData.imageUrls && formData.imageUrls.length > 0 && <div className="mt-2 grid grid-cols-4 gap-2">{formData.imageUrls.map((url) => <img key={url} src={url} alt="ภาพสถานที่" className="h-16 w-full rounded-lg object-cover" />)}</div>}
+            {formData.imageUrls && formData.imageUrls.length > 0 && <div className="mt-2 grid grid-cols-4 gap-2">{formData.imageUrls.map((url) => <img key={url} src={getOptimizedImageUrl(url)} alt="ภาพสถานที่" loading="lazy" decoding="async" className="h-16 w-full rounded-lg object-cover" />)}</div>}
             {errors.imageUrl && <p className="text-rose-400 text-xs mt-1">{errors.imageUrl[0]}</p>}
           </div>
 

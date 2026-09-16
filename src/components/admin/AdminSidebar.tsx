@@ -9,6 +9,7 @@ import {
   Palette,
   FileText,
   Users,
+  Headphones,
   Home,
   LogOut,
   ShieldCheck,
@@ -21,7 +22,8 @@ export type AdminTab =
   | "media"
   | "themes"
   | "texts"
-  | "users";
+  | "users"
+  | "relaxation";
 
 interface AdminSidebarProps {
   currentTab: AdminTab;
@@ -59,6 +61,12 @@ const NAV_ITEMS: {
     label: "คลังสื่อ & โฟลเดอร์",
     sublabel: "Uploads & Folders",
     icon: FolderOpen,
+  },
+  {
+    id: "relaxation",
+    label: "เพลงผ่อนคลาย",
+    sublabel: "Playlists & Publishing",
+    icon: Headphones,
   },
   {
     id: "themes",
