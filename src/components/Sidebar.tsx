@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home } from "lucide-react";
+import { Headphones, Home } from "lucide-react";
 import CampusMiniMap from "./CampusMiniMap";
 import type { CampusMapSpot } from "./CampusMapInner";
 
@@ -37,6 +37,17 @@ export default function Sidebar({
           >
             <Home className="w-4 h-4 text-purple-400" />
             <span>Home (หน้าหลัก)</span>
+          </Link>
+          <Link
+            href="/relaxation"
+            className={`mt-2 flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm font-semibold transition cursor-pointer ${
+              pathname === "/relaxation"
+                ? "bg-purple-600/25 text-purple-100 border border-purple-500/40 shadow-sm"
+                : "text-purple-200/70 hover:bg-purple-600/15"
+            }`}
+          >
+            <Headphones className="w-4 h-4 text-fuchsia-400" />
+            <span>เพลงผ่อนคลาย</span>
           </Link>
         </div>
 
