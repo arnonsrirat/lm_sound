@@ -939,6 +939,48 @@ body.lmsound-editor-open .lmsound-audio-player {
   display: none !important;
 }
 
+/* โปรไฟล์มือถือเป็น bottom sheet จึงซ่อน player ชั่วคราว ไม่ให้แถบเล่นเพลงทับเนื้อหา */
+body.lmsound-profile-open .lmsound-audio-player {
+  display: none !important;
+}
+
+.site-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #080510;
+  animation: sitePreloaderFadeIn .25s ease-out;
+}
+.site-preloader-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(25, 7, 49, .28), rgba(5, 2, 13, .9) 78%);
+  backdrop-filter: blur(2px);
+}
+.site-preloader-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .35rem;
+  color: white;
+  text-align: center;
+}
+.site-preloader-cat-frame { width: min(88vw, 720px); aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(232, 121, 249, .35); border-radius: 1.5rem; box-shadow: 0 0 45px rgba(168, 85, 247, .35); background: rgba(8, 5, 16, .35); }
+.site-preloader-cat { display: block; width: 100%; height: 100%; object-fit: contain; }
+.site-preloader-text { color: #e9d5ff; font-size: .85rem; }
+.site-preloader-dots { display: flex; gap: .35rem; margin-top: .35rem; }
+.site-preloader-dots i { width: .4rem; height: .4rem; border-radius: 999px; background: #e879f9; animation: sitePreloaderDot 1s ease-in-out infinite; }
+.site-preloader-dots i:nth-child(2) { animation-delay: .15s; }
+.site-preloader-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes sitePreloaderDot { 0%, 100% { transform: translateY(0); opacity: .35; } 50% { transform: translateY(-4px); opacity: 1; } }
+@keyframes sitePreloaderFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .site-preloader-dots i { animation: none; } }
+
 /* พื้นหลังวิวทะเลสาบพาสเทลดรีมมี่ (Dreamy Lake Landscape) ของธีมสว่าง — ปรับความจาง 60% */
 html.light body {
   background-color: #edf1fe;
