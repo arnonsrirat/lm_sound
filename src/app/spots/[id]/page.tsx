@@ -3,6 +3,7 @@ import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import { getSpotById } from "@/actions/spot";
 import { getSession } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/site-settings";
 import { notFound } from "next/navigation";
 import { MapPin, User, ArrowLeft, Edit3, Calendar, Compass } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +19,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
   const { id } = await params;
   const spot = await getSpotById(id);
   const session = await getSession();
+  const settings = await getSiteSettings();
 
   if (!spot) {
     notFound();
@@ -42,7 +44,7 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
       <Header currentUser={session ? { userId: session.userId, username: session.username } : null} />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        <Sidebar role={session?.role} spots={[mapSpot]} />
+        <Sidebar logoLight={settings.logoLight} logoDark={settings.logoDark} role={session?.role} spots={[mapSpot]} />
 
         <main className="flex-1 md:pl-60 lg:pl-64 p-4 sm:p-6 md:p-8 pb-36 sm:pb-32 md:pb-28 min-w-0">
           <div className="mb-4 sm:mb-6">

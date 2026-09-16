@@ -7,6 +7,7 @@ import AmbientAura from "@/components/AmbientAura";
 import { getSiteSettings } from "@/lib/site-settings";
 import ToastViewport from "@/components/ToastViewport";
 import InstallAppPrompt from "@/components/InstallAppPrompt";
+import FaviconSync from "@/components/FaviconSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,6 +55,7 @@ export default async function RootLayout({
           <AmbientAura />
           <ToastViewport />
           <InstallAppPrompt />
+          <FaviconSync light={settings.logoLight} dark={settings.logoDark} />
           <div className="flex-1 flex flex-col relative z-0">{children}</div>
           <AudioPlayerBar />
         </AudioProvider>

@@ -206,6 +206,15 @@ html.light {
   --muted-text: rgba(124, 94, 180, 0.75);
 }
 
+/* ปรับ contrast ของคลาสเดิมที่เคยออกแบบมาสำหรับพื้นหลังมืด */
+html.light .text-white { color: #24133f; }
+html.light .text-purple-100 { color: #321653; }
+html.light .text-purple-200 { color: #4b2670; }
+html.light .text-purple-300 { color: #63388d; }
+html.light .text-purple-300\/70 { color: rgba(76, 43, 112, 0.82); }
+html.light .bg-purple-950\/30, html.light .bg-purple-950\/40 { background-color: rgba(109, 73, 156, 0.1); }
+html.light .border-purple-500\/20, html.light .border-purple-500\/25 { border-color: rgba(109, 73, 156, 0.28); }
+
 /* ============================================
    ธีมเทศกาล (แอดมินสลับได้จากหน้า /admin)
    ============================================ */
