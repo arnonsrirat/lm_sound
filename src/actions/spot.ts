@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { spotSchema, type SpotInput } from "@/lib/validations/spot";
-import { requireAuth, assertSpotOwnership, ForbiddenError, UnauthorizedError } from "@/lib/auth";
+import { requireAuth, requireAdmin, ForbiddenError, UnauthorizedError } from "@/lib/auth";
 import { filterFallbackSpots, FALLBACK_SPOTS } from "@/lib/fallbackSpots";
 
 export interface ActionResult<T = unknown> {
@@ -238,20 +238,17 @@ export async function updateSpotAction(
   formData: FormData | SpotInput
 ): Promise<ActionResult> {
   try {
-    const session = await requireAuth();
+    await requireAdmin();
 
     // ค้นหา Spot เดิมก่อน
     const existingSpot = await prisma.spot.findUnique({
       where: { id: spotId },
-      select: { authorId: true },
+      select: { id: true },
     });
 
     if (!existingSpot) {
       return { success: false, error: "ไม่พบจุดอ่านหนังสือนี้ในระบบ (404)", statusCode: 404 };
     }
-
-    // Authorization Guard: สิทธิ์เฉพาะเจ้าของโพสต์ (แอดมินผ่านได้ทุกจุด)
-    assertSpotOwnership(existingSpot.authorId, session.userId, session.role === "ADMIN");
 
     let rawData: Record<string, unknown>;
     if (formData instanceof FormData) {
@@ -325,19 +322,16 @@ export async function updateSpotAction(
  */
 export async function deleteSpotAction(spotId: string): Promise<ActionResult> {
   try {
-    const session = await requireAuth();
+    await requireAdmin();
 
     const existingSpot = await prisma.spot.findUnique({
       where: { id: spotId },
-      select: { authorId: true },
+      select: { id: true },
     });
 
     if (!existingSpot) {
       return { success: false, error: "ไม่พบจุดอ่านหนังสือนี้ในระบบ (404)", statusCode: 404 };
     }
-
-    // Authorization Guard: 403 Forbidden (แอดมินผ่านได้ทุกจุด)
-    assertSpotOwnership(existingSpot.authorId, session.userId, session.role === "ADMIN");
 
     await prisma.spot.delete({
       where: { id: spotId },

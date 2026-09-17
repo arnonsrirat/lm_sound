@@ -783,6 +783,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof window.AudioContext })
           .webkitAudioContext;
+      if (!AudioCtxClass) return null;
       const ctx = new AudioCtxClass();
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(masterVolume, ctx.currentTime);
@@ -891,6 +892,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       oscRight.start(0);
 
       audioCtxRef.current = ctx;
+      if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
       masterGainRef.current = masterGain;
       spatialBusRef.current = spatialBus;
       dryGainRef.current = dryGain;

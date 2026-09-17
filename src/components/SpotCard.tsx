@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Play, Pause, MapPin, Trash2, Edit3, User, Heart, Sparkles } from "lucide-react";
+import { Play, Pause, MapPin, User, Heart, Sparkles } from "lucide-react";
 import { noiseLevelLabels, type NoiseLevel } from "@/lib/validations/spot";
-import { deleteSpotAction } from "@/actions/spot";
 import { useAudio } from "@/context/AudioContext";
 import NoiseGauge from "@/components/NoiseGauge";
 import { notify } from "@/lib/notify";
@@ -68,7 +67,6 @@ function getAmenities(title: string, description: string): Array<{ label: string
 export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }: SpotCardProps) {
   const { isPlaying, activeTrack, playSpot, togglePlay } = useAudio();
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isFavorite, setIsFavorite] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -127,7 +125,6 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
       badgeColor: "bg-purple-950/60 text-purple-300 border-purple-500/30",
     };
 
-  const isOwner = currentUserId && spot.authorId === currentUserId;
   const amenities = spot.amenities ?? [];
 
   const handleTogglePlay = () => {
@@ -143,21 +140,6 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
         audioUrl: spot.audioUrl,
         location: spot.location,
       });
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบจุด "${spot.title}"?`)) return;
-    setIsDeleting(true);
-    try {
-      const res = await deleteSpotAction(spot.id);
-      if (!res.success) {
-        notify(res.error || "เกิดข้อผิดพลาดในการลบ", "error");
-      }
-    } catch {
-      notify("ไม่สามารถลบได้", "error");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -303,28 +285,8 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
             </span>
           </div>
 
-          {/* Action buttons (Owner or Detail view) */}
+          {/* การจัดการสถานที่ทำได้เฉพาะในระบบหลังบ้าน */}
           <div className="flex items-center gap-1.5">
-            {isOwner && (
-              <>
-                <Link
-                  href={`/spots/${spot.id}/edit`}
-                  className="p-1.5 rounded-lg hover:bg-purple-500/20 text-purple-400 hover:text-white transition"
-                  title="แก้ไขจุดอ่านหนังสือ"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </Link>
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="p-1.5 rounded-lg hover:bg-rose-500/20 text-purple-400 hover:text-rose-400 transition cursor-pointer"
-                  title="ลบจุดอ่านหนังสือ"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </>
-            )}
-
             <Link
               href={`/spots/${spot.id}`}
               className="text-purple-400 hover:text-fuchsia-300 font-semibold text-xs ml-1 inline-flex items-center gap-1 transition"

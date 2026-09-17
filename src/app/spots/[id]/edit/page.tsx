@@ -21,8 +21,8 @@ export default async function EditSpotPage({ params }: EditSpotPageProps) {
     notFound();
   }
 
-  // Authorization Guard: หากไม่ใช่เจ้าของ แสดงหน้า 403 Forbidden
-  if (!session || session.userId !== spot.authorId) {
+  // Authorization Guard: การแก้ไขสถานที่ทำได้เฉพาะในระบบหลังบ้าน
+  if (!session || session.role !== "ADMIN") {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
         <Header currentUser={session ? { userId: session.userId, username: session.username } : null} />
@@ -33,10 +33,10 @@ export default async function EditSpotPage({ params }: EditSpotPageProps) {
             </div>
             <h1 className="text-xl font-bold text-slate-100">403 - Forbidden</h1>
             <p className="text-xs text-rose-400 mt-2 font-medium">
-              คุณไม่มีสิทธิ์แก้ไขจุดอ่านหนังสือนี้ เนื่องจากไม่ใช่เจ้าของโพสต์
+              เฉพาะผู้ดูแลระบบเท่านั้นที่แก้ไขสถานที่ได้
             </p>
             <p className="text-[11px] text-slate-500 mt-1">
-              เฉพาะผู้สร้าง &ldquo;{spot.title}&rdquo; เท่านั้นที่ได้รับอนุญาตให้ทำการเปลี่ยนแปลง
+              กรุณาเข้าเมนูหลังบ้านเพื่อจัดการข้อมูลสถานที่
             </p>
             <div className="mt-6">
               <Link

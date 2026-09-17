@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { spotSchema } from "@/lib/validations/spot";
-import { requireAuth, assertSpotOwnership, ForbiddenError, UnauthorizedError } from "@/lib/auth";
+import { requireAdmin, ForbiddenError, UnauthorizedError } from "@/lib/auth";
 import { getSpotById } from "@/actions/spot";
 
 // GET /api/spots/[id] - ดึงข้อมูลจุดอ่านหนังสือเฉพาะรายการ
@@ -34,19 +34,16 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const session = await requireAuth();
+    await requireAdmin();
 
     const existingSpot = await prisma.spot.findUnique({
       where: { id },
-      select: { authorId: true },
+      select: { id: true },
     });
 
     if (!existingSpot) {
       return NextResponse.json({ success: false, error: "ไม่พบจุดอ่านหนังสือนี้" }, { status: 404 });
     }
-
-    // Authorization Guard: 403 Forbidden
-    assertSpotOwnership(existingSpot.authorId, session.userId, session.role === "ADMIN");
 
     const body = await request.json();
     const validated = spotSchema.safeParse(body);
@@ -94,19 +91,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const session = await requireAuth();
+    await requireAdmin();
 
     const existingSpot = await prisma.spot.findUnique({
       where: { id },
-      select: { authorId: true },
+      select: { id: true },
     });
 
     if (!existingSpot) {
       return NextResponse.json({ success: false, error: "ไม่พบจุดอ่านหนังสือนี้" }, { status: 404 });
     }
-
-    // Authorization Guard: 403 Forbidden
-    assertSpotOwnership(existingSpot.authorId, session.userId, session.role === "ADMIN");
 
     await prisma.spot.delete({
       where: { id },
