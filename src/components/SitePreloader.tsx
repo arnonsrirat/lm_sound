@@ -23,6 +23,7 @@ export default function SitePreloader() {
             autoPlay
             muted
             playsInline
+            preload="metadata"
             onEnded={() => window.setTimeout(() => setVisible(false), 300)}
             onError={() => setVisible(false)}
           />

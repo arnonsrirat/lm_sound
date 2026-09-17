@@ -6,7 +6,7 @@ import { getSession } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 import { notFound } from "next/navigation";
 import { getOptimizedImageUrl } from "@/lib/media-url";
-import { MapPin, User, ArrowLeft, Edit3, Calendar, Compass } from "lucide-react";
+import { MapPin, User, ArrowLeft, Calendar, Compass } from "lucide-react";
 import Link from "next/link";
 import SpotDetailInteractive from "@/components/SpotDetailInteractive";
 import CampusMap from "@/components/CampusMap";
@@ -25,8 +25,6 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
   if (!spot) {
     notFound();
   }
-
-  const isOwner = session?.userId === spot.authorId;
 
   const mapSpot = {
     id: spot.id,
@@ -68,17 +66,6 @@ export default async function SpotDetailPage({ params }: SpotDetailPageProps) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/40 to-transparent" />
 
-              {isOwner && (
-                <div className="absolute top-4 right-4">
-                  <Link
-                    href={`/spots/${spot.id}/edit`}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white purple-gradient-btn transition shadow-lg border border-purple-400/40"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>แก้ไขข้อมูล</span>
-                  </Link>
-                </div>
-              )}
             </div>
 
             {(spot.imageUrls?.length ?? 0) > 1 && (
