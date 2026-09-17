@@ -240,7 +240,7 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
           <div className="mb-2.5 flex items-center justify-between">
             <div className="flex min-w-0 flex-col items-start gap-0.5">
               <NoiseGauge noiseLevel={spot.noiseLevel} noiseScore={spot.noiseScore} />
-              <span className="text-[9px] text-purple-300/55">{spot.noiseSampleCount ? `วิเคราะห์ ${spot.noiseSampleCount}/${spot.noiseSampleTarget ?? 5} รอบ` : "รอผลวิเคราะห์เสียง"}</span>
+              <span className="text-[9px] text-purple-300/55">{spot.noiseSampleCount ? `คำนวณจากข้อมูลเสียง ${spot.noiseSampleCount}/${spot.noiseSampleTarget ?? 5} ช่อง` : "รอข้อมูลเสียงสำหรับการคำนวณ"}</span>
             </div>
             <div className="flex items-center gap-1.5">
               {matchScore !== undefined && matchScore >= 65 && (

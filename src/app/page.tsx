@@ -88,8 +88,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
 
           {/* Right Column ("เวลา sound เล่น" - Now Playing Panel with Equalizer, Controls & Mixer) */}
-          <div className="hidden shrink-0 xl:block xl:h-[calc(100dvh-6rem)] xl:max-h-[calc(100dvh-6rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
-            <div className="sticky top-20">
+          <div className="hidden shrink-0 xl:block xl:w-72 2xl:w-80">
+            <div>
               <NowPlayingSidebar />
             </div>
           </div>

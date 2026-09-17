@@ -288,8 +288,9 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
       </div>
 
       {/* Sound Match Selector & Active Match Bar */}
-      {(isSoundMatchOpen || soundMatchIntention) && (
-        <div className="rounded-3xl p-5 sm:p-6 border border-teal-500/35 bg-gradient-to-br from-[#0c1f24]/90 via-[#0e172a]/95 to-[#130b2c]/90 backdrop-blur-2xl shadow-2xl relative overflow-hidden transition-all duration-300">
+      {isSoundMatchOpen && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-sm sm:p-6" onClick={(event) => { if (event.target === event.currentTarget) { setIsSoundMatchOpen(false); } }}>
+          <div className="w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-3xl border border-teal-500/35 bg-gradient-to-br from-[#0c1f24]/95 via-[#0e172a]/95 to-[#130b2c]/95 p-5 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-6" onClick={(event) => event.stopPropagation()}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-teal-500/20">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/30">
@@ -308,17 +309,17 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
               </div>
             </div>
 
-            {soundMatchIntention && (
-              <button
-                type="button"
-                onClick={() => setSoundMatchIntention(null)}
-                className="flex items-center gap-1 text-xs text-teal-300/80 hover:text-white px-2.5 py-1 rounded-lg hover:bg-white/10 transition cursor-pointer self-start sm:self-auto"
-                title="ล้างโหมดจับคู่"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>ล้างค่า</span>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {soundMatchIntention && (
+                <button type="button" onClick={() => setSoundMatchIntention(null)} className="flex items-center gap-1 text-xs text-teal-300/80 hover:text-white px-2.5 py-1 rounded-lg hover:bg-white/10 transition cursor-pointer" title="ล้างโหมดจับคู่">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>ล้างค่า</span>
+                </button>
+              )}
+              <button type="button" onClick={() => setIsSoundMatchOpen(false)} className="rounded-lg p-1.5 text-teal-200/70 hover:bg-white/10 hover:text-white" aria-label="ปิด Sound Match">
+                <X className="h-4 w-4" />
               </button>
-            )}
+            </div>
           </div>
 
           {/* Intention Choices Cards */}
@@ -403,6 +404,7 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
               </div>
             </div>
           )}
+          </div>
         </div>
       )}
 

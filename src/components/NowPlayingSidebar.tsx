@@ -46,6 +46,7 @@ export default function NowPlayingSidebar() {
     isLiveStream,
     seek,
   } = useAudio();
+  const [mixerEnabled, setMixerEnabled] = React.useState(false);
 
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -92,7 +93,7 @@ export default function NowPlayingSidebar() {
   }
 
   return (
-    <aside className="fixed inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex max-h-[calc(100dvh-6rem)] w-auto min-w-0 shrink-0 flex-col overflow-y-auto overscroll-contain touch-pan-y isolate rounded-3xl border border-purple-500/25 bg-[var(--card-bg)]/95 p-4 shadow-2xl backdrop-blur-2xl transition-all duration-300 xl:static xl:max-h-none xl:w-72 xl:overflow-visible xl:rounded-3xl xl:bg-transparent xl:p-4 2xl:w-80 2xl:p-5">
+    <aside className="fixed inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex max-h-[calc(100dvh-6rem)] w-auto min-w-0 shrink-0 flex-col overflow-y-auto overscroll-contain touch-pan-y isolate rounded-3xl border border-purple-500/25 bg-[var(--card-bg)]/95 p-4 shadow-2xl backdrop-blur-2xl transition-all duration-300 xl:fixed xl:right-6 xl:top-20 xl:bottom-auto xl:h-[calc(100dvh-6rem)] xl:max-h-[calc(100dvh-6rem)] xl:w-72 xl:overflow-y-auto xl:overscroll-contain xl:rounded-3xl xl:bg-[var(--card-bg)]/95 xl:p-4 2xl:w-80 2xl:p-5">
       {/* Background ambient lighting */}
       <div className="absolute -top-16 -right-16 w-44 h-44 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -left-16 w-44 h-44 rounded-full bg-pink-600/10 blur-3xl pointer-events-none" />
@@ -270,19 +271,22 @@ export default function NowPlayingSidebar() {
       </div>
 
       {/* Sound Mixer Channels */}
-      <details className="space-y-3 pt-3 border-t border-purple-500/15 group">
+      <details
+        open={mixerEnabled}
+        onToggle={(event) => setMixerEnabled(event.currentTarget.open)}
+        className="space-y-3 pt-3 border-t border-purple-500/15 group"
+      >
         <summary className="flex cursor-pointer list-none items-center justify-between py-2">
           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5 text-purple-500" />
-            <span>Focus Recipe & Mixer</span>
+            <span>เพิ่มมิกซ์เสียง</span>
           </span>
-          {activePresetId === "custom" ? (
-            <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-400/30">
-              Custom Mode
+          <span className="flex items-center gap-2">
+            <span className="text-[10px] text-purple-300/70">{mixerEnabled ? "เปิดใช้งาน" : "ต้องการเพิ่มเสียงไหม?"}</span>
+            <span className={`relative h-5 w-9 rounded-full transition-colors ${mixerEnabled ? "bg-emerald-500" : "bg-purple-900/70"}`} aria-hidden="true">
+              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${mixerEnabled ? "translate-x-4" : "translate-x-0.5"}`} />
             </span>
-          ) : (
-            <span className="text-[10px] text-purple-400 font-bold uppercase">Real-time</span>
-          )}
+          </span>
         </summary>
 
         {/* Quick Focus Recipe 1-Click Chips */}

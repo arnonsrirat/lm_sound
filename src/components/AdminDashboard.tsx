@@ -740,7 +740,7 @@ function AdminSpotForm({
       const nextCount = Math.min(noiseSampleTarget, noiseSampleCount + 1);
       setNoiseScore(Math.round(((noiseScore * noiseSampleCount) + sampleScore) / nextCount));
       setNoiseSampleCount(nextCount);
-      notify(true, `วัดเสียงรอบที่ ${nextCount}/${noiseSampleTarget} สำเร็จ`);
+      notify(true, `เพิ่มข้อมูลเสียงช่องเวลาที่ ${nextCount}/${noiseSampleTarget} สำเร็จ`);
     } catch (error) {
       notify(false, error instanceof Error ? error.message : "วัดเสียงไม่สำเร็จ กรุณาอนุญาตการใช้ไมโครโฟน");
     } finally {
@@ -867,11 +867,11 @@ function AdminSpotForm({
             <div>
               <label className="text-xs font-semibold text-purple-300/80">ผลวิเคราะห์เสียงรบกวน</label>
               <div className="mt-1 rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-3 py-2">
-                <div className="flex items-center justify-between"><span className="text-lg font-black text-cyan-200">{Math.round(noiseScore)}%</span><span className="text-[11px] text-cyan-100/70">วิเคราะห์แล้ว {noiseSampleCount}/{noiseSampleTarget} รอบ</span></div>
+                <div className="flex items-center justify-between"><span className="text-lg font-black text-cyan-200">{Math.round(noiseScore)}%</span><span className="text-[11px] text-cyan-100/70">มีข้อมูลเสียง {noiseSampleCount}/{noiseSampleTarget} ช่อง</span></div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-purple-950/50"><div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500" style={{ width: `${noiseScore}%` }} /></div>
               </div>
-              <label className="mt-2 block text-[11px] text-purple-300/80">จำนวนรอบสูงสุดต่อวัน<select value={noiseSampleTarget} onChange={(e) => setNoiseSampleTarget(Number(e.target.value))} className="ml-2 rounded-lg border border-purple-500/25 bg-purple-950/40 px-2 py-1 text-xs"><option value={1}>1 รอบ</option><option value={3}>3 รอบ</option><option value={5}>5 รอบ</option><option value={10}>10 รอบ</option></select></label>
-              <div className="mt-2 flex flex-wrap gap-3"><button type="button" disabled={isAnalyzing || noiseSampleCount >= noiseSampleTarget} onClick={() => void recordNoiseSample()} className="text-[11px] font-semibold text-cyan-300 underline cursor-pointer disabled:opacity-50">{isAnalyzing ? "กำลังวัดเสียง 3 วินาที…" : noiseSampleCount >= noiseSampleTarget ? "ครบจำนวนรอบที่ตั้งไว้แล้ว" : "วัดเสียงจากไมโครโฟน (3 วินาที)"}</button><span className="text-[10px] text-purple-300/60">ต้องเปิดสิทธิ์ไมโครโฟนและใช้ผ่าน HTTPS</span></div>
+               <label className="mt-2 block text-[11px] text-purple-300/80">จำนวนช่องเวลาที่ต้องการต่อวัน<select value={noiseSampleTarget} onChange={(e) => setNoiseSampleTarget(Number(e.target.value))} className="ml-2 rounded-lg border border-purple-500/25 bg-purple-950/40 px-2 py-1 text-xs"><option value={1}>1 ช่อง</option><option value={3}>3 ช่อง</option><option value={5}>5 ช่อง</option><option value={10}>10 ช่อง</option></select></label>
+               <div className="mt-2 flex flex-wrap gap-3"><button type="button" disabled={isAnalyzing || noiseSampleCount >= noiseSampleTarget} onClick={() => void recordNoiseSample()} className="text-[11px] font-semibold text-cyan-300 underline cursor-pointer disabled:opacity-50">{isAnalyzing ? "กำลังเพิ่มเสียงช่องเวลานี้ 3 วินาที…" : noiseSampleCount >= noiseSampleTarget ? "มีข้อมูลเสียงครบทุกช่องแล้ว" : "เพิ่มเสียงตัวอย่างในช่องเวลานี้ (3 วินาที)"}</button><span className="text-[10px] text-purple-300/60">ระบบจะนำข้อมูลเสียงที่เพิ่มในแต่ละช่วงมาคำนวณรวม · ต้องเปิดไมโครโฟนผ่าน HTTPS</span></div>
             </div>
           </div>
 

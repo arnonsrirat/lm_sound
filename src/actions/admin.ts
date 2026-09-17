@@ -9,6 +9,44 @@ import { spotSchema, type SpotInput } from "@/lib/validations/spot";
 import type { ActionResult } from "@/actions/spot";
 import { FALLBACK_SPOTS } from "@/lib/fallbackSpots";
 
+export async function saveSpotNoiseSampleAction(input: {
+  spotId: string;
+  mediaAssetId: string;
+  timeSlot: string;
+  note?: string | null;
+  noiseScore?: number | null;
+}) {
+  try {
+    await requireAdmin();
+    const timeSlot = input.timeSlot.trim().slice(0, 40);
+    if (!input.spotId || !input.mediaAssetId || !timeSlot) return { success: false, error: "กรุณาระบุสถานที่ ไฟล์เสียง และช่วงเวลา", statusCode: 400 };
+    const [spot, asset] = await Promise.all([
+      prisma.spot.findUnique({ where: { id: input.spotId }, select: { id: true, noiseSampleTarget: true } }),
+      prisma.mediaAsset.findFirst({ where: { id: input.mediaAssetId, folder: "audio" }, select: { id: true } }),
+    ]);
+    if (!spot) return { success: false, error: "ไม่พบสถานที่ที่เลือก", statusCode: 404 };
+    if (!asset) return { success: false, error: "ไฟล์นี้ไม่ใช่เสียงตัวอย่างในคลังเสียง", statusCode: 400 };
+    const noiseScore = input.noiseScore == null ? null : Math.max(0, Math.min(100, Math.round(input.noiseScore)));
+    const sample = await prisma.spotNoiseSample.upsert({
+      where: { spotId_timeSlot: { spotId: spot.id, timeSlot } },
+      create: { spotId: spot.id, mediaAssetId: asset.id, timeSlot, note: input.note?.trim().slice(0, 200) || null, noiseScore },
+      update: { mediaAssetId: asset.id, note: input.note?.trim().slice(0, 200) || null, noiseScore },
+      include: { mediaAsset: { select: { url: true, originalName: true, name: true } } },
+    });
+    const samples = await prisma.spotNoiseSample.findMany({ where: { spotId: spot.id }, select: { noiseScore: true } });
+    const scored = samples.map((item) => item.noiseScore).filter((score): score is number => score != null);
+    const average = scored.length ? Math.round(scored.reduce((sum, score) => sum + score, 0) / scored.length) : 0;
+    const level = average < 34 ? "quiet" : average < 67 ? "moderate" : "lively";
+    await prisma.spot.update({ where: { id: spot.id }, data: { noiseScore: average, noiseLevel: level, noiseSampleCount: samples.length, noiseAnalyzedAt: new Date() } });
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true, data: { sample, sampleCount: samples.length, sampleTarget: spot.noiseSampleTarget, noiseScore: average, noiseLevel: level }, statusCode: 200 };
+  } catch (error) {
+    console.error("Save Spot Noise Sample Error:", error);
+    return { success: false, error: "บันทึกเสียงตัวอย่างไม่สำเร็จ", statusCode: 500 };
+  }
+}
+
 const settingsSchema = z.object({
   logoLight: z.string().min(1, "กรุณาระบุโลโก้ธีมสว่าง"),
   logoDark: z.string().min(1, "กรุณาระบุโลโก้ธีมมืด"),
