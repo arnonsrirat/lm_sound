@@ -47,6 +47,9 @@ export const spotSchema = z.object({
   noiseLevel: z.enum(noiseLevels, {
     message: "กรุณาเลือกระดับเสียงรบกวน",
   }).default("quiet"),
+  noiseScore: z.number().int().min(0).max(100).optional(),
+  noiseSampleCount: z.number().int().min(0).max(100).optional(),
+  noiseSampleTarget: z.number().int().min(1).max(20).optional(),
   imageUrl: z
     .string()
     .url("รูปแบบ URL รูปภาพไม่ถูกต้อง")

@@ -624,7 +624,7 @@ function SpotsTab({
                 {spot.location}
               </p>
               <div className="mt-1.5">
-                <NoiseGauge noiseLevel={spot.noiseLevel} compact />
+                <NoiseGauge noiseLevel={spot.noiseLevel} noiseScore={spot.noiseScore} compact />
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -683,9 +683,9 @@ function AdminSpotForm({
   const [title, setTitle] = useState(spot?.title || "");
   const [description, setDescription] = useState(spot?.description || "");
   const [location, setLocation] = useState(spot?.location || "");
-  const [noiseLevel, setNoiseLevel] = useState<"quiet" | "moderate" | "lively">(
-    (spot?.noiseLevel as "quiet" | "moderate" | "lively") || "quiet"
-  );
+  const [noiseScore, setNoiseScore] = useState(() => spot?.noiseScore ?? (spot?.noiseLevel === "lively" ? 80 : spot?.noiseLevel === "moderate" ? 50 : 20));
+  const [noiseSampleCount, setNoiseSampleCount] = useState(spot?.noiseSampleCount ?? 0);
+  const [noiseSampleTarget, setNoiseSampleTarget] = useState(spot?.noiseSampleTarget ?? 5);
   const [imageUrl, setImageUrl] = useState(spot?.imageUrl || "");
   const [imageUrls, setImageUrls] = useState(spot?.imageUrls?.length ? spot.imageUrls : (spot?.imageUrl ? [spot.imageUrl] : []));
   const [audioUrl, setAudioUrl] = useState(spot?.audioUrl || "");
@@ -702,6 +702,53 @@ function AdminSpotForm({
   const [isPending, startTransition] = useTransition();
 
   const [pickerOpen, setPickerOpen] = useState<"image" | "audio" | null>(null);
+
+  const recordNoiseSample = async () => {
+    if (noiseSampleCount >= noiseSampleTarget || isAnalyzing) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      notify(false, "เบราว์เซอร์นี้ไม่รองรับการวัดเสียงจากไมโครโฟน");
+      return;
+    }
+    setIsAnalyzing(true);
+    let stream: MediaStream | null = null;
+    let ctx: AudioContext | null = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) throw new Error("ไม่รองรับการวิเคราะห์เสียงในเบราว์เซอร์นี้");
+      ctx = new AudioContextClass();
+      await ctx.resume();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      source.connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+      const samples: number[] = [];
+      const startedAt = performance.now();
+      while (performance.now() - startedAt < 3000) {
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (const value of data) {
+          const normalized = (value - 128) / 128;
+          sum += normalized * normalized;
+        }
+        samples.push(Math.sqrt(sum / data.length));
+        await new Promise((resolve) => window.setTimeout(resolve, 100));
+      }
+      const averageRms = samples.reduce((sum, value) => sum + value, 0) / Math.max(samples.length, 1);
+      const sampleScore = Math.min(100, Math.round(averageRms * 500));
+      const nextCount = Math.min(noiseSampleTarget, noiseSampleCount + 1);
+      setNoiseScore(Math.round(((noiseScore * noiseSampleCount) + sampleScore) / nextCount));
+      setNoiseSampleCount(nextCount);
+      notify(true, `วัดเสียงรอบที่ ${nextCount}/${noiseSampleTarget} สำเร็จ`);
+    } catch (error) {
+      notify(false, error instanceof Error ? error.message : "วัดเสียงไม่สำเร็จ กรุณาอนุญาตการใช้ไมโครโฟน");
+    } finally {
+      stream?.getTracks().forEach((track) => track.stop());
+      if (ctx) await ctx.close().catch(() => undefined);
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -725,11 +772,15 @@ function AdminSpotForm({
     }
 
     startTransition(async () => {
+      const analyzedNoiseLevel = (noiseScore < 34 ? "quiet" : noiseScore < 67 ? "moderate" : "lively") as SpotInput["noiseLevel"];
       const payload = {
         title,
         description,
         location,
-        noiseLevel,
+        noiseLevel: analyzedNoiseLevel,
+        noiseScore,
+        noiseSampleCount,
+        noiseSampleTarget,
         imageUrl,
         imageUrls,
         audioUrl,
@@ -814,19 +865,13 @@ function AdminSpotForm({
               {fieldErrors.location && <p className="mt-1 text-[11px] font-semibold text-rose-300">{fieldErrors.location[0]}</p>}
             </div>
             <div>
-              <label className="text-xs font-semibold text-purple-300/80">ระดับเสียง</label>
-              <select
-                value={noiseLevel}
-                onChange={(e) =>
-                  setNoiseLevel(e.target.value as "quiet" | "moderate" | "lively")
-                }
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/25 text-sm"
-              >
-                <option value="quiet">Quiet (เงียบสงบ)</option>
-                <option value="moderate">Moderate (ปานกลาง)</option>
-                <option value="lively">Lively (คึกคัก)</option>
-              </select>
-              <button type="button" disabled={!audioUrl || isAnalyzing} onClick={async () => { setIsAnalyzing(true); try { const audio = new Audio(audioUrl); const ctx = new AudioContext(); const response = await fetch(audioUrl); const buffer = await ctx.decodeAudioData(await response.arrayBuffer()); const data = buffer.getChannelData(0); let sum = 0; for (let i = 0; i < data.length; i += Math.max(1, Math.floor(data.length / 50000))) sum += data[i] * data[i]; const rms = Math.sqrt(sum / Math.ceil(data.length / Math.max(1, Math.floor(data.length / 50000)))); setNoiseLevel(rms < 0.08 ? "quiet" : rms < 0.2 ? "moderate" : "lively"); void audio; await ctx.close(); } catch { notify(false, "วิเคราะห์เสียงไม่สำเร็จ"); } finally { setIsAnalyzing(false); } }} className="mt-2 text-[11px] text-cyan-300 underline cursor-pointer disabled:opacity-50">{isAnalyzing ? "กำลังวิเคราะห์…" : "วิเคราะห์เสียงรบกวนอัตโนมัติ"}</button>
+              <label className="text-xs font-semibold text-purple-300/80">ผลวิเคราะห์เสียงรบกวน</label>
+              <div className="mt-1 rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-3 py-2">
+                <div className="flex items-center justify-between"><span className="text-lg font-black text-cyan-200">{Math.round(noiseScore)}%</span><span className="text-[11px] text-cyan-100/70">วิเคราะห์แล้ว {noiseSampleCount}/{noiseSampleTarget} รอบ</span></div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-purple-950/50"><div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500" style={{ width: `${noiseScore}%` }} /></div>
+              </div>
+              <label className="mt-2 block text-[11px] text-purple-300/80">จำนวนรอบสูงสุดต่อวัน<select value={noiseSampleTarget} onChange={(e) => setNoiseSampleTarget(Number(e.target.value))} className="ml-2 rounded-lg border border-purple-500/25 bg-purple-950/40 px-2 py-1 text-xs"><option value={1}>1 รอบ</option><option value={3}>3 รอบ</option><option value={5}>5 รอบ</option><option value={10}>10 รอบ</option></select></label>
+              <div className="mt-2 flex flex-wrap gap-3"><button type="button" disabled={isAnalyzing || noiseSampleCount >= noiseSampleTarget} onClick={() => void recordNoiseSample()} className="text-[11px] font-semibold text-cyan-300 underline cursor-pointer disabled:opacity-50">{isAnalyzing ? "กำลังวัดเสียง 3 วินาที…" : noiseSampleCount >= noiseSampleTarget ? "ครบจำนวนรอบที่ตั้งไว้แล้ว" : "วัดเสียงจากไมโครโฟน (3 วินาที)"}</button><span className="text-[10px] text-purple-300/60">ต้องเปิดสิทธิ์ไมโครโฟนและใช้ผ่าน HTTPS</span></div>
             </div>
           </div>
 

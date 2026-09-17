@@ -18,6 +18,9 @@ export interface SpotCardProps {
     description: string;
     location: string;
     noiseLevel: string;
+    noiseScore?: number | null;
+    noiseSampleCount?: number;
+    noiseSampleTarget?: number;
     imageUrl: string;
     audioUrl: string;
     createdAt?: Date | string;
@@ -235,7 +238,10 @@ export default function SpotCard({ spot, currentUserId, matchScore, isTopMatch }
         <div>
           {/* 180-degree Noise Gauge with Active Sound Indicator & Sound Match Badge */}
           <div className="mb-2.5 flex items-center justify-between">
-            <NoiseGauge noiseLevel={spot.noiseLevel} />
+            <div className="flex min-w-0 flex-col items-start gap-0.5">
+              <NoiseGauge noiseLevel={spot.noiseLevel} noiseScore={spot.noiseScore} />
+              <span className="text-[9px] text-purple-300/55">{spot.noiseSampleCount ? `วิเคราะห์ ${spot.noiseSampleCount}/${spot.noiseSampleTarget ?? 5} รอบ` : "รอผลวิเคราะห์เสียง"}</span>
+            </div>
             <div className="flex items-center gap-1.5">
               {matchScore !== undefined && matchScore >= 65 && (
                 <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${
