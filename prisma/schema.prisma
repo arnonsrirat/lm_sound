@@ -12,19 +12,19 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
-  password  String
-  role      String   @default("USER") // "USER" | "ADMIN"
+  id              String         @id @default(cuid())
+  email           String         @unique
+  username        String         @unique
+  password        String
+  role            String         @default("USER") // "USER" | "ADMIN"
   emailVerifiedAt DateTime?
-  spots     Spot[]
-  trackRatings TrackRating[]
-  spotRatings SpotRating[]
-  spotFavorites SpotFavorite[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  authTokens AuthToken[]
+  spots           Spot[]
+  trackRatings    TrackRating[]
+  spotRatings     SpotRating[]
+  spotFavorites   SpotFavorite[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  authTokens      AuthToken[]
 }
 
 model AuthToken {
@@ -35,15 +35,16 @@ model AuthToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, purpose])
 }
 
 // การตั้งค่าเว็บไซต์ที่แอดมินปรับแต่งได้ โดยไม่ต้องแก้โค้ด
 model SiteSetting {
-  id                   String   @id @default(cuid())
-  key                  String   @unique
-  value                String
-  updatedAt            DateTime @updatedAt
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model GoogleDriveConnection {
@@ -56,65 +57,84 @@ model GoogleDriveConnection {
 }
 
 model MediaAsset {
-  id              String   @id @default(cuid())
+  id              String                    @id @default(cuid())
   name            String
   originalName    String?
-  fileKey         String?  @unique
-  storageProvider String   @default("google-drive")
+  fileKey         String?                   @unique
+  storageProvider String                    @default("google-drive")
   note            String?
   timeTag         String?
-  isPublished     Boolean  @default(false)
-  playCount       Int      @default(0)
-  averageRating   Float    @default(0)
-  ratingCount     Int      @default(0)
+  isPublished     Boolean                   @default(false)
+  playCount       Int                       @default(0)
+  averageRating   Float                     @default(0)
+  ratingCount     Int                       @default(0)
   folder          String
   mimeType        String
   size            Int
-  driveFileId     String?  @unique
+  driveFileId     String?                   @unique
   driveWebViewUrl String?
   url             String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
   ratings         TrackRating[]
   playlistTracks  RelaxationPlaylistTrack[]
+  noiseSamples    SpotNoiseSample[]
 
   @@index([folder, createdAt])
 }
 
 model RelaxationPlaylist {
-  id          String   @id @default(cuid())
+  id          String                    @id @default(cuid())
   name        String
   description String?
   coverUrl    String?
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isPublished Boolean                   @default(false)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
   tracks      RelaxationPlaylistTrack[]
 
   @@index([isPublished, updatedAt])
 }
 
 model RelaxationPlaylistTrack {
-  id         String   @id @default(cuid())
+  id         String             @id @default(cuid())
   playlistId String
   assetId    String
-  position   Int      @default(0)
+  position   Int                @default(0)
   playlist   RelaxationPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  asset      MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  asset      MediaAsset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@unique([playlistId, assetId])
   @@index([playlistId, position])
 }
 
+model SpotNoiseSample {
+  id           String     @id @default(cuid())
+  spotId       String
+  mediaAssetId String
+  timeSlot     String
+  note         String?
+  noiseScore   Int?
+  recordedAt   DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  spot         Spot       @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([spotId, timeSlot])
+  @@index([spotId, recordedAt])
+  @@index([mediaAssetId])
+}
+
 model TrackRating {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   assetId   String
   userId    String
   score     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   asset     MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([assetId, userId])
   @@index([assetId])
 }
@@ -126,8 +146,9 @@ model SpotRating {
   score     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  spot      Spot @relation(fields: [spotId], references: [id], onDelete: Cascade)
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spot      Spot     @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([spotId, userId])
   @@index([spotId])
 }
@@ -137,41 +158,43 @@ model SpotFavorite {
   spotId    String
   userId    String
   createdAt DateTime @default(now())
-  spot      Spot @relation(fields: [spotId], references: [id], onDelete: Cascade)
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spot      Spot     @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([spotId, userId])
   @@index([spotId])
 }
 
 model Spot {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  location    String
-  noiseLevel  String   // e.g. "quiet" (เงียบสงบ), "moderate" (ปานกลาง), "lively" (คึกคัก)
-  noiseScore  Int      @default(0) // คะแนนเสียงรบกวนจากการวิเคราะห์ 0-100%
-  noiseSampleCount Int @default(0)
-  noiseSampleTarget Int @default(5)
-  noiseAnalyzedAt DateTime?
-  imageUrl    String
-  imageUrls   String[] @default([])
-  audioUrl    String
-  timeTag     String?
-  timeStart   Int?
-  timeEnd     Int?
-  availabilityStatus String @default("READY")
-  pendingFields String[] @default([])
-  amenities    String[] @default([])
-  averageRating Float @default(0)
-  ratingCount Int @default(0)
-  latitude    Float?
-  longitude   Float?
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  ratings     SpotRating[]
-  favorites   SpotFavorite[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String            @id @default(cuid())
+  title              String
+  description        String
+  location           String
+  noiseLevel         String // e.g. "quiet" (เงียบสงบ), "moderate" (ปานกลาง), "lively" (คึกคัก)
+  noiseScore         Int               @default(0) // คะแนนเสียงรบกวนจากการวิเคราะห์ 0-100%
+  noiseSampleCount   Int               @default(0)
+  noiseSampleTarget  Int               @default(5)
+  noiseAnalyzedAt    DateTime?
+  imageUrl           String
+  imageUrls          String[]          @default([])
+  audioUrl           String
+  timeTag            String?
+  timeStart          Int?
+  timeEnd            Int?
+  availabilityStatus String            @default("READY")
+  pendingFields      String[]          @default([])
+  amenities          String[]          @default([])
+  noiseSamples       SpotNoiseSample[]
+  averageRating      Float             @default(0)
+  ratingCount        Int               @default(0)
+  latitude           Float?
+  longitude          Float?
+  authorId           String
+  author             User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ratings            SpotRating[]
+  favorites          SpotFavorite[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@index([authorId])
 }

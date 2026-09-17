@@ -46,6 +46,7 @@ export default function Header({
   const [searchResults, setSearchResults] = useState<AutocompleteSpot[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -363,7 +364,7 @@ export default function Header({
                   <span className="hidden sm:inline">หลังบ้าน (Admin)</span>
                 </Link>
               )}
-              <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200 min-w-0 max-w-[42px] sm:max-w-[180px]">
+              <button type="button" onClick={() => setIsProfileOpen(true)} className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200 min-w-0 max-w-[42px] sm:max-w-[180px] hover:border-purple-300 hover:bg-purple-900/40 transition cursor-pointer" aria-label="เปิดโปรไฟล์">
                 <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 text-white flex items-center justify-center font-bold text-[10px]">
                   {currentUser.username[0]?.toUpperCase() || "U"}
                 </div>
@@ -373,7 +374,7 @@ export default function Header({
                     Admin
                   </span>
                 )}
-              </div>
+              </button>
               <button
                 onClick={handleLogout}
                 className="p-1.5 rounded-full text-purple-400 hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
@@ -399,6 +400,22 @@ export default function Header({
         isOpen={isStatsModalOpen}
         onClose={() => setIsStatsModalOpen(false)}
       />
+
+      {isProfileOpen && currentUser && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={(event) => { if (event.target === event.currentTarget) setIsProfileOpen(false); }}>
+          <div className="w-full max-w-sm rounded-3xl border border-purple-400/30 bg-[var(--card-bg)] p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+              <div><p className="text-[10px] uppercase tracking-widest text-purple-400">บัญชีของฉัน</p><h2 className="text-lg font-bold text-foreground">โปรไฟล์ผู้ใช้</h2></div>
+              <button type="button" onClick={() => setIsProfileOpen(false)} className="rounded-lg p-2 text-purple-300 hover:bg-purple-500/15 hover:text-white" aria-label="ปิดโปรไฟล์"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="mt-4 space-y-3 rounded-2xl bg-purple-950/25 p-4 text-sm">
+              <div><p className="text-xs text-purple-300/70">ชื่อผู้ใช้</p><p className="font-semibold text-foreground">{currentUser.username}</p></div>
+              <div><p className="text-xs text-purple-300/70">สถานะบัญชี</p><p className="font-semibold text-emerald-300">{settings?.role === "ADMIN" ? "ผู้ดูแลระบบ" : "สมาชิก"} · เข้าสู่ระบบแล้ว</p></div>
+            </div>
+            <Link href="/profile" onClick={() => setIsProfileOpen(false)} className="mt-4 flex w-full items-center justify-center rounded-xl purple-gradient-btn px-4 py-2.5 text-sm font-bold">ดูรายละเอียดและแก้ไขโปรไฟล์</Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
