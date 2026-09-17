@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 // รับไฟล์ต้นฉบับได้ถึง 50MB; รูปและเสียงจะถูกลดขนาดฝั่ง browser ก่อนส่งจริงเมื่อทำได้
 const MAX_SIZE = 50 * 1024 * 1024;
-const FOLDERS = new Set(["logos", "banners", "general", "audio", "relaxation"]);
+const FOLDERS = new Set(["logos", "favicons", "banners", "general", "audio", "relaxation"]);
 const EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif", ".mp3", ".wav", ".ogg", ".m4a", ".webm"]);
 
 function signUpload(userId: string, key: string, originalName: string, mimeType: string, size: number) {

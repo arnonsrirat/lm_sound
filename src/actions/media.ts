@@ -30,7 +30,7 @@ export interface MediaActionResult<T = unknown> {
 }
 
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
-const ALLOWED_FOLDERS = ["logos", "banners", "general", "audio", "relaxation"] as const;
+const ALLOWED_FOLDERS = ["logos", "favicons", "banners", "general", "audio", "relaxation"] as const;
 export type MediaFolder = (typeof ALLOWED_FOLDERS)[number];
 
 const ALLOWED_EXTENSIONS = new Set([

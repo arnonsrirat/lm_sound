@@ -37,6 +37,7 @@ interface MediaFolderPickerProps {
 
 const FOLDERS: { id: MediaFolder; label: string; desc: string }[] = [
   { id: "logos", label: "โฟลเดอร์โลโก้ (Logos)", desc: "รูปโลโก้สำหรับธีมสว่างและมืด" },
+  { id: "favicons", label: "อัลบั้ม Favicon", desc: "ไอคอนแท็บเว็บสำหรับธีมสว่างและมืด" },
   { id: "banners", label: "โฟลเดอร์แบนเนอร์ (Banners)", desc: "ภาพหัวเว็บ / Banner แนะนำ" },
   { id: "general", label: "คลังภาพทั่วไป (General)", desc: "รูปสปอตและสื่อประกอบอื่นๆ" },
   { id: "audio", label: "คลังเสียงบรรยากาศ (Audio)", desc: "ไฟล์เสียง MP3, WAV, OGG, M4A และ WebM" },

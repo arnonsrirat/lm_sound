@@ -73,7 +73,7 @@ export default async function RootLayout({
           <AmbientAura />
           <ToastViewport />
           <InstallAppPrompt />
-          <FaviconSync light={settings.logoLight} dark={settings.logoDark} />
+          <FaviconSync light={settings.faviconLight} dark={settings.faviconDark} />
           <div className="lmsound-page-shell flex-1 flex flex-col relative z-0">{children}</div>
           <AudioPlayerBar />
         </AudioProvider>
