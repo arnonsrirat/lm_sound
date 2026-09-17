@@ -98,7 +98,7 @@ export default function AdminDashboard({
   // Picker Modal State for selecting image into a specific settings field
   const [pickerModal, setPickerModal] = useState<{
     isOpen: boolean;
-    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark";
+    field: "logoLight" | "logoDark" | "faviconLight" | "faviconDark" | "bannerLight" | "bannerDark";
     title: string;
     folder: MediaFolder;
   } | null>(null);
@@ -121,6 +121,8 @@ export default function AdminDashboard({
       const res = await updateSiteSettingsAction({
         logoLight: settings.logoLight,
         logoDark: settings.logoDark,
+        faviconLight: settings.faviconLight,
+        faviconDark: settings.faviconDark,
         bannerLight: settings.bannerLight,
         bannerDark: settings.bannerDark,
         siteName: settings.siteName,
@@ -350,7 +352,7 @@ function LogosBannersTab({
   settings: SiteSettings;
   setSettings: React.Dispatch<React.SetStateAction<SiteSettings>>;
   onOpenPicker: (
-    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark",
+    field: "logoLight" | "logoDark" | "faviconLight" | "faviconDark" | "bannerLight" | "bannerDark",
     title: string,
     folder: MediaFolder
   ) => void;
@@ -358,11 +360,11 @@ function LogosBannersTab({
   isPending: boolean;
 }) {
   const cards: {
-    field: "logoLight" | "logoDark" | "bannerLight" | "bannerDark";
+    field: "logoLight" | "logoDark" | "faviconLight" | "faviconDark" | "bannerLight" | "bannerDark";
     title: string;
     subtitle: string;
     folder: MediaFolder;
-    aspect: "logo" | "banner";
+    aspect: "logo" | "favicon" | "banner";
   }[] = [
     {
       field: "logoLight",
@@ -377,6 +379,20 @@ function LogosBannersTab({
       subtitle: "แสดงที่มุมซ้ายบนของเว็บในโหมดมืด (ค่าเริ่มต้น)",
       folder: "logos",
       aspect: "logo",
+    },
+    {
+      field: "faviconLight",
+      title: "☀️ Favicon (ธีมสว่าง)",
+      subtitle: "ไอคอนแท็บเว็บเมื่อเปิดโหมดสว่าง",
+      folder: "favicons",
+      aspect: "favicon",
+    },
+    {
+      field: "faviconDark",
+      title: "🌙 Favicon (ธีมมืด)",
+      subtitle: "ไอคอนแท็บเว็บเมื่อเปิดโหมดมืด",
+      folder: "favicons",
+      aspect: "favicon",
     },
     {
       field: "bannerLight",
@@ -419,7 +435,7 @@ function LogosBannersTab({
           </button>
         </div>
 
-        {/* Grid of 4 cards */}
+        {/* Grid of logo, favicon, and banner cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           {cards.map((c) => {
             const currentVal = settings[c.field];
@@ -441,13 +457,13 @@ function LogosBannersTab({
 
                   {/* Preview Area */}
                   <div className="mt-3.5 rounded-2xl overflow-hidden border border-purple-500/30 bg-black/40 flex items-center justify-center p-3 relative group">
-                    {c.aspect === "logo" ? (
+                    {c.aspect === "logo" || c.aspect === "favicon" ? (
                       <div className="h-28 flex items-center justify-center">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={getOptimizedImageUrl(currentVal)}
                           alt={c.title}
-                          className="max-h-24 max-w-full object-contain drop-shadow-md group-hover:scale-105 transition"
+                          className={`${c.aspect === "favicon" ? "h-20 w-20" : "max-h-24 max-w-full"} object-contain drop-shadow-md group-hover:scale-105 transition`}
                         />
                       </div>
                     ) : (

@@ -14,6 +14,9 @@ export interface SiteSettings {
   // โลโก้ — แยกตามธีมสว่าง/มืด
   logoLight: string;
   logoDark: string;
+  // Favicon — แยกตามธีมสว่าง/มืด
+  faviconLight: string;
+  faviconDark: string;
   // แบนเนอร์ — แยกตามธีมสว่าง/มืด (ใช้เป็นภาพพื้นหลังของ FeaturedBanner)
   bannerLight: string;
   bannerDark: string;
@@ -34,6 +37,8 @@ export interface SiteSettings {
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   logoLight: "/logo-light.png",
   logoDark: "/logo.png",
+  faviconLight: "/logo-light.png",
+  faviconDark: "/logo.png",
   bannerLight: "/logo.png",
   bannerDark: "/logo.png",
   siteName: "LM Sound",

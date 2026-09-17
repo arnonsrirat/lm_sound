@@ -12,6 +12,8 @@ import { FALLBACK_SPOTS } from "@/lib/fallbackSpots";
 const settingsSchema = z.object({
   logoLight: z.string().min(1, "กรุณาระบุโลโก้ธีมสว่าง"),
   logoDark: z.string().min(1, "กรุณาระบุโลโก้ธีมมืด"),
+  faviconLight: z.string().min(1, "กรุณาระบุ Favicon ธีมสว่าง"),
+  faviconDark: z.string().min(1, "กรุณาระบุ Favicon ธีมมืด"),
   bannerLight: z.string().min(1, "กรุณาระบุแบนเนอร์ธีมสว่าง"),
   bannerDark: z.string().min(1, "กรุณาระบุแบนเนอร์ธีมมืด"),
   siteName: z.string().min(1, "กรุณาระบุชื่อเว็บไซต์").max(60, "ชื่อเว็บไซต์ต้องไม่เกิน 60 ตัวอักษร"),

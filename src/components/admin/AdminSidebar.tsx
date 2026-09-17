@@ -51,8 +51,8 @@ const NAV_ITEMS: {
   },
   {
     id: "logos-banners",
-    label: "โลโก้ & แบนเนอร์",
-    sublabel: "Logo & Banner Selector",
+    label: "โลโก้ แบนเนอร์ & Favicon",
+    sublabel: "Logo, Banner & Favicon",
     icon: ImageIcon,
     badge: "ด่วน",
   },

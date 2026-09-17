@@ -1,3 +1,22 @@
 "use client";
 import { useEffect } from "react";
-export default function FaviconSync({ light, dark }: { light: string; dark: string }) { useEffect(() => { const update = () => { const href = document.documentElement.classList.contains("dark") ? dark : light; let link = document.querySelector<HTMLLinkElement>("link#lmsound-favicon"); if (!link) { link = document.createElement("link"); link.id = "lmsound-favicon"; link.rel = "icon"; document.head.appendChild(link); } link.href = href; }; update(); const observer = new MutationObserver(update); observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] }); return () => observer.disconnect(); }, [light, dark]); return null; }
+export default function FaviconSync({ light, dark }: { light: string; dark: string }) {
+  useEffect(() => {
+    const update = () => {
+      const href = document.documentElement.classList.contains("dark") ? dark : light;
+      let link = document.querySelector<HTMLLinkElement>("link#lmsound-favicon");
+      if (!link) {
+        link = document.createElement("link");
+        link.id = "lmsound-favicon";
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = href || (document.documentElement.classList.contains("dark") ? "/logo.png" : "/logo-light.png");
+    };
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, [light, dark]);
+  return null;
+}

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     if (Number(object.ContentLength || 0) !== size || object.ContentType !== contentType) return NextResponse.json({ success: false, error: "ไฟล์บน R2 ไม่ตรงกับข้อมูลที่ขออัปโหลด" }, { status: 409 });
     // ใช้โฟลเดอร์จาก key ที่เซิร์ฟเวอร์สร้างเท่านั้น ไม่รับ path จาก client
     const folder = fileKey.split("/")[2] || "";
-    if (!["logos", "banners", "general", "audio", "relaxation"].includes(folder)) {
+    if (!["logos", "favicons", "banners", "general", "audio", "relaxation"].includes(folder)) {
       return NextResponse.json({ success: false, error: "โฟลเดอร์ไฟล์ไม่ถูกต้อง" }, { status: 400 });
     }
     const asset = await prisma.mediaAsset.create({ data: { name: fileKey.split("/").pop() || originalName, originalName, fileKey, storageProvider: "r2", note: body.note?.trim().slice(0, 160) || null, timeTag: body.timeTag?.trim().slice(0, 40) || null, folder, mimeType: contentType, size, driveFileId: null, driveWebViewUrl: null, url: getR2PublicUrl(fileKey) } });
