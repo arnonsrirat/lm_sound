@@ -12,6 +12,9 @@ export interface CampusMapSpot {
   title: string;
   location: string;
   noiseLevel: string;
+  noiseScore?: number | null;
+  noiseSampleCount?: number;
+  noiseSampleTarget?: number;
   latitude?: number | null;
   longitude?: number | null;
   imageUrl?: string;
@@ -65,6 +68,11 @@ function getPinIconByNoiseLevel(noiseLevel?: string, selected = false): L.DivIco
 
   pinIconsCache[cacheKey] = icon;
   return icon;
+}
+
+function getNoiseLevelFromScore(score?: number | null, fallback = "moderate") {
+  if (score == null || !Number.isFinite(score)) return fallback;
+  return score < 34 ? "quiet" : score < 67 ? "moderate" : "lively";
 }
 
 function PinDropper({ onPick }: { onPick?: (latitude: number, longitude: number) => void }) {
@@ -146,7 +154,7 @@ export default function CampusMapInner({
           <Marker
             key={spot.id}
             position={[spot.latitude, spot.longitude]}
-            icon={getPinIconByNoiseLevel(spot.noiseLevel, selectedSpotId === spot.id)}
+            icon={getPinIconByNoiseLevel(getNoiseLevelFromScore(spot.noiseScore, spot.noiseLevel), selectedSpotId === spot.id)}
           >
             <Popup>
               <div className="min-w-[170px] overflow-hidden rounded-xl p-0.5 text-slate-800">

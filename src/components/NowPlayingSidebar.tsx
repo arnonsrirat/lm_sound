@@ -79,7 +79,7 @@ export default function NowPlayingSidebar() {
     return (
       <button
         onClick={() => setIsNowPlayingOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full purple-gradient-btn shadow-2xl hover:scale-105 transition-all text-xs font-semibold cursor-pointer border border-purple-400/40"
+        className="fixed bottom-20 right-3 z-40 flex items-center gap-2 px-3 py-2.5 rounded-full purple-gradient-btn shadow-2xl hover:scale-105 transition-all text-xs font-semibold cursor-pointer border border-purple-400/40 xl:bottom-6 xl:right-6"
         title="เปิดแผงควบคุมเสียง (เวลา sound เล่น)"
       >
         <Headphones className="w-4 h-4 animate-bounce" />
@@ -92,7 +92,7 @@ export default function NowPlayingSidebar() {
   }
 
   return (
-    <aside className="w-full xl:w-80 2xl:w-88 shrink-0 flex flex-col glass-panel rounded-3xl p-5 border border-purple-500/25 shadow-2xl relative overflow-hidden transition-all duration-300">
+    <aside className="fixed inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex max-h-[calc(100dvh-6rem)] w-auto min-w-0 shrink-0 flex-col overflow-y-auto overscroll-contain touch-pan-y isolate rounded-3xl border border-purple-500/25 bg-[var(--card-bg)]/95 p-4 shadow-2xl backdrop-blur-2xl transition-all duration-300 xl:static xl:max-h-none xl:w-72 xl:overflow-visible xl:rounded-3xl xl:bg-transparent xl:p-4 2xl:w-80 2xl:p-5">
       {/* Background ambient lighting */}
       <div className="absolute -top-16 -right-16 w-44 h-44 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -left-16 w-44 h-44 rounded-full bg-pink-600/10 blur-3xl pointer-events-none" />
@@ -133,7 +133,7 @@ export default function NowPlayingSidebar() {
       </div>
 
       {/* Artwork / Vinyl Cover */}
-      <div className="relative group w-full aspect-square max-h-56 rounded-2xl overflow-hidden border border-purple-500/30 bg-[#120a26] shadow-xl mb-4 flex items-center justify-center">
+      <div className="relative group w-full aspect-[16/10] max-h-44 rounded-2xl overflow-hidden border border-purple-500/30 bg-[#120a26] shadow-xl mb-3 flex items-center justify-center xl:aspect-square xl:max-h-48">
         {activeTrack.imageUrl ? (
           <img
             src={activeTrack.imageUrl}
@@ -175,7 +175,7 @@ export default function NowPlayingSidebar() {
       </div>
 
       {/* Track Info */}
-      <div className="mb-4">
+      <div className="mb-3">
         <h4 className="text-base font-bold text-foreground tracking-tight line-clamp-1">
           {activeTrack.title}
         </h4>
@@ -192,7 +192,7 @@ export default function NowPlayingSidebar() {
       </div>
 
       {/* Playback Controls */}
-      <div className="flex items-center justify-center gap-4 mb-5">
+      <div className="flex items-center justify-center gap-3 mb-3">
         <button
           onClick={prevTrack}
           className="p-2 text-foreground/80 hover:text-purple-400 hover:bg-purple-500/20 rounded-full transition cursor-pointer"
@@ -222,7 +222,7 @@ export default function NowPlayingSidebar() {
         </button>
       </div>
 
-      <div className="mb-5 rounded-2xl border border-purple-500/20 bg-purple-950/25 px-3 py-2.5">
+      <div className="mb-3 rounded-2xl border border-purple-500/20 bg-purple-950/25 px-3 py-2">
         <div className="mb-1.5 flex items-center justify-between text-[10px] text-purple-200/70">
           <span>{isLiveStream ? "เสียงสด / วนบรรยากาศ" : formatTime(currentTime)}</span>
           <span>{isLiveStream ? "LIVE" : formatTime(duration)}</span>
@@ -241,7 +241,7 @@ export default function NowPlayingSidebar() {
       </div>
 
       {/* Master Volume Bar */}
-      <div className="p-3 rounded-2xl bg-purple-950/25 border border-purple-500/20 mb-5">
+      <div className="p-3 rounded-2xl bg-purple-950/25 border border-purple-500/20 mb-3">
         <div className="flex items-center justify-between text-xs text-foreground mb-2">
           <button
             onClick={toggleMute}
@@ -270,8 +270,8 @@ export default function NowPlayingSidebar() {
       </div>
 
       {/* Sound Mixer Channels */}
-      <div className="space-y-3 pt-3 border-t border-purple-500/15">
-        <div className="flex items-center justify-between">
+      <details className="space-y-3 pt-3 border-t border-purple-500/15 group">
+        <summary className="flex cursor-pointer list-none items-center justify-between py-2">
           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5 text-purple-500" />
             <span>Focus Recipe & Mixer</span>
@@ -283,7 +283,7 @@ export default function NowPlayingSidebar() {
           ) : (
             <span className="text-[10px] text-purple-400 font-bold uppercase">Real-time</span>
           )}
-        </div>
+        </summary>
 
         {/* Quick Focus Recipe 1-Click Chips */}
         <div className="grid grid-cols-2 gap-1.5">
@@ -404,7 +404,7 @@ export default function NowPlayingSidebar() {
             </div>
           </div>
         )}
-      </div>
+      </details>
     </aside>
   );
 }

@@ -149,6 +149,10 @@ model Spot {
   description String
   location    String
   noiseLevel  String   // e.g. "quiet" (เงียบสงบ), "moderate" (ปานกลาง), "lively" (คึกคัก)
+  noiseScore  Int      @default(0) // คะแนนเสียงรบกวนจากการวิเคราะห์ 0-100%
+  noiseSampleCount Int @default(0)
+  noiseSampleTarget Int @default(5)
+  noiseAnalyzedAt DateTime?
   imageUrl    String
   imageUrls   String[] @default([])
   audioUrl    String

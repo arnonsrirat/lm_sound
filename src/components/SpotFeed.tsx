@@ -4,9 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import SpotCard from "./SpotCard";
 import {
-  Filter,
   AlertCircle,
-  Dices,
   Heart,
   Target,
   X,
@@ -23,6 +21,9 @@ interface SpotFeedProps {
     description: string;
     location: string;
     noiseLevel: string;
+    noiseScore?: number | null;
+    noiseSampleCount?: number;
+    noiseSampleTarget?: number;
     imageUrl: string;
     audioUrl: string;
     createdAt?: Date | string;
@@ -129,14 +130,11 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
   const router = useRouter();
   const { playSpot } = useAudio();
 
-  const activeNoise = searchParams.get("noiseLevel") || "all";
   const searchQuery = searchParams.get("search") || "";
 
-  // Filter Categories: Level + Mood/Time-of-day + Favorites
+  // ตัวเลือกที่จำเป็นต่อการค้นหา: จุดโปรด และ Sound Match
   const [activeMoodFilter, setActiveMoodFilter] = useState<string>("all");
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [isRollingDice, setIsRollingDice] = useState(false);
-  const [highlightedSpotId, setHighlightedSpotId] = useState<string | null>(null);
 
   // Sound Match Intention State
   const [soundMatchIntention, setSoundMatchIntention] = useState<string | null>(null);
@@ -163,16 +161,11 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
 
   const filterOptions = [
     { key: "all", label: "ทั้งหมด" },
-    { key: "quiet", label: "🤫 เงียบสงบ" },
-    { key: "moderate", label: "🔉 ปานกลาง" },
-    { key: "lively", label: "🔊 คึกคัก / มีเสียง" },
-    { key: "mood-night", label: "🌙 รอบดึก 24 ชม." },
-    { key: "mood-cafe", label: "☕ คาเฟ่ & ชิลล์" },
     { key: "favorites", label: `❤️ จุดโปรด (${favorites.length})` },
   ];
 
   const handleFilterClick = (key: string) => {
-    if (key.startsWith("mood-") || key === "favorites") {
+    if (key === "favorites") {
       setActiveMoodFilter(key);
       const params = new URLSearchParams(searchParams.toString());
       params.delete("noiseLevel");
@@ -180,65 +173,15 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
     } else {
       setActiveMoodFilter("all");
       const params = new URLSearchParams(searchParams.toString());
-      if (key === "all") {
-        params.delete("noiseLevel");
-      } else {
-        params.set("noiseLevel", key);
-      }
+      params.delete("noiseLevel");
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  };
-
-  // Lucky Spot Shuffle (สุ่มจุดอ่านหนังสือ & เล่นเสียงบรรยากาศทันที 🎲)
-  const handleLuckyShuffle = () => {
-    if (spots.length === 0 || isRollingDice) return;
-    setIsRollingDice(true);
-
-    setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * spots.length);
-      const chosenSpot = spots[randomIndex];
-
-      setIsRollingDice(false);
-      setHighlightedSpotId(chosenSpot.id);
-
-      // เริ่มเล่นเสียงทันที
-      playSpot({
-        id: chosenSpot.id,
-        title: chosenSpot.title,
-        subtitle: chosenSpot.description,
-        category: chosenSpot.noiseLevel,
-        imageUrl: chosenSpot.imageUrl,
-        audioUrl: chosenSpot.audioUrl,
-        location: chosenSpot.location,
-      });
-
-      // เลื่อนจอไปยังการ์ดที่สุ่มได้
-      const targetElement = document.getElementById(`spot-${chosenSpot.id}`);
-      if (targetElement) {
-        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-
-      // ปลดไฮไลต์หลังจาก 3 วินาที
-      setTimeout(() => setHighlightedSpotId(null), 3500);
-    }, 600);
   };
 
   // Instant In-Memory Filtering
   const filteredSpots = useMemo(() => {
     return spots.filter((spot) => {
-      // 1. Noise Filter
-      if (activeMoodFilter === "all" && activeNoise !== "all") {
-        if (spot.noiseLevel !== activeNoise) return false;
-      }
-
-      // 2. Mood Filters
-      if (activeMoodFilter === "mood-night") {
-        const text = `${spot.title} ${spot.description}`.toLowerCase();
-        if (!text.includes("24") && !text.includes("ดึก") && !text.includes("หอพัก")) return false;
-      } else if (activeMoodFilter === "mood-cafe") {
-        const text = `${spot.title} ${spot.description}`.toLowerCase();
-        if (!text.includes("คาเฟ่") && !text.includes("กาแฟ") && !text.includes("วิศวะ")) return false;
-      } else if (activeMoodFilter === "favorites") {
+      if (activeMoodFilter === "favorites") {
         if (!favorites.includes(spot.id)) return false;
       }
 
@@ -253,7 +196,7 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
 
       return true;
     });
-  }, [spots, activeNoise, activeMoodFilter, favorites, searchQuery]);
+  }, [spots, activeMoodFilter, favorites, searchQuery]);
 
   // Deterministic Sound Matching & Ordering
   const scoredSpots = useMemo(() => {
@@ -276,11 +219,11 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
 
   return (
     <section id="popular" className="space-y-6 scroll-mt-20">
-      {/* Feed Controls Header: 'เสียงยอดนิยม' & Filters & Lucky Spot Button */}
+      {/* Feed Controls Header: เสียงยอดนิยม และตัวเลือกที่จำเป็น */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-purple-500/20">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-fuchsia-400">
-            <Filter className="w-4 h-4" />
+            <Headphones className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
@@ -297,7 +240,7 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
           </div>
         </div>
 
-        {/* Right side: Sound Match Button + Lucky Spot Button + Filter Chips */}
+        {/* Right side: Sound Match และจุดโปรด */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* Sound Match Intention Button (ปุ่มเปิดโหมดจับคู่จุดอ่านหนังสือ 🎯) */}
           <button
@@ -317,27 +260,13 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
             )}
           </button>
 
-          {/* Lucky Spot Shuffle Button (ปุ่มสุ่มจุดอ่านหนังสือ 🎲) */}
-          <button
-            type="button"
-            onClick={handleLuckyShuffle}
-            disabled={isRollingDice}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-900/30 transition transform active:scale-95 cursor-pointer border border-amber-300/40"
-            title="สุ่มจุดอ่านหนังสือและเปิดเสียงบรรยากาศทันที"
-          >
-            <Dices className={`w-4 h-4 ${isRollingDice ? "animate-dice" : ""}`} />
-            <span>{isRollingDice ? "กำลังสุ่ม..." : "สุ่มที่อ่านหนังสือ 🎲"}</span>
-          </button>
-
-          {/* Filter Chips (ระดับเสียง, ช่วงเวลา, และจุดโปรด) */}
+          {/* ตัวเลือกแบบย่อ */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {filterOptions.map((opt) => {
               const active =
                 opt.key === "all"
-                  ? activeNoise === "all" && activeMoodFilter === "all" && !soundMatchIntention
-                  : opt.key.startsWith("mood-") || opt.key === "favorites"
-                  ? activeMoodFilter === opt.key
-                  : activeNoise === opt.key && activeMoodFilter === "all";
+                  ? activeMoodFilter === "all" && !soundMatchIntention
+                  : activeMoodFilter === opt.key;
 
               return (
                 <button
@@ -502,11 +431,7 @@ export default function SpotFeed({ spots, currentUserId }: SpotFeedProps) {
           {scoredSpots.map((item, idx) => (
             <div
               key={item.spot.id}
-              className={`transition-all duration-500 rounded-2xl ${
-                highlightedSpotId === item.spot.id
-                  ? "ring-4 ring-amber-400 shadow-2xl shadow-amber-500/50 scale-[1.03]"
-                  : ""
-              }`}
+              className="rounded-2xl"
             >
               <SpotCard
                 spot={item.spot}

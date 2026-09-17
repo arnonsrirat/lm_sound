@@ -5,30 +5,29 @@ import { noiseLevelLabels, type NoiseLevel } from "@/lib/validations/spot";
 
 export default function NoiseGauge({
   noiseLevel,
+  noiseScore,
   showLabel = true,
   compact = false,
 }: {
   noiseLevel: string;
+  noiseScore?: number | null;
   showLabel?: boolean;
   compact?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const level = (noiseLevel in noiseLevelLabels ? noiseLevel : "moderate") as NoiseLevel;
+  const normalizedScore = noiseScore != null && Number.isFinite(noiseScore)
+    ? Math.min(100, Math.max(0, noiseScore))
+    : noiseLevel === "quiet" ? 20 : noiseLevel === "lively" ? 80 : 50;
+  const level = normalizedScore < 34 ? "quiet" : normalizedScore < 67 ? "moderate" : "lively";
   const label = noiseLevelLabels[level]?.label || "ปานกลาง";
 
   // มุมของเข็ม (อิงจาก 0° คือชี้ตรงขึ้นฟ้า 12 นาฬิกา)
   // quiet: -55° (เอียงไปทางซ้าย ชี้ตรงกลางโซนเขียว)
   // moderate: 0° (ชี้ตรงขึ้นฟ้า ชี้ตรงกลางโซนเหลือง)
   // lively: +55° (เอียงไปทางขวา ชี้ตรงกลางโซนแดง)
-  const rotationMap: Record<NoiseLevel, number> = {
-    quiet: -55,
-    moderate: 0,
-    lively: 55,
-  };
-
-  const needleRotation = rotationMap[level] ?? 0;
+  const needleRotation = -55 + (normalizedScore / 100) * 110;
 
   // สีข้อความตามระดับ
   const textColorMap: Record<NoiseLevel, string> = {
@@ -53,7 +52,7 @@ export default function NoiseGauge({
   const pivotSize = compact ? "w-2.5 h-2.5" : "w-3.5 h-3.5";
 
   return (
-    <div className="inline-flex items-center gap-2.5 select-none" aria-label={`ระดับเสียง ${label}`}>
+    <div className="inline-flex items-center gap-2.5 select-none" aria-label={`เสียงรบกวน ${Math.round(normalizedScore)} เปอร์เซ็นต์ (${label})`}>
       {/* 180-Degree Full Semi-Circle Fan Gauge */}
       <div
         className={`relative rounded-t-full ${sizeClasses} shadow-sm border-t border-x border-white/25`}
@@ -104,7 +103,7 @@ export default function NoiseGauge({
       {/* ข้อความชื่อระดับเสียง */}
       {showLabel && (
         <span className={`font-bold tracking-wide ${labelClasses} ${textColorMap[level]}`}>
-          {label}
+          {Math.round(normalizedScore)}% · {label}
         </span>
       )}
       <span className="sr-only">ระดับเสียงรบกวน: {label}</span>

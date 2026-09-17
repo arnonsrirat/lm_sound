@@ -4,6 +4,10 @@ export interface SpotItem {
   description: string;
   location: string;
   noiseLevel: string;
+  noiseScore?: number;
+  noiseSampleCount?: number;
+  noiseSampleTarget?: number;
+  noiseAnalyzedAt?: Date | string | null;
   imageUrl: string;
   imageUrls?: string[];
   audioUrl: string;
